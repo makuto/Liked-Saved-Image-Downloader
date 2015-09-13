@@ -1,0 +1,9 @@
+*.pyc
+Images*
+*URLs.txt
+*.geany
+*.gif
+*.png
+*gif*
+*.jpg
+*jpg*
