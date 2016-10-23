@@ -85,8 +85,9 @@ def saveAllImages(soft_retrieve_imgs=True):
     saveAllImagesToDir(saved_urls, savedDirectory, soft_retrieve = soft_retrieve_imgs)
     saveAllImagesToDir(liked_urls, likedDirectory, soft_retrieve = soft_retrieve_imgs)
 
+# Make sure the filename is alphanumeric or has supported symbols, and is shorter than 45 characters
 def safeFileName(filename):
-    acceptableChars = ['_', ' ', '1', '2']
+    acceptableChars = ['_', ' ']
     safeName = ''
     for char in filename:
         if char.isalnum() or char in acceptableChars:
@@ -95,6 +96,10 @@ def safeFileName(filename):
     # If there were no valid characters, give it a random number for a unique title
     if not safeName:
         safeName = 'badName_' + str(random.randint(1, 1000000))
+
+    MAX_NAME_LENGTH = 45
+    if len(safeName) > MAX_NAME_LENGTH:
+        safeName = safeName[:MAX_NAME_LENGTH]
 
     return safeName
 
