@@ -1,0 +1,33 @@
+# Enter your username in password, with no quotes and no /u/
+# Note that I am NOT responsible for security problems that may result
+#  from using this script. You can check my code if you're paranoid,
+#  but I'm not sure how PRAW handles raw text usernames and passwords.
+username=
+password=
+
+#
+# Set this to false to actually download images!
+#
+SHOULD_SOFT_RETRIEVE=True
+
+# Increase this value to 1000 or so to get more submissions
+TOTAL_REQUESTS=100
+
+SILENT_GET=False
+
+# This is a broken feature, and should be left off. Turn on if you're adventurous
+URLS_FROM_COMMENTS=False
+
+#========================================
+# Version 2 settings
+#========================================
+# Version 2 outputs images to directories separated by subreddit, and is cooler.
+# You shouldn't toggle this unless you've used the old version
+USE_NEW_VERSION=True
+
+# If you just ran the script and forgot to turn SHOULD_SOFT_RETRIEVE off, set this 
+#  variable to True. It'll use the submissions it got last time and speed up the process
+USE_CACHED_SUBMISSIONS=False
+
+# Output directory relative to where you executed the script
+OUTPUT_DIR=output

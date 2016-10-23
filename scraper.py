@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
+
 import praw
 import re
+import pickle
 
 def writeOutAllLinksFromRedditList(redditList, f, silent=False, extractLinksFromComments = False):
     for singleSubmission in redditList:
@@ -18,11 +21,77 @@ def writeOutAllLinksFromRedditList(redditList, f, silent=False, extractLinksFrom
                     if not silent:
                         print 'Comment link (extracted via regex): ' + commentLink
     
-def getRedditUserLikedSavedImages(user_name, user_password, request_limit = 100, silentGet = False, extractURLsFromComments = False):
-    user_agent = "PythonStuff: Likes grabber 1.0 by /u/makuto9"
+class RedditSubmission:
+    def __init__(self):
+        self.title = u''
+        self.author = u''
+        self.subreddit = u''
+        self.subredditTitle = u''
+        self.body = u''
+        self.bodyUrl = u''
+        self.postUrl = u''
+
+    def getXML(self):
+        baseString = (u'\t<title>' + self.title + u'</title>\n'
+            + u'\t<author>' + self.author + u'</author>\n'
+            + u'\t<subreddit>' + self.subreddit + u'</subreddit>\n'
+            + u'\t<subredditTitle>' + self.subredditTitle + u'</subredditTitle>\n'
+            + u'\t<body>' + self.body + u'</body>\n'
+            + u'\t<bodyUrl>' + self.bodyUrl + u'</bodyUrl>\n'
+            + u'\t<postUrl>' + self.postUrl + u'</postUrl>\n')
+
+        return unicode(baseString)
+
+def writeOutRedditSubmissionsAsXML(redditList, file, silent = False, extractLinksFromComments = False):
+    for submission in redditList:
+        file.write(u'<submission>\n' + submission.getXML() + u'</submission>\n')
+        #file.write(u'<submission>\n' + submission.getXML().encode('utf-8', 'replace') + u'</submission>\n')
+
+def saveSubmissionsAsXML(submissions, fileName):
+    outputFile = open(fileName, 'w')
+    writeOutRedditSubmissionsAsXML(submissions, outputFile)
+    outputFile.close()
+
+def writeCacheRedditSubmissions(submissions, cacheFileName):
+    cacheFile = open(cacheFileName, 'wb')
+    pickle.dump(submissions, cacheFile)
+
+def readCacheRedditSubmissions(cacheFileName):
+    cacheFile = open(cacheFileName, 'rb')
+    submissions = pickle.load(cacheFile)
+    return submissions
+
+def getRedditSubmissionsFromRedditList(redditList):
+    submissions = []
+
+    for singleSubmission in redditList:
+        if type(singleSubmission) is praw.objects.Submission:
+            newSubmission = RedditSubmission()
+
+            newSubmission.title = singleSubmission.title
+            newSubmission.author = singleSubmission.author.name if singleSubmission.author else u'no_author'
+
+            newSubmission.subreddit = singleSubmission.subreddit.url
+            newSubmission.subredditTitle = singleSubmission.subreddit.title
+
+            newSubmission.body = singleSubmission.selftext
+            newSubmission.bodyUrl = singleSubmission.url
+
+            newSubmission.postUrl = singleSubmission.permalink
+
+            submissions.append(newSubmission)
+        else:
+            print('Comment (unsupported): ' + singleSubmission.body[:40] + '...')
+
+    return submissions
+
+def getRedditUserLikedSavedImages(user_name, user_password, 
+                                  request_limit = 100, silentGet = False, 
+                                  extractURLsFromComments = False):
+    user_agent = 'PythonStuff: Likes grabber 1.0 by /u/makuto9'
     
-    fSaved = open("savedURLS.txt", 'w')
-    fLiked = open("likedURLS.txt", 'w')
+    fSaved = open('savedURLS.txt', 'w')
+    fLiked = open('likedURLS.txt', 'w')
     
     r = praw.Reddit(user_agent=user_agent)
 
@@ -34,9 +103,43 @@ def getRedditUserLikedSavedImages(user_name, user_password, request_limit = 100,
     likedLinks = r.user.get_upvoted(limit=request_limit)
     likedLinks = list(likedLinks)
 
-    writeOutAllLinksFromRedditList(savedLinks, fSaved, silent = silentGet, extractLinksFromComments = extractURLsFromComments)
-    writeOutAllLinksFromRedditList(likedLinks, fLiked, silent = silentGet, extractLinksFromComments = extractURLsFromComments)
+    writeOutAllLinksFromRedditList(savedLinks, fSaved, 
+        silent = silentGet, extractLinksFromComments = extractURLsFromComments)
+    writeOutAllLinksFromRedditList(likedLinks, fLiked, 
+        silent = silentGet, extractLinksFromComments = extractURLsFromComments)
     
     fSaved.close()
     fLiked.close()
     return
+
+def getRedditSavedSubmissions(user_name, user_password, request_limit = 50):
+    user_agent = 'PythonStuff: Likes grabber 1.0 by /u/makuto9'
+
+    r = praw.Reddit(user_agent=user_agent)
+
+    r.login(user_name, user_password)
+
+    submissions = r.user.get_saved(limit=request_limit)
+    submissions = list(submissions)
+
+    return submissions
+
+def getRedditUserLikedSavedSubmissions(user_name, user_password, 
+                                       request_limit = 10, silentGet = False, 
+                                       extractURLsFromComments = False):
+    user_agent = 'PythonStuff: Likes grabber 1.0 by /u/makuto9'
+
+    r = praw.Reddit(user_agent=user_agent)
+
+    r.login(user_name, user_password)
+
+    savedLinks = r.user.get_saved(limit=request_limit)
+    savedLinks = list(savedLinks)
+
+    likedLinks = r.user.get_upvoted(limit=request_limit)
+    likedLinks = list(likedLinks)
+
+    savedSubmissions = getRedditSubmissionsFromRedditList(savedLinks)
+    likedSubmissions = getRedditSubmissionsFromRedditList(likedLinks)    
+
+    return savedSubmissions + likedSubmissions
