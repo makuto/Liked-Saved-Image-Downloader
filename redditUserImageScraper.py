@@ -96,6 +96,7 @@ def main():
 			# Cache them in case it's needed later
 			scraper.writeCacheRedditSubmissions(submissions, DEFAULT_CACHE_FILE)
 
+		print 'Saving images. This will take several minutes...'
 		unsupportedSubmissions = imageSaver.saveAllImages_Advanced(OUTPUT_DIR, submissions, 
 			soft_retrieve_imgs = SHOULD_SOFT_RETRIEVE)
 
@@ -114,5 +115,6 @@ def main():
 		print('\nYou have run the script in Soft Retrieve mode - if you actually\n'
 			  'want to download images now, you should change SHOULD_SOFT_RETRIEVE\n'
 			  'to False in settings.txt')
-    
-main()
+
+if __name__ == '__main__':
+	main()

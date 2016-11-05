@@ -4,6 +4,13 @@ import praw
 import re
 import pickle
 
+# Helper function. Print percentage complete
+def percentageComplete(currentItem, numItems):
+    if numItems:
+        return str(int(((float(currentItem + 1) / float(numItems)) * 100))) + '%'
+
+    return 'Invalid'
+
 def writeOutAllLinksFromRedditList(redditList, f, silent=False, extractLinksFromComments = False):
     for singleSubmission in redditList:
         if type(singleSubmission) is praw.objects.Submission:
@@ -64,7 +71,8 @@ def readCacheRedditSubmissions(cacheFileName):
 def getRedditSubmissionsFromRedditList(redditList):
     submissions = []
 
-    for singleSubmission in redditList:
+    numTotalSubmissions = len(redditList)
+    for currentSubmissionIndex, singleSubmission in enumerate(redditList):
         if type(singleSubmission) is praw.objects.Submission:
             newSubmission = RedditSubmission()
 
@@ -80,6 +88,8 @@ def getRedditSubmissionsFromRedditList(redditList):
             newSubmission.postUrl = singleSubmission.permalink
 
             submissions.append(newSubmission)
+
+            print percentageComplete(currentSubmissionIndex, numTotalSubmissions)
         else:
             print('Comment (unsupported): ' + singleSubmission.body[:40] + '...')
 
@@ -133,13 +143,16 @@ def getRedditUserLikedSavedSubmissions(user_name, user_password,
 
     r.login(user_name, user_password)
 
+    print '\n\nCommunicating with reddit. This should only take a minute...\n'
     savedLinks = r.user.get_saved(limit=request_limit)
     savedLinks = list(savedLinks)
 
     likedLinks = r.user.get_upvoted(limit=request_limit)
     likedLinks = list(likedLinks)
 
+    print '\n\nRetrieving your saved submissions. This can take several minutes...\n'
     savedSubmissions = getRedditSubmissionsFromRedditList(savedLinks)
+    print '\n\nRetrieving your liked submissions. This can take several minutes...\n'
     likedSubmissions = getRedditSubmissionsFromRedditList(likedLinks)    
 
     return savedSubmissions + likedSubmissions

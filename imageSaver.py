@@ -6,40 +6,98 @@ import os
 import random
 from operator import attrgetter
 from zlib import crc32
+import sys
 
 def getFileTypeFromUrl(url):
-    if url.find('.'):
+    if url and url.find('.') != -1:
         return url[url.rfind('.') + 1:]
     else:
         return ''
 
+# Helper function. Print percentage complete
+def percentageComplete(currentItem, numItems):
+    if numItems:
+        return str(int(((float(currentItem) / float(numItems)) * 100))) + '%'
+
+    return 'Invalid'
+
 def isUrlSupportedType(url):
-    # no .gifv support yet (four symbols...)
-    filters = ['.jpg', '.gif', '.png']
-    blacklist = ['.gifv'] 
-    
-    isSupported = False
+    supportedTypes = ['jpg', 'gif', 'png', 'webm', 'mp4']
+    urlFileType = getFileTypeFromUrl(url)
+    return urlFileType in supportedTypes
 
-    # Make sure URL has file of supported type
-    for currentFilter in filters:
-        if currentFilter in url:
-            isSupported = True
-            break
-            
-    # Filter out unsupported types
-    for currentFilter in blacklist:
-        if currentFilter in url:
-            isSupported = False
-            break
+# Find the source of an image by reading the url's HTML, looking for sourceKey
+def findSourceFromHTML(url, sourceKey):
+    SANE_NUM_LINES = 30
 
-    # Ensure that the file type doesn't have any shit besides the type (e.g. '.png?1')
-    # (for now, just reject the URL rather than removing odd characters)
-    fileType = getFileTypeFromUrl(url)
-    for character in fileType:
-        if not character.isalpha():
-            isSupported = False
+    # Open the page to search for a saveable .gif or .webm
+    pageSource = urllib.urlopen(url)
+    pageSourceLines = pageSource.readlines()
+    pageSource.close()
 
-    return isSupported
+    # If a page has fewer than this number of lines, there is something wrong.
+    # This is a somewhat arbitrary heuristic
+    if len(pageSourceLines) <= SANE_NUM_LINES:
+        print 'Url "' + url + '" has a suspicious number of lines (' + str(len(pageSourceLines)) + ')'
+
+    for line in pageSourceLines:
+        foundSourcePosition = line.lower().find(sourceKey.lower())
+        
+        if foundSourcePosition > -1:
+            # Find the first character of the URL (add 1 for the ")
+            urlStartPosition = foundSourcePosition + len(sourceKey) + 1
+
+            # From the start of the url, search for the next '"' which is the end of the src link
+            urlEndPosition = line[urlStartPosition:].find('"')
+
+            if urlEndPosition > -1:
+                sourceUrl = line[urlStartPosition:urlStartPosition + urlEndPosition]
+
+                return sourceUrl
+
+    return ''
+
+def isGfycatUrl(url):
+    return 'gfycat' in url.lower()
+
+# Special handling for Gfycat links
+# Returns a URL to a webm which can be downloaded by urllib
+def convertGfycatUrlToWebM(url):
+    # Change this:
+    #   https://gfycat.com/IndolentScalyIncatern
+    # Into this:
+    #   https://zippy.gfycat.com/IndolentScalyIncatern.webm
+    # Or maybe this:
+    #   https://giant.gfycat.com/IndolentScalyIncatern.webm
+
+    # Look for this key in the HTML document and get whatever src is
+    GFYCAT_SOURCE_KEY = '<source id="webmSource" src='
+
+    return findSourceFromHTML(url, GFYCAT_SOURCE_KEY)
+
+def isGifVUrl(url):
+    return getFileTypeFromUrl(url) == 'gifv'
+
+# Special handling for Imgur's .gifv
+def convertGifVUrlToWebM(url):
+    # Find the source link
+    GIFV_SOURCE_KEY = '<source src='
+    gifvSource = findSourceFromHTML(url, GIFV_SOURCE_KEY)
+
+    # Didn't work? Try the alternate key
+    if not gifvSource:
+        ALTERNATE_GIFV_SOURCE_KEY = '<meta itemprop="contentURL" content='
+        gifvSource = findSourceFromHTML(url, ALTERNATE_GIFV_SOURCE_KEY)
+
+    # Still nothing? Try text hacking .mp4 onto the link and hope it's valid
+    if not gifvSource:
+        gifvSource = url[:-5] + '.mp4'
+
+    # For whatever reason, Imgur has this screwy no http(s) on their source links sometimes
+    if gifvSource and gifvSource[:2] == '//':
+        gifvSource = 'http:' + gifvSource
+
+    return gifvSource
 
 def getURLSFromFile(filename):
     f = open(filename, 'r')
@@ -115,10 +173,18 @@ def saveAllImages_Advanced(outputDir, submissions, soft_retrieve_imgs = True):
     unsupportedSubmissions = []
 
     submissionsToSave = len(sortedSubmissions)
-    for count, submission in enumerate(sortedSubmissions):
-        if isUrlSupportedType(submission.bodyUrl):
+    for currentSubmissionIndex, submission in enumerate(sortedSubmissions):
+        url = submission.bodyUrl
+
+        # Massage Gfycat links so that they can be downloaded
+        if isGfycatUrl(url):
+            url = convertGfycatUrlToWebM(url)
+
+        if isGifVUrl(url):
+            url = convertGifVUrlToWebM(url)
+
+        if isUrlSupportedType(url):
             subredditDir = submission.subreddit[3:-1]
-            url = submission.bodyUrl
             fileType = getFileTypeFromUrl(url)
 
             # Example path:
@@ -131,7 +197,8 @@ def saveAllImages_Advanced(outputDir, submissions, soft_retrieve_imgs = True):
 
             # If we already saved the image, skip it
             if os.path.isfile(saveFilePath):
-                print 'Skipping ' + saveFilePath + ' (already saved)'
+                print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
+                    + ' [already saved] ' + 'Skipping ' + saveFilePath)
                 continue
 
             if not soft_retrieve_imgs:
@@ -142,11 +209,12 @@ def saveAllImages_Advanced(outputDir, submissions, soft_retrieve_imgs = True):
                 urllib.urlretrieve(url, saveFilePath)
 
             # Output our progress
-            print ('[' + str(int((float(count) / float(submissionsToSave)) * 100)) + '%] ' 
-                    + url + ' saved to "' + subredditDir + '"')
+            print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
+                    + ' [save] ' + url + ' saved to "' + subredditDir + '"')
 
         else:
-            print 'Skipped "' + submission.bodyUrl + '" (image not recognized/supported)'
+            print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+                + ' [unsupported] ' + 'Skipped "' + url + '"')
             unsupportedSubmissions.append(submission)
 
     return unsupportedSubmissions
