@@ -1,8 +1,7 @@
 Reddit User Image Scraper
 --------------------------
 
-Use this shitty Python script I whipped up in an hour to download all of
-your reddit saved and upvoted/liked images to disk.
+Use this ~~shitty~~ awesome Python script I whipped up ~~in an hour~~ over a couple months of sporadic development to download all of your reddit saved and upvoted/liked images to disk.
 
 Make sure you have PRAW installed:
 `pip install praw`
@@ -21,3 +20,5 @@ Not actually getting images downloaded, but seeing the console say it downloaded
 This script uses PRAW to talk to reddit and urllib to download images.
 
 Note that the script will probably break once reddit no longer supports username password authentication and moves over to OAuth completely.
+
+Feel free to create Issues on this repo if you need help. I'm a nice guy, so don't be shy.
