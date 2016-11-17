@@ -9,7 +9,7 @@ from zlib import crc32
 import sys
 
 def getFileTypeFromUrl(url):
-    if url and url.find('.') != -1:
+    if url and url.find('.') != -1 and url.rfind('.') > url.rfind('/'):
         return url[url.rfind('.') + 1:]
     else:
         return ''
@@ -27,7 +27,12 @@ def isUrlSupportedType(url):
     return urlFileType in supportedTypes
 
 # Find the source of an image by reading the url's HTML, looking for sourceKey
-def findSourceFromHTML(url, sourceKey):
+# An example key would be '<img src='. Note that the '"' will automatically be 
+#  recognized as part of the key, so do not specify it
+# If sourceKeyAttribute is specified, sourceKey will first be found, then 
+#  the line will be searched for sourceKeyAttribute (e.g. sourceKey = '<img' and 
+#  sourceKeyAttribute = 'src=').
+def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
     SANE_NUM_LINES = 30
 
     # Open the page to search for a saveable .gif or .webm
@@ -44,8 +49,14 @@ def findSourceFromHTML(url, sourceKey):
         foundSourcePosition = line.lower().find(sourceKey.lower())
         
         if foundSourcePosition > -1:
-            # Find the first character of the URL (add 1 for the ")
-            urlStartPosition = foundSourcePosition + len(sourceKey) + 1
+            urlStartPosition = -1
+            if sourceKeyAttribute:
+                attributePosition = line[foundSourcePosition:].lower().find(sourceKeyAttribute.lower())
+                # Find the first character of the URL specified by the attribute (add 1 for the ")
+                urlStartPosition = foundSourcePosition + attributePosition + len(sourceKeyAttribute) + 1
+            else:
+                # Find the first character of the URL (add 1 for the ")
+                urlStartPosition = foundSourcePosition + len(sourceKey) + 1
 
             # From the start of the url, search for the next '"' which is the end of the src link
             urlEndPosition = line[urlStartPosition:].find('"')
@@ -98,6 +109,18 @@ def convertGifVUrlToWebM(url):
         gifvSource = 'http:' + gifvSource
 
     return gifvSource
+
+def isImgurIndirectUrl(url):
+    # If it is imgur domain, has no file type, and isn't an imgur album
+    return ('imgur' in url.lower() 
+        and not getFileTypeFromUrl(url) 
+        and not '/a/' in url)
+
+def convertImgurIndirectUrlToImg(url):
+    IMGUR_INDIRECT_SOURCE_KEY = '<link rel="image_src"'
+    IMGUR_INDIRECT_SOURCE_KEY_ATTRIBUTE = 'href='
+    
+    return findSourceFromHTML(url, IMGUR_INDIRECT_SOURCE_KEY, sourceKeyAttribute = IMGUR_INDIRECT_SOURCE_KEY_ATTRIBUTE)
 
 def getURLSFromFile(filename):
     f = open(filename, 'r')
@@ -176,12 +199,13 @@ def saveAllImages_Advanced(outputDir, submissions, soft_retrieve_imgs = True):
     for currentSubmissionIndex, submission in enumerate(sortedSubmissions):
         url = submission.bodyUrl
 
-        # Massage Gfycat links so that they can be downloaded
+        # Massage links so that they can be downloaded
         if isGfycatUrl(url):
             url = convertGfycatUrlToWebM(url)
-
         if isGifVUrl(url):
             url = convertGifVUrlToWebM(url)
+        if isImgurIndirectUrl(url):
+            url = convertImgurIndirectUrlToImg(url)
 
         if isUrlSupportedType(url):
             subredditDir = submission.subreddit[3:-1]
