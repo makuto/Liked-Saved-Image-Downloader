@@ -19,6 +19,6 @@ Not actually getting images downloaded, but seeing the console say it downloaded
 
 This script uses PRAW to talk to reddit and urllib to download images.
 
-Note that the script will probably break once reddit no longer supports username password authentication and moves over to OAuth completely.
+Note that the script will probably break once reddit no longer supports username password authentication and moves over to OAuth completely. *UPDATE:* As of November 29, 2016, PRAW has been updated to version 4.0, which requires OAuth in order to access reddit.
 
 Feel free to create Issues on this repo if you need help. I'm a nice guy, so don't be shy.

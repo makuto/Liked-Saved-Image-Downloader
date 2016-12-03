@@ -2,32 +2,55 @@
 # Note that I am NOT responsible for security problems that may result
 #  from using this script. You can check my code if you're paranoid,
 #  but I'm not sure how PRAW handles raw text usernames and passwords.
-username=
-password=
+Username=
+Password=
+
+# You need OAuth tokens to run the script. To get them follow these steps:
+#	1. Go to https://www.reddit.com/prefs/apps/ (while signed in to reddit)
+#	2. Scroll down to the bottom and click "create app" (something like that)
+#	3. Fill in the fields as such:
+#		name: Reddit Liked-Saved Image Downloader
+#		Choose "script" as the type
+#		about url: https://github.com/makuto/redditLikedSavedImageDownloader
+# 		redirect uri: http://localhost:8080
+#	4. Click create app
+#	5. Copy the text which is right below "personal use script" here:
+
+Client_id=
+
+#		(should look like "J9-x99_-btqndQ" or something (it'll be different for your app)
+#	6. Finally, copy the text after "Secret" here:
+
+Client_secret=
+
+#		(should look like "1zvtQjDZLMmehC2Qps7DdOl4iiQ" (different for your app)
+#
+# Yes, this process is a pain in the ass, but it's for your own security
+# (see https://praw.readthedocs.io/en/latest/getting_started/authentication.html)
 
 #
 # Set this to false to actually download images!
 #
-SHOULD_SOFT_RETRIEVE=True
+Should_soft_retrieve=False
 
 # Increase this value to 1000 or so to get more submissions
-TOTAL_REQUESTS=100
+Total_requests=250
 
-SILENT_GET=False
+Silent_get=False
 
 # This is a broken feature, and should be left off. Turn on if you're adventurous
-URLS_FROM_COMMENTS=False
+Urls_from_comments=False
 
 #========================================
 # Version 2 settings
 #========================================
 # Version 2 outputs images to directories separated by subreddit, and is cooler.
 # You shouldn't toggle this unless you've used the old version
-USE_NEW_VERSION=True
+Use_new_version=True
 
 # If you just ran the script and forgot to turn SHOULD_SOFT_RETRIEVE off, set this 
 #  variable to True. It'll use the submissions it got last time and speed up the process
-USE_CACHED_SUBMISSIONS=False
+Use_cached_submissions=False
 
 # Output directory relative to where you executed the script
-OUTPUT_DIR=output
+Output_dir=output

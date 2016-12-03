@@ -4,6 +4,8 @@ import praw
 import re
 import pickle
 
+user_agent = 'Python Script: v2.0: Reddit Liked Saved Image Downloader (by /u/makuto9)'
+
 # Helper function. Print percentage complete
 def percentageComplete(currentItem, numItems):
     if numItems:
@@ -91,26 +93,26 @@ def getRedditSubmissionsFromRedditList(redditList):
 
             print percentageComplete(currentSubmissionIndex, numTotalSubmissions)
         else:
+            # Macoy: Look at https://praw.readthedocs.io/en/latest/getting_started/quick_start.html
+            #  very bottom to learn how to enumerate what information a submission can provide
             print('Comment (unsupported): ' + singleSubmission.body[:40] + '...')
 
     return submissions
 
-def getRedditUserLikedSavedImages(user_name, user_password, 
+def getRedditUserLikedSavedImages(user_name, user_password, client_id, client_secret,
                                   request_limit = 100, silentGet = False, 
                                   extractURLsFromComments = False):
-    user_agent = 'PythonStuff: Likes grabber 1.0 by /u/makuto9'
-    
     fSaved = open('savedURLS.txt', 'w')
     fLiked = open('likedURLS.txt', 'w')
     
     r = praw.Reddit(user_agent=user_agent)
 
-    r.login(user_name, user_password)
+    #r.login(user_name, user_password)
 
-    savedLinks = r.user.get_saved(limit=request_limit)
+    savedLinks = r.user.me().saved(limit=request_limit)
     savedLinks = list(savedLinks)
 
-    likedLinks = r.user.get_upvoted(limit=request_limit)
+    likedLinks = r.user.me().upvoted(limit=request_limit)
     likedLinks = list(likedLinks)
 
     writeOutAllLinksFromRedditList(savedLinks, fSaved, 
@@ -122,32 +124,22 @@ def getRedditUserLikedSavedImages(user_name, user_password,
     fLiked.close()
     return
 
-def getRedditSavedSubmissions(user_name, user_password, request_limit = 50):
-    user_agent = 'PythonStuff: Likes grabber 1.0 by /u/makuto9'
-
-    r = praw.Reddit(user_agent=user_agent)
-
-    r.login(user_name, user_password)
-
-    submissions = r.user.get_saved(limit=request_limit)
-    submissions = list(submissions)
-
-    return submissions
-
-def getRedditUserLikedSavedSubmissions(user_name, user_password, 
+def getRedditUserLikedSavedSubmissions(user_name, user_password, client_id, client_secret,
                                        request_limit = 10, silentGet = False, 
                                        extractURLsFromComments = False):
-    user_agent = 'PythonStuff: Likes grabber 1.0 by /u/makuto9'
+    r = praw.Reddit(client_id = client_id,
+        client_secret=client_secret,
+        username=user_name,
+        password=user_password,
+        user_agent=user_agent)
 
-    r = praw.Reddit(user_agent=user_agent)
-
-    r.login(user_name, user_password)
+    #r.login(user_name, user_password)
 
     print '\n\nCommunicating with reddit. This should only take a minute...\n'
-    savedLinks = r.user.get_saved(limit=request_limit)
+    savedLinks = r.user.me().saved(limit=request_limit)
     savedLinks = list(savedLinks)
 
-    likedLinks = r.user.get_upvoted(limit=request_limit)
+    likedLinks = r.user.me().upvoted(limit=request_limit)
     likedLinks = list(likedLinks)
 
     print '\n\nRetrieving your saved submissions. This can take several minutes...\n'
