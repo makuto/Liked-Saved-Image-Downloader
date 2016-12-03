@@ -1,0 +1,26 @@
+{
+	"build_systems":
+	[
+		{
+			"name": "Run Script",
+			"shell_cmd": "python redditUserImageScraper.py"
+		}
+	],
+	"folders":
+	[
+		{
+			"file_include_patterns":
+			[
+				"*.py",
+				"*.txt",
+				"*.md"
+			],
+			"folder_exclude_patterns":
+			[
+				"output"
+			],
+			"name": "Reddit Liked Saved Image Downloader",
+			"path": "."
+		}
+	]
+}
