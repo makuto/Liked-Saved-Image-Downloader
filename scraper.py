@@ -75,7 +75,7 @@ def getRedditSubmissionsFromRedditList(redditList):
 
     numTotalSubmissions = len(redditList)
     for currentSubmissionIndex, singleSubmission in enumerate(redditList):
-        if type(singleSubmission) is praw.objects.Submission:
+        if type(singleSubmission) is praw.models.Submission:
             newSubmission = RedditSubmission()
 
             newSubmission.title = singleSubmission.title
