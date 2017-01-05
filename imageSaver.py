@@ -288,7 +288,13 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
             # Don't talk to the API for soft retrieval (we don't want to waste our credits)
             if not soft_retrieve_imgs:
                 # Request the list of images from Imgur
-                albumId = albumUrl[albumUrl.rfind('/') + 1:]
+                albumStartId = albumUrl.find('/a/') + 3
+                albumEndId = albumUrl[albumStartId:].find('/')
+                if albumEndId != -1:
+                    albumId = albumUrl[albumStartId:albumStartId + albumEndId]
+                else:
+                    albumId = albumUrl[albumStartId:]
+
                 albumImages = imgurClient.get_album_images(albumId)
 
             if not albumImages:
