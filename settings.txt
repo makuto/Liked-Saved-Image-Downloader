@@ -38,8 +38,23 @@ Total_requests=250
 
 Silent_get=False
 
+Only_important_messages=True
+
 # This is a broken feature, and should be left off. Turn on if you're adventurous
 Urls_from_comments=False
+
+#========================================
+# Imgur API Settings
+#========================================
+# These need to be filled in so that the script can download Imgur albums. If not filled in,
+#  imgur albums will be ignored. Single images will still be downloaded. I've filled in a public
+#  imgur user's information. This isn't safe giving you hooligans the secret, but fuck it
+# If you want to use your own Imgur Client, sign in to Imgur, then go to https://api.imgur.com/oauth2/addclient
+#  and create your new client.
+Imgur_client_id=bb24366c72e680f
+Imgur_client_secret=bc4c25819c95f4b2214c01f155ece80d0cee4011
+
+Should_download_albums=True
 
 #========================================
 # Version 2 settings

@@ -13,7 +13,12 @@ settings = {
 'Username' : '',
 'Password' : '',
 'Client_id' : '',
-'Client_secret': '',
+'Client_secret' : '',
+'Imgur_client_id' : '',
+'Imgur_client_secret' : '',
+
+# Disable downloading albums by default.
+'Should_download_albums' : False,
 
 # If True, don't actually download the images - just pretend to
 'Should_soft_retrieve' : True,
@@ -94,6 +99,14 @@ def main():
 		print('Please provide a Username and password in settings.txt')
 		return
 
+	imgurAuth = None
+	if settings['Should_download_albums'] and settings['Imgur_client_id'] and settings['Imgur_client_secret']:
+		imgurAuth = imageSaver.ImgurAuth(settings['Imgur_client_id'], settings['Imgur_client_secret'])
+	else:
+		print('No Imgur Client ID and/or Imgur Client Secret was provided, or album download is not enabled. '
+			'This is required to download imgur albums. '
+			'They will be ignored. Check settings.txt for how to fill in these values.')
+
 	print('Username: ' + settings['Username'])
 
 	if settings['Use_new_version']:
@@ -110,6 +123,7 @@ def main():
 
 		print 'Saving images. This will take several minutes...'
 		unsupportedSubmissions = imageSaver.saveAllImages_Advanced(settings['Output_dir'], submissions, 
+			imgur_auth = imgurAuth,
 			soft_retrieve_imgs = settings['Should_soft_retrieve'],
 			only_important_messages = settings['Only_important_messages'])
 
