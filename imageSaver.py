@@ -8,6 +8,8 @@ from operator import attrgetter
 from zlib import crc32
 import sys
 
+SupportedTypes = ['jpg', 'gif', 'png', 'webm', 'mp4']
+
 def getFileTypeFromUrl(url):
     if url and url.find('.') != -1 and url.rfind('.') > url.rfind('/'):
         return url[url.rfind('.') + 1:]
@@ -22,9 +24,26 @@ def percentageComplete(currentItem, numItems):
     return 'Invalid'
 
 def isUrlSupportedType(url):
-    supportedTypes = ['jpg', 'gif', 'png', 'webm', 'mp4']
     urlFileType = getFileTypeFromUrl(url)
-    return urlFileType in supportedTypes
+    return urlFileType in SupportedTypes
+
+def getUrlContentType(url):
+    if url:
+        openedUrl = urllib.urlopen(url)
+        return openedUrl.info().subtype
+    return ''
+
+def isContentTypeSupported(contentType):
+    # JPGs are JPEG
+    supportedTypes = SupportedTypes + ['jpeg']
+    return contentType.lower() in supportedTypes
+
+def convertContentTypeToFileType(contentType):
+    # Special case: we want all our JPEGs to be .jpg :(
+    if contentType.lower() == 'jpeg':
+        return 'jpg'
+
+    return contentType
 
 # Find the source of an image by reading the url's HTML, looking for sourceKey
 # An example key would be '<img src='. Note that the '"' will automatically be 
@@ -122,6 +141,11 @@ def convertImgurIndirectUrlToImg(url):
     
     return findSourceFromHTML(url, IMGUR_INDIRECT_SOURCE_KEY, sourceKeyAttribute = IMGUR_INDIRECT_SOURCE_KEY_ATTRIBUTE)
 
+def isImgurAlbumUrl(url):
+    return ('imgur' in url.lower()
+        and not getFileTypeFromUrl(url) 
+        and '/a/' in url)
+
 def getURLSFromFile(filename):
     f = open(filename, 'r')
     urls = []
@@ -187,7 +211,12 @@ def safeFileName(filename):
 # Save the images in directories based on subreddits
 # Name the images based on their submission titles
 # Returns a list of submissions which didn't have supported image formats
-def saveAllImages_Advanced(outputDir, submissions, soft_retrieve_imgs = True):
+def saveAllImages_Advanced(outputDir, submissions, soft_retrieve_imgs = True, only_important_messages = False):
+    numSavedImages = 0
+    numAlreadySavedImages = 0
+    numUnsupportedImages = 0
+    numUnsupportedAlbums = 0
+
     if not soft_retrieve_imgs:
         makeDirIfNonexistant(outputDir)
     
@@ -199,17 +228,41 @@ def saveAllImages_Advanced(outputDir, submissions, soft_retrieve_imgs = True):
     for currentSubmissionIndex, submission in enumerate(sortedSubmissions):
         url = submission.bodyUrl
 
-        # Massage links so that they can be downloaded
+        if not url:
+            continue
+
+        # Massage special-case links so that they can be downloaded
         if isGfycatUrl(url):
             url = convertGfycatUrlToWebM(url)
         if isGifVUrl(url):
             url = convertGifVUrlToWebM(url)
         if isImgurIndirectUrl(url):
             url = convertImgurIndirectUrlToImg(url)
+        if isImgurAlbumUrl(url):
+            # TODO
+            print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+                + ' [unsupported] ' + 'Skipped "' + url + '" (imgur album support eventually coming...)')
+            numUnsupportedAlbums += 1
+            continue
 
-        if isUrlSupportedType(url):
+        urlContentType = getUrlContentType(url)
+        if isUrlSupportedType(url) or isContentTypeSupported(urlContentType):
             subredditDir = submission.subreddit[3:-1]
             fileType = getFileTypeFromUrl(url)
+            if not fileType:
+                fileType = convertContentTypeToFileType(urlContentType)
+
+            # If the file path doesn't match the content type, it's possible it's incorrect 
+            #  (e.g. a .png labeled as a .jpg)
+            contentFileType = convertContentTypeToFileType(urlContentType)
+            if contentFileType != fileType and (contentFileType != 'jpg' and fileType != 'jpeg'):
+                print ('WARNING: Content type "' + contentFileType + '" was going to be saved as "' + fileType + '"! Correcting.')
+                if contentFileType == 'html':
+                    print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+                        + ' [unsupported] ' + 'Skipped "' + url 
+                        + '" (file is html, not image; this might mean Access was Denied)')
+                    numUnsupportedImages += 1
+                    continue
 
             # Example path:
             # output/aww/My Cute Kitten_802984323.png
@@ -221,8 +274,10 @@ def saveAllImages_Advanced(outputDir, submissions, soft_retrieve_imgs = True):
 
             # If we already saved the image, skip it
             if os.path.isfile(saveFilePath):
-                print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
-                    + ' [already saved] ' + 'Skipping ' + saveFilePath)
+                if not only_important_messages:
+                    print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
+                        + ' [already saved] ' + 'Skipping ' + saveFilePath)
+                numAlreadySavedImages += 1
                 continue
 
             if not soft_retrieve_imgs:
@@ -235,10 +290,17 @@ def saveAllImages_Advanced(outputDir, submissions, soft_retrieve_imgs = True):
             # Output our progress
             print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
                     + ' [save] ' + url + ' saved to "' + subredditDir + '"')
+            numSavedImages += 1
 
         else:
             print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
-                + ' [unsupported] ' + 'Skipped "' + url + '"')
+                + ' [unsupported] ' + 'Skipped "' + url + '" (content type "' + urlContentType + '")')
             unsupportedSubmissions.append(submission)
+            numUnsupportedImages += 1
+
+    print('numSavedImages: ' + str(numSavedImages))
+    print('numAlreadySavedImages: ' + str(numAlreadySavedImages))
+    print('numUnsupportedImages: ' + str(numUnsupportedImages))
+    print('numUnsupportedAlbums: ' + str(numUnsupportedAlbums))
 
     return unsupportedSubmissions

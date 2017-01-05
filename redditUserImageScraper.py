@@ -18,6 +18,8 @@ settings = {
 # If True, don't actually download the images - just pretend to
 'Should_soft_retrieve' : True,
 
+'Only_important_messages' : False,
+
 # If True, reddit scraper won't print URLs to console
 'Silent_get' : False,
 
@@ -108,7 +110,8 @@ def main():
 
 		print 'Saving images. This will take several minutes...'
 		unsupportedSubmissions = imageSaver.saveAllImages_Advanced(settings['Output_dir'], submissions, 
-			soft_retrieve_imgs = settings['Should_soft_retrieve'])
+			soft_retrieve_imgs = settings['Should_soft_retrieve'],
+			only_important_messages = settings['Only_important_messages'])
 
 		# Unicode errors make this borked for now
 		#scraper.saveSubmissionsAsXML(unsupportedSubmissions, OUTPUT_DIR + u'/' + 'UnsupportedSubmissions.xml') 

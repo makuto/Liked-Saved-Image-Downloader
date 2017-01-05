@@ -1,7 +1,7 @@
 Reddit User Image Scraper
 --------------------------
 
-Use this ~~shitty~~ awesome Python script I whipped up ~~in an hour~~ over a couple months of sporadic development to download all of your reddit saved and upvoted/liked images to disk.
+Use this ~~shitty~~ awesome Python 2 script I whipped up ~~in an hour~~ over a couple months of sporadic development to download all of your reddit saved and upvoted/liked images to disk.
 
 Make sure you have PRAW installed:
 `pip install praw`
