@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import time
+
 import scraper
 import imageSaver
 
@@ -41,7 +43,7 @@ settings = {
 'Use_cached_submissions' : False,
 'Default_cache_file' : 'SubmissionCache.bin',
 
-'Output_dir' : u'output'
+'Output_dir' : 'output'
 }
 
 def valueAfterTag(line, optionTag):
@@ -108,6 +110,7 @@ def main():
 			'They will be ignored. Check settings.txt for how to fill in these values.')
 
 	print('Username: ' + settings['Username'])
+	print('Output: ' + settings['Output_dir'])
 
 	if settings['Use_new_version']:
 		if settings['Use_cached_submissions']:
@@ -121,6 +124,9 @@ def main():
 			# Cache them in case it's needed later
 			scraper.writeCacheRedditSubmissions(submissions, settings['Default_cache_file'])
 
+			scraper.saveSubmissionsAsJson(submissions, settings['Output_dir'] + u'/' 
+				+ 'AllSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
+
 		print 'Saving images. This will take several minutes...'
 		unsupportedSubmissions = imageSaver.saveAllImages_Advanced(settings['Output_dir'], submissions, 
 			imgur_auth = imgurAuth,
@@ -128,7 +134,8 @@ def main():
 			only_important_messages = settings['Only_important_messages'])
 
 		# Unicode errors make this borked for now
-		#scraper.saveSubmissionsAsXML(unsupportedSubmissions, OUTPUT_DIR + u'/' + 'UnsupportedSubmissions.xml') 
+		scraper.saveSubmissionsAsJson(unsupportedSubmissions, OUTPUT_DIR + u'/' 
+			+ 'UnsupportedSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
 
 	else:
 	    #Talk to reddit and fill .txt files with liked and saved URLS

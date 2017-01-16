@@ -194,9 +194,14 @@ def saveAllImages(soft_retrieve_imgs=True):
     saveAllImagesToDir(liked_urls, likedDirectory, soft_retrieve = soft_retrieve_imgs)
 
 # Make sure the filename is alphanumeric or has supported symbols, and is shorter than 45 characters
-def safeFileName(filename):
+def safeFileName(filename, file_path = False):
     acceptableChars = ['_', ' ']
     safeName = ''
+
+    # If we are making a file path safe, allow / and \
+    if file_path:
+        acceptableChars += ['/', '\\']
+
     for char in filename:
         if char.isalnum() or char in acceptableChars:
             safeName += char
@@ -205,9 +210,10 @@ def safeFileName(filename):
     if not safeName:
         safeName = 'badName_' + str(random.randint(1, 1000000))
 
-    MAX_NAME_LENGTH = 45
-    if len(safeName) > MAX_NAME_LENGTH:
-        safeName = safeName[:MAX_NAME_LENGTH]
+    if not file_path:
+        MAX_NAME_LENGTH = 45
+        if len(safeName) > MAX_NAME_LENGTH:
+            safeName = safeName[:MAX_NAME_LENGTH]
 
     return safeName
 
@@ -272,6 +278,8 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
             #  post title (e.g. 'me_irl') we get unique folder names because the URL is different
             saveAlbumPath = (outputDir + u'/' + subredditDir + u'/' 
                 + safeFileName(albumTitle) + u'_' + unicode(crc32(albumUrl)))
+
+            #saveAlbumPath = safeFileName(saveAlbumPath, file_path = True)
 
             # If we already saved the album, skip it
             # Note that this means updating albums will not be updated
@@ -394,10 +402,14 @@ def saveAllImages_Advanced(outputDir, submissions, imgur_auth = None,
             # output/subreddit/Submission Title_urlCRC.fileType
             # The CRC is used so that if we are saving two images with the same
             #  post title (e.g. 'me_irl') we get unique filenames because the URL is different
-            saveFilePath = (outputDir + u'/' + subredditDir + u'/' 
+            saveFilePath = (unicode(outputDir, errors='replace') + u'/' + subredditDir + u'/' 
                 + safeFileName(submissionTitle) + u'_' + unicode(crc32(url)) + u'.' + fileType)
 
+            # Maybe not do this? Ubuntu at least can do Unicode folders etc. just fine
+            #saveFilePath = safeFileName(saveFilePath, file_path = True)
+
             # If we already saved the image, skip it
+            # TODO: Try not to make make any HTTP requests on skips...
             if os.path.isfile(saveFilePath):
                 if not only_important_messages:
                     print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 

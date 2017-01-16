@@ -3,6 +3,7 @@
 import praw
 import re
 import pickle
+import jsonpickle
 
 user_agent = 'Python Script: v2.0: Reddit Liked Saved Image Downloader (by /u/makuto9)'
 
@@ -51,10 +52,27 @@ class RedditSubmission:
 
         return unicode(baseString)
 
+    def getJson(self):
+        jsonpickle.set_preferred_backend('json')
+        jsonpickle.set_encoder_options('json', ensure_ascii=False, indent=4, separators=(',', ': '))
+        return jsonpickle.encode(self)
+
+def writeOutRedditSubmissionsAsJson(redditList, file, silent = False, extractLinksFromComments = False):
+    file.write('{\n')
+    for submission in redditList:
+        outputString = submission.getJson() + u',\n'
+        file.write(outputString.encode('utf8'))
+    file.write('}')
+
+def saveSubmissionsAsJson(submissions, fileName):
+    outputFile = open(fileName, 'w')
+    writeOutRedditSubmissionsAsJson(submissions, outputFile)
+    outputFile.close()
+
 def writeOutRedditSubmissionsAsXML(redditList, file, silent = False, extractLinksFromComments = False):
     for submission in redditList:
-        file.write(u'<submission>\n' + submission.getXML() + u'</submission>\n')
-        #file.write(u'<submission>\n' + submission.getXML().encode('utf-8', 'replace') + u'</submission>\n')
+        outputString = u'<submission>\n' + submission.getXML() + u'</submission>\n'
+        file.write(outputString.encode('utf8'))
 
 def saveSubmissionsAsXML(submissions, fileName):
     outputFile = open(fileName, 'w')
