@@ -27,17 +27,11 @@ settings = {
 
 'Only_important_messages' : False,
 
-# If True, reddit scraper won't print URLs to console
-'Silent_get' : False,
-
 # Total requests to reddit (actual results may vary)
 'Total_requests' : 500,
 
 # May result in shitty URLs (regex is tough)
 'Urls_from_comments' : False,
-
-# Use the fancy new version, which organizes images by subreddit
-'Use_new_version' : False,
 
 # Don't get new stuff, just use the .xml files from last run
 'Use_cached_submissions' : False,
@@ -102,50 +96,42 @@ def main():
 		return
 
 	imgurAuth = None
-	if settings['Should_download_albums'] and settings['Imgur_client_id'] and settings['Imgur_client_secret']:
-		imgurAuth = imageSaver.ImgurAuth(settings['Imgur_client_id'], settings['Imgur_client_secret'])
+	if (settings['Should_download_albums'] 
+		and settings['Imgur_client_id'] 
+		and settings['Imgur_client_secret']):
+		imgurAuth = imageSaver.ImgurAuth(settings['Imgur_client_id'], 
+		                                 settings['Imgur_client_secret'])
 	else:
-		print('No Imgur Client ID and/or Imgur Client Secret was provided, or album download is not enabled. '
-			'This is required to download imgur albums. '
-			'They will be ignored. Check settings.txt for how to fill in these values.')
+		print('No Imgur Client ID and/or Imgur Client Secret was provided, or album download is not'
+			' enabled. This is required to download imgur albums. They will be ignored. Check'
+			' settings.txt for how to fill in these values.')
 
 	print('Username: ' + settings['Username'])
 	print('Output: ' + settings['Output_dir'])
 
-	if settings['Use_new_version']:
-		if settings['Use_cached_submissions']:
-			submissions = scraper.readCacheRedditSubmissions(settings['Default_cache_file'])
-		else:
-			submissions = scraper.getRedditUserLikedSavedSubmissions(settings['Username'], settings['Password'], 
-				settings['Client_id'], settings['Client_secret'],
-				request_limit = settings['Total_requests'], silentGet = settings['Silent_get'], 
-				extractURLsFromComments = settings['Urls_from_comments'])
-
-			# Cache them in case it's needed later
-			scraper.writeCacheRedditSubmissions(submissions, settings['Default_cache_file'])
-
-			scraper.saveSubmissionsAsJson(submissions, settings['Output_dir'] + u'/' 
-				+ 'AllSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
-
-		print 'Saving images. This will take several minutes...'
-		unsupportedSubmissions = imageSaver.saveAllImages_Advanced(settings['Output_dir'], submissions, 
-			imgur_auth = imgurAuth,
-			soft_retrieve_imgs = settings['Should_soft_retrieve'],
-			only_important_messages = settings['Only_important_messages'])
-
-		# Unicode errors make this borked for now
-		scraper.saveSubmissionsAsJson(unsupportedSubmissions, OUTPUT_DIR + u'/' 
-			+ 'UnsupportedSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
-
+	if settings['Use_cached_submissions']:
+		submissions = scraper.readCacheRedditSubmissions(settings['Default_cache_file'])
 	else:
-	    #Talk to reddit and fill .txt files with liked and saved URLS
-	    scraper.getRedditUserLikedSavedImages(settings['Username'], settings['Password'], 
-	    	settings['Client_id'], settings['Client_secret'],
-	    	request_limit = settings['Total_requests'], silentGet = settings['Silent_get'], 
-	    	extractURLsFromComments = settings['Urls_from_comments'])
+		submissions = scraper.getRedditUserLikedSavedSubmissions(
+			settings['Username'], settings['Password'], 
+			settings['Client_id'], settings['Client_secret'],
+			request_limit = settings['Total_requests'])
 
-	    #Parse those .txt files for image URLS and download them (if !SHOULD_SOFT_RETRIEVE)
-	    imageSaver.saveAllImages(soft_retrieve_imgs = settings['Should_soft_retrieve'])
+		# Cache them in case it's needed later
+		scraper.writeCacheRedditSubmissions(submissions, settings['Default_cache_file'])
+
+		scraper.saveSubmissionsAsJson(submissions, settings['Output_dir'] + u'/' 
+			+ 'AllSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
+
+	print 'Saving images. This will take several minutes...'
+	unsupportedSubmissions = imageSaver.saveAllImages_Advanced(settings['Output_dir'], submissions, 
+		imgur_auth = imgurAuth,
+		soft_retrieve_imgs = settings['Should_soft_retrieve'],
+		only_important_messages = settings['Only_important_messages'])
+
+	# Unicode errors make this borked for now
+	scraper.saveSubmissionsAsJson(unsupportedSubmissions, OUTPUT_DIR + u'/' 
+		+ 'UnsupportedSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
 
 	if settings['Should_soft_retrieve']:
 		print('\nYou have run the script in Soft Retrieve mode - if you actually\n'

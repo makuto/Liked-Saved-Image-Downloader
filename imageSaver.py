@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import urllib
-import datetime
 import os
 import random
 from operator import attrgetter
 from zlib import crc32
-import sys
 import imgurpython as imgur
 
 SupportedTypes = ['jpg', 'jpeg', 'gif', 'png', 'webm', 'mp4']
@@ -140,7 +138,8 @@ def convertImgurIndirectUrlToImg(url):
     IMGUR_INDIRECT_SOURCE_KEY = '<link rel="image_src"'
     IMGUR_INDIRECT_SOURCE_KEY_ATTRIBUTE = 'href='
     
-    return findSourceFromHTML(url, IMGUR_INDIRECT_SOURCE_KEY, sourceKeyAttribute = IMGUR_INDIRECT_SOURCE_KEY_ATTRIBUTE)
+    return findSourceFromHTML(url, IMGUR_INDIRECT_SOURCE_KEY, 
+                              sourceKeyAttribute = IMGUR_INDIRECT_SOURCE_KEY_ATTRIBUTE)
 
 def isImgurAlbumUrl(url):
     # If it is imgur domain, has no file type, is an imgur album, and isn't a single image
@@ -149,49 +148,9 @@ def isImgurAlbumUrl(url):
         and '/a/' in url
         and not '#' in url)
 
-def getURLSFromFile(filename):
-    f = open(filename, 'r')
-    urls = []
-    nonRelevantURLs = 0
-    
-    for line in f:
-        if isUrlSupportedType(line):
-            urls.append(line[:-1]) #trim off the newline
-        else:
-            nonRelevantURLs += 1
-
-    print 'Filtered ' + str(nonRelevantURLs) + ' URLs that didn\'t contain images'
-    return urls
-
-def saveAllImagesToDir(urls, directory, soft_retrieve = True):
-    count = 0
-    imagesToSave = len(urls)
-    for url in urls:
-        if not soft_retrieve:
-            urllib.urlretrieve(url, directory + '/img' + str(count) + url[-4:])
-
-        count += 1
-        print ('[' + str(int((float(count) / float(imagesToSave)) * 100)) + '%] ' 
-            + url + ' saved to "' + directory + '/img' + str(count) + url[-4:] + '"')
-
 def makeDirIfNonexistant(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
-        
-#note that you must explicitly set soft_retrieve to False to actually get the images
-def saveAllImages(soft_retrieve_imgs=True):
-    saved_urls = getURLSFromFile('savedURLS.txt')
-    liked_urls = getURLSFromFile('likedURLS.txt')
-    timestamp = datetime.datetime.now().strftime('%m-%d_%H-%-M-%S')
-    count = 0
-    savedDirectory = 'ImagesSaved__' + timestamp
-    likedDirectory = 'ImagesLiked__' + timestamp
-
-    makeDirIfNonexistant(savedDirectory)
-    makeDirIfNonexistant(likedDirectory)
-
-    saveAllImagesToDir(saved_urls, savedDirectory, soft_retrieve = soft_retrieve_imgs)
-    saveAllImagesToDir(liked_urls, likedDirectory, soft_retrieve = soft_retrieve_imgs)
 
 # Make sure the filename is alphanumeric or has supported symbols, and is shorter than 45 characters
 def safeFileName(filename, file_path = False):
@@ -231,7 +190,8 @@ def checkImgurAPICredits(imgurClient):
     if imgurClient.credits['ClientRemaining'] < 1000:
         print('RedditLikedSavedImageDownloader Imgur Client is running low on Imgur API credits!\n'
             'Unfortunately, this means no one can download any Imgur albums until the end of the month.\n'
-            'If you are really jonesing for access, authorize your own Imgur Client and fill in its details in settings.txt.')
+            'If you are really jonesing for access, authorize your own Imgur Client and fill in'
+            ' its details in settings.txt.')
         return False
 
     return True
@@ -389,7 +349,8 @@ def saveAllImages_Advanced(outputDir, submissions, imgur_auth = None,
             #  (e.g. a .png labeled as a .jpg)
             contentFileType = convertContentTypeToFileType(urlContentType)
             if contentFileType != fileType and (contentFileType != 'jpg' and fileType != 'jpeg'):
-                print ('WARNING: Content type "' + contentFileType + '" was going to be saved as "' + fileType + '"! Correcting.')
+                print ('WARNING: Content type "' + contentFileType 
+                    + '" was going to be saved as "' + fileType + '"! Correcting.')
                 if contentFileType == 'html':
                     print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
                         + ' [unsupported] ' + 'Skipped "' + url 
