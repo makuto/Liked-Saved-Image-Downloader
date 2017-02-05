@@ -93,7 +93,7 @@ def getRedditSubmissionsFromRedditList(redditList):
 
             print percentageComplete(currentSubmissionIndex, numTotalSubmissions)
         else:
-            # Macoy: Look at https://praw.readthedocs.io/en/latest/getting_started/quick_start.html
+            # TODO: Macoy: Look at https://praw.readthedocs.io/en/latest/getting_started/quick_start.html
             #  very bottom to learn how to enumerate what information a submission can provide
             print('Comment (unsupported): ' + singleSubmission.body[:40] + '...')
 

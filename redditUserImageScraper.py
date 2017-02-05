@@ -49,7 +49,8 @@ def lineHasOption(line, optionTag):
 
 def getBooleanOption(line, optionTag):
 	if lineHasOption(line, optionTag):
-		return True if valueAfterTag(line, optionTag).lower() == 'true' else False
+		value = valueAfterTag(line, optionTag).lower()
+		return True if (value == 'true' or value == '1') else False
 	return False
 
 def getStringOption(line, optionTag):
@@ -120,17 +121,18 @@ def main():
 		# Cache them in case it's needed later
 		scraper.writeCacheRedditSubmissions(submissions, settings['Default_cache_file'])
 
+		# Write out a .json file with all of the submissions in case the user wants the data
 		scraper.saveSubmissionsAsJson(submissions, settings['Output_dir'] + u'/' 
 			+ 'AllSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
 
 	print 'Saving images. This will take several minutes...'
-	unsupportedSubmissions = imageSaver.saveAllImages_Advanced(settings['Output_dir'], submissions, 
+	unsupportedSubmissions = imageSaver.saveAllImages(settings['Output_dir'], submissions, 
 		imgur_auth = imgurAuth,
 		soft_retrieve_imgs = settings['Should_soft_retrieve'],
 		only_important_messages = settings['Only_important_messages'])
 
-	# Unicode errors make this borked for now
-	scraper.saveSubmissionsAsJson(unsupportedSubmissions, OUTPUT_DIR + u'/' 
+	# Write out a .json file listing all of the submissions the script failed to download
+	scraper.saveSubmissionsAsJson(unsupportedSubmissions, settings['Output_dir'] + u'/' 
 		+ 'UnsupportedSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
 
 	if settings['Should_soft_retrieve']:

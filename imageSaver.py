@@ -142,11 +142,10 @@ def convertImgurIndirectUrlToImg(url):
                               sourceKeyAttribute = IMGUR_INDIRECT_SOURCE_KEY_ATTRIBUTE)
 
 def isImgurAlbumUrl(url):
-    # If it is imgur domain, has no file type, is an imgur album, and isn't a single image
+    # If it is imgur domain, has no file type, and is an imgur album
     return ('imgur' in url.lower()
         and not getFileTypeFromUrl(url) 
-        and '/a/' in url
-        and not '#' in url)
+        and '/a/' in url)
 
 def makeDirIfNonexistant(directory):
     if not os.path.exists(directory):
@@ -175,6 +174,13 @@ def safeFileName(filename, file_path = False):
             safeName = safeName[:MAX_NAME_LENGTH]
 
     return safeName
+
+# Obnoxious special case: imgur album urls with anchors (eg /a/erere#0)
+def cleanImgurAlbumUrl(url):
+    anchor = url.rfind('#')
+    if anchor > -1:
+        return url[:anchor]
+    return url
 
 # Returns whether or not there are credits remaining
 def checkImgurAPICredits(imgurClient):
@@ -227,7 +233,7 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
         numAlbums = len(albums)
         for albumIndex, album in enumerate(albums):
             albumTitle = album[0]
-            albumUrl = album[1]
+            albumUrl = cleanImgurAlbumUrl(album[1])
             print('\t[' + percentageComplete(albumIndex, numAlbums) + '] ' 
                 + '\t' + albumTitle + ' (' + albumUrl + ')')
 
@@ -289,8 +295,8 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
 # Save the images in directories based on subreddits
 # Name the images based on their submission titles
 # Returns a list of submissions which didn't have supported image formats
-def saveAllImages_Advanced(outputDir, submissions, imgur_auth = None, 
-                           soft_retrieve_imgs = True, only_important_messages = False):
+def saveAllImages(outputDir, submissions, imgur_auth = None, 
+                  soft_retrieve_imgs = True, only_important_messages = False):
     numSavedImages = 0
     numAlreadySavedImages = 0
     numUnsupportedImages = 0
@@ -357,6 +363,8 @@ def saveAllImages_Advanced(outputDir, submissions, imgur_auth = None,
                         + '" (file is html, not image; this might mean Access was Denied)')
                     numUnsupportedImages += 1
                     continue
+
+                fileType = contentFileType
 
             # Example path:
             # output/aww/My Cute Kitten_802984323.png
