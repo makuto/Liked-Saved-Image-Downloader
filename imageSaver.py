@@ -28,8 +28,19 @@ def isUrlSupportedType(url):
 
 def getUrlContentType(url):
     if url:
-        openedUrl = urllib.urlopen(url)
-        return openedUrl.info().subtype
+        openedUrl = None
+        try:
+            openedUrl = urllib.urlopen(url)
+        except IOError as e:
+            print('[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'
+                .format(url, e.errno, e.strerror))
+        except:
+            print('[ERROR] Url ' + url + 
+                ' raised an exception I was too lazy to handle. Open an issue at '
+                '\n\thttps://github.com/makuto/redditLikedSavedImageDownloader/issues'
+                '\n and I will try to fix it')
+        else:
+            return openedUrl.info().subtype
     return ''
 
 def isContentTypeSupported(contentType):
@@ -295,8 +306,9 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
 # Save the images in directories based on subreddits
 # Name the images based on their submission titles
 # Returns a list of submissions which didn't have supported image formats
-def saveAllImages(outputDir, submissions, imgur_auth = None, 
-                  soft_retrieve_imgs = True, only_important_messages = False):
+def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_albums = False,
+                   skip_n_percent_submissions = 0, 
+                   soft_retrieve_imgs = True, only_important_messages = False,):
     numSavedImages = 0
     numAlreadySavedImages = 0
     numUnsupportedImages = 0
@@ -312,6 +324,16 @@ def saveAllImages(outputDir, submissions, imgur_auth = None,
     
     # Sort by subreddit, alphabetically
     sortedSubmissions = sorted(submissions, key=attrgetter('subreddit'))
+
+    # Start further into the list (in case the script failed early or something and you don't want 
+    #  to redownload everything)
+    if skip_n_percent_submissions:
+        newFirstSubmissionIndex = (len(sortedSubmissions) / 100) * skip_n_percent_submissions
+        sortedSubmissions = sortedSubmissions[newFirstSubmissionIndex:]
+
+        print('Starting at ' + str(skip_n_percent_submissions) + '%; skipped ' +
+            str(newFirstSubmissionIndex) + ' submissions')
+
     submissionsToSave = len(sortedSubmissions)
 
     for currentSubmissionIndex, submission in enumerate(sortedSubmissions):
@@ -336,6 +358,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None,
                 else:
                     imgurAlbumsToSave[subredditDir] = [(submissionTitle, url)]
                 continue
+        elif only_download_albums:
+            continue
 
         # Massage special-case links so that they can be downloaded
         if isGfycatUrl(url):
@@ -391,7 +415,20 @@ def saveAllImages(outputDir, submissions, imgur_auth = None,
                 makeDirIfNonexistant(outputDir + '/' + subredditDir)
 
                 # Retrieve the image and save it
-                urllib.urlretrieve(url, saveFilePath)
+                try:
+                    urllib.urlretrieve(url, saveFilePath)
+                except IOError as e:
+                    print('[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'
+                        .format(url, e.errno, e.strerror))
+                    numUnsupportedImages += 1
+                    continue
+                except:
+                    print('[ERROR] Url ' + url + 
+                        ' raised an exception I was too lazy to handle. Open an issue at '
+                        '\n\thttps://github.com/makuto/redditLikedSavedImageDownloader/issues'
+                        '\n and I will try to fix it')
+                    numUnsupportedImages += 1
+                    continue
 
             # Output our progress
             print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 

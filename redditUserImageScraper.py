@@ -22,6 +22,9 @@ settings = {
 # Disable downloading albums by default.
 'Should_download_albums' : False,
 
+# If true, do not download single images, only submissions which are imgur albums
+'Only_download_albums' : False,
+
 # If True, don't actually download the images - just pretend to
 'Should_soft_retrieve' : True,
 
@@ -30,12 +33,16 @@ settings = {
 # Total requests to reddit (actual results may vary)
 'Total_requests' : 500,
 
-# May result in shitty URLs (regex is tough)
-'Urls_from_comments' : False,
-
 # Don't get new stuff, just use the .xml files from last run
 'Use_cached_submissions' : False,
 'Default_cache_file' : 'SubmissionCache.bin',
+
+# If the script failed at say 70%, you could use toggle Use_cached_submissions and set this value to
+#  69. The script would then restart 69% of the way into the cached submissions nearer to where you
+#  left off. 
+# The reason why this isn't default is because there might have been changes to the script which 
+#  made previous submissions successfully download, so we always re-check submissions 
+'Skip_n_percent_submissions': 0,
 
 'Output_dir' : 'output'
 }
@@ -127,7 +134,8 @@ def main():
 
 	print 'Saving images. This will take several minutes...'
 	unsupportedSubmissions = imageSaver.saveAllImages(settings['Output_dir'], submissions, 
-		imgur_auth = imgurAuth,
+		imgur_auth = imgurAuth, only_download_albums = settings['Only_download_albums'],
+		skip_n_percent_submissions = settings['Skip_n_percent_submissions'],
 		soft_retrieve_imgs = settings['Should_soft_retrieve'],
 		only_important_messages = settings['Only_important_messages'])
 

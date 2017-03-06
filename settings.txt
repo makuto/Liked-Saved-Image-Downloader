@@ -34,14 +34,25 @@ Client_secret=
 Should_soft_retrieve=False
 
 # Increase this value to 1000 or so to get more submissions
-Total_requests=250
+Total_requests=500
 
-Silent_get=False
+# Output directory relative to where you executed the script
+Output_dir=output
 
-Only_important_messages=True
+# If you just ran the script and forgot to turn SHOULD_SOFT_RETRIEVE off, set this 
+#  variable to True. It'll use the submissions it got last time and speed up the process
+Use_cached_submissions=False
 
-# This is a broken feature, and should be left off. Turn on if you're adventurous
-Urls_from_comments=False
+# If the script failed at say 70%, you could use toggle Use_cached_submissions and set this value to
+#  69. The script would then restart 69% of the way into the cached submissions nearer to where you
+#  left off. 
+# The reason why this isn't default is because there might have been changes to the script which 
+#  made previous submissions successfully download, so we always re-check submissions 
+# Note that this command will skip roughly the same percentage of imgur albums too
+Skip_n_percent_submissions=0
+
+# Only output messages which are considered important (file saved, file unsupported)
+Only_important_messages=False
 
 #========================================
 # Imgur API Settings
@@ -56,16 +67,5 @@ Imgur_client_secret=bc4c25819c95f4b2214c01f155ece80d0cee4011
 
 Should_download_albums=True
 
-#========================================
-# Version 2 settings
-#========================================
-# Version 2 outputs images to directories separated by subreddit, and is cooler.
-# You shouldn't toggle this unless you've used the old version
-Use_new_version=True
-
-# If you just ran the script and forgot to turn SHOULD_SOFT_RETRIEVE off, set this 
-#  variable to True. It'll use the submissions it got last time and speed up the process
-Use_cached_submissions=False
-
-# Output directory relative to where you executed the script
-Output_dir=output
+# If true, do not download single images, only submissions which are imgur albums
+Only_download_albums=False
