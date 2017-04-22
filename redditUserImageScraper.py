@@ -3,6 +3,8 @@
 import time
 
 import scraper
+import tumblrScraper
+import submission
 import imageSaver
 
 # Open this file to change the script settings. DO NOT change the settings below
@@ -12,12 +14,21 @@ DEFAULT_SETTINGS_FILENAME = 'settings.txt'
 Default settings. Note that these are overridden by the default settings file
 """
 settings = {
+# Reddit authentication information
 'Username' : '',
 'Password' : '',
 'Client_id' : '',
 'Client_secret' : '',
+
+# Imgur authentication information
 'Imgur_client_id' : '',
 'Imgur_client_secret' : '',
+
+# Tumblr authentication information
+'Tumblr_Client_id' : '',
+'Tumblr_Client_secret' : '',
+'Tumblr_Client_token' : '',
+'Tumblr_Client_token_secret' : '',
 
 # Disable downloading albums by default.
 'Should_download_albums' : False,
@@ -31,11 +42,15 @@ settings = {
 'Only_important_messages' : False,
 
 # Total requests to reddit (actual results may vary)
-'Total_requests' : 500,
+'Reddit_Total_requests' : 500,
+
+# Total requests to Tumblr
+'Tumblr_Total_requests' : 500,
 
 # Don't get new stuff, just use the .xml files from last run
 'Use_cached_submissions' : False,
-'Default_cache_file' : 'SubmissionCache.bin',
+'Reddit_cache_file' : 'Reddit_SubmissionCache.bin',
+'Tumblr_cache_file' : 'Tumblr_SubmissionCache.bin',
 
 # If the script failed at say 70%, you could use toggle Use_cached_submissions and set this value to
 #  69. The script would then restart 69% of the way into the cached submissions nearer to where you
@@ -96,40 +111,68 @@ def readSettings(settingsFileName):
 					settings[option] = getStringOption(line, option)
 					break
 
+def hasRedditSettings():
+	return (settings['Username'] and settings['Password'] and 
+			settings['Client_id'] and settings['Client_secret'])
+
+def hasTumblrSettings():
+	return (settings['Tumblr_Client_id'] and settings['Tumblr_Client_secret'] and 
+			settings['Tumblr_Client_token'] and settings['Tumblr_Client_token_secret'])
+
+def hasImgurSettings():
+	return (settings['Imgur_client_id'] and settings['Imgur_client_secret'])
+
 def main():
 	readSettings(DEFAULT_SETTINGS_FILENAME)
 
-	if not settings['Username'] or not settings['Password']:
-		print('Please provide a Username and password in settings.txt')
+	if (not settings['Use_cached_submissions'] 
+	    and not hasTumblrSettings() and not hasRedditSettings()):
+		print('Please provide Tumblr or Reddit account details settings.txt')
 		return
 
 	imgurAuth = None
 	if (settings['Should_download_albums'] 
-		and settings['Imgur_client_id'] 
-		and settings['Imgur_client_secret']):
+		and hasImgurSettings()):
 		imgurAuth = imageSaver.ImgurAuth(settings['Imgur_client_id'], 
-		                                 settings['Imgur_client_secret'])
+										 settings['Imgur_client_secret'])
 	else:
 		print('No Imgur Client ID and/or Imgur Client Secret was provided, or album download is not'
 			' enabled. This is required to download imgur albums. They will be ignored. Check'
 			' settings.txt for how to fill in these values.')
 
-	print('Username: ' + settings['Username'])
 	print('Output: ' + settings['Output_dir'])
 
-	if settings['Use_cached_submissions']:
-		submissions = scraper.readCacheRedditSubmissions(settings['Default_cache_file'])
-	else:
-		submissions = scraper.getRedditUserLikedSavedSubmissions(
-			settings['Username'], settings['Password'], 
-			settings['Client_id'], settings['Client_secret'],
-			request_limit = settings['Total_requests'])
+	submissions = []
 
-		# Cache them in case it's needed later
-		scraper.writeCacheRedditSubmissions(submissions, settings['Default_cache_file'])
+	if settings['Use_cached_submissions']:
+		print('Using cached submissions')
+		submissions += submission.readCacheSubmissions(settings['Reddit_cache_file'])
+		submissions += submission.readCacheSubmissions(settings['Tumblr_cache_file'])
+	else:
+		if hasRedditSettings():
+			redditSubmissions = scraper.getRedditUserLikedSavedSubmissions(
+				settings['Username'], settings['Password'], 
+				settings['Client_id'], settings['Client_secret'],
+				request_limit = settings['Reddit_Total_requests'])
+			
+			# Cache them in case it's needed later
+			submission.writeCacheSubmissions(redditSubmissions, settings['Reddit_cache_file'])
+
+			submissions += redditSubmissions
+
+		if hasTumblrSettings():
+			tumblrSubmissions = tumblrScraper.getTumblrUserLikedSubmissions(
+				settings['Tumblr_Client_id'], settings['Tumblr_Client_secret'], 
+				settings['Tumblr_Client_token'], settings['Tumblr_Client_token_secret'],
+				likeRequestLimit = settings['Tumblr_Total_requests'])
+			
+			# Cache them in case it's needed later
+			submission.writeCacheSubmissions(tumblrSubmissions, settings['Tumblr_cache_file'])
+
+			submissions += tumblrSubmissions
 
 		# Write out a .json file with all of the submissions in case the user wants the data
-		scraper.saveSubmissionsAsJson(submissions, settings['Output_dir'] + u'/' 
+		submission.saveSubmissionsAsJson(submissions, settings['Output_dir'] + u'/' 
 			+ 'AllSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
 
 	print 'Saving images. This will take several minutes...'
@@ -140,7 +183,7 @@ def main():
 		only_important_messages = settings['Only_important_messages'])
 
 	# Write out a .json file listing all of the submissions the script failed to download
-	scraper.saveSubmissionsAsJson(unsupportedSubmissions, settings['Output_dir'] + u'/' 
+	submission.saveSubmissionsAsJson(unsupportedSubmissions, settings['Output_dir'] + u'/' 
 		+ 'UnsupportedSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
 
 	if settings['Should_soft_retrieve']:

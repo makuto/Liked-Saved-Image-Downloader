@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import praw
-import pickle
-import jsonpickle
+from submission import Submission 
 
 user_agent = 'Python Script: v2.0: Reddit Liked Saved Image Downloader (by /u/makuto9)'
 
@@ -12,71 +11,16 @@ def percentageComplete(currentItem, numItems):
         return str(int(((float(currentItem + 1) / float(numItems)) * 100))) + '%'
 
     return 'Invalid'
-    
-class RedditSubmission:
-    def __init__(self):
-        self.title = u''
-        self.author = u''
-        self.subreddit = u''
-        self.subredditTitle = u''
-        self.body = u''
-        self.bodyUrl = u''
-        self.postUrl = u''
 
-    def getXML(self):
-        baseString = (u'\t<title>' + self.title + u'</title>\n'
-            + u'\t<author>' + self.author + u'</author>\n'
-            + u'\t<subreddit>' + self.subreddit + u'</subreddit>\n'
-            + u'\t<subredditTitle>' + self.subredditTitle + u'</subredditTitle>\n'
-            + u'\t<body>' + self.body + u'</body>\n'
-            + u'\t<bodyUrl>' + self.bodyUrl + u'</bodyUrl>\n'
-            + u'\t<postUrl>' + self.postUrl + u'</postUrl>\n')
-
-        return unicode(baseString)
-
-    def getJson(self):
-        jsonpickle.set_preferred_backend('json')
-        jsonpickle.set_encoder_options('json', ensure_ascii=False, indent=4, separators=(',', ': '))
-        return jsonpickle.encode(self)
-
-def writeOutRedditSubmissionsAsJson(redditList, file):
-    file.write('{\n')
-    for submission in redditList:
-        outputString = submission.getJson() + u',\n'
-        file.write(outputString.encode('utf8'))
-    file.write('}')
-
-def saveSubmissionsAsJson(submissions, fileName):
-    outputFile = open(fileName, 'w')
-    writeOutRedditSubmissionsAsJson(submissions, outputFile)
-    outputFile.close()
-
-def writeOutRedditSubmissionsAsXML(redditList, file):
-    for submission in redditList:
-        outputString = u'<submission>\n' + submission.getXML() + u'</submission>\n'
-        file.write(outputString.encode('utf8'))
-
-def saveSubmissionsAsXML(submissions, fileName):
-    outputFile = open(fileName, 'w')
-    writeOutRedditSubmissionsAsXML(submissions, outputFile)
-    outputFile.close()
-
-def writeCacheRedditSubmissions(submissions, cacheFileName):
-    cacheFile = open(cacheFileName, 'wb')
-    pickle.dump(submissions, cacheFile)
-
-def readCacheRedditSubmissions(cacheFileName):
-    cacheFile = open(cacheFileName, 'rb')
-    submissions = pickle.load(cacheFile)
-    return submissions
-
-def getRedditSubmissionsFromRedditList(redditList):
+def getSubmissionsFromRedditList(redditList):
     submissions = []
 
     numTotalSubmissions = len(redditList)
     for currentSubmissionIndex, singleSubmission in enumerate(redditList):
         if type(singleSubmission) is praw.models.Submission:
-            newSubmission = RedditSubmission()
+            newSubmission = Submission()
+
+            newSubmission.source = u'reddit'
 
             newSubmission.title = singleSubmission.title
             newSubmission.author = singleSubmission.author.name if singleSubmission.author else u'no_author'
@@ -117,8 +61,8 @@ def getRedditUserLikedSavedSubmissions(user_name, user_password, client_id, clie
     likedLinks = list(likedLinks)
 
     print '\n\nRetrieving your saved submissions. This can take several minutes...\n'
-    savedSubmissions = getRedditSubmissionsFromRedditList(savedLinks)
+    savedSubmissions = getSubmissionsFromRedditList(savedLinks)
     print '\n\nRetrieving your liked submissions. This can take several minutes...\n'
-    likedSubmissions = getRedditSubmissionsFromRedditList(likedLinks)    
+    likedSubmissions = getSubmissionsFromRedditList(likedLinks)    
 
     return savedSubmissions + likedSubmissions

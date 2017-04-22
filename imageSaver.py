@@ -338,57 +338,64 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
 
     for currentSubmissionIndex, submission in enumerate(sortedSubmissions):
         url = submission.bodyUrl
-        subredditDir = submission.subreddit[3:-1]
+        subredditDir = submission.subreddit[3:-1] if submission.source == u'Reddit' else safeFileName(submission.subredditTitle)
         submissionTitle = submission.title
+        # Always trust tumblr submissions because we know 100% they're images
+        shouldTrustUrl = (submission.source == u'Tumblr')
 
         if not url:
             continue
 
-        # Imgur Albums have special handling
-        if isImgurAlbumUrl(url):
-            if not imgur_auth:
-                print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
-                    + ' [unsupported] ' + 'Skipped "' + url + '" (imgur album)')
-                numUnsupportedAlbums += 1
-                continue
-            else:
-                # We're going to save Imgur Albums at a separate stage
-                if subredditDir in imgurAlbumsToSave:
-                    imgurAlbumsToSave[subredditDir].append((submissionTitle, url))
+        urlContentType = ''
+
+        if not shouldTrustUrl:
+            # Imgur Albums have special handling
+            if isImgurAlbumUrl(url):
+                if not imgur_auth:
+                    print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+                        + ' [unsupported] ' + 'Skipped "' + url + '" (imgur album)')
+                    numUnsupportedAlbums += 1
+                    continue
                 else:
-                    imgurAlbumsToSave[subredditDir] = [(submissionTitle, url)]
+                    # We're going to save Imgur Albums at a separate stage
+                    if subredditDir in imgurAlbumsToSave:
+                        imgurAlbumsToSave[subredditDir].append((submissionTitle, url))
+                    else:
+                        imgurAlbumsToSave[subredditDir] = [(submissionTitle, url)]
+                    continue
+            elif only_download_albums:
                 continue
-        elif only_download_albums:
-            continue
 
-        # Massage special-case links so that they can be downloaded
-        if isGfycatUrl(url):
-            url = convertGfycatUrlToWebM(url)
-        if isGifVUrl(url):
-            url = convertGifVUrlToWebM(url)
-        if isImgurIndirectUrl(url):
-            url = convertImgurIndirectUrlToImg(url)
+            # Massage special-case links so that they can be downloaded
+            if isGfycatUrl(url):
+                url = convertGfycatUrlToWebM(url)
+            if isGifVUrl(url):
+                url = convertGifVUrlToWebM(url)
+            if isImgurIndirectUrl(url):
+                url = convertImgurIndirectUrlToImg(url)
 
-        urlContentType = getUrlContentType(url)
-        if isUrlSupportedType(url) or isContentTypeSupported(urlContentType):
+            urlContentType = getUrlContentType(url)
+
+        if shouldTrustUrl or isUrlSupportedType(url) or isContentTypeSupported(urlContentType):
             fileType = getFileTypeFromUrl(url)
             if not fileType:
                 fileType = convertContentTypeToFileType(urlContentType)
 
-            # If the file path doesn't match the content type, it's possible it's incorrect 
-            #  (e.g. a .png labeled as a .jpg)
-            contentFileType = convertContentTypeToFileType(urlContentType)
-            if contentFileType != fileType and (contentFileType != 'jpg' and fileType != 'jpeg'):
-                print ('WARNING: Content type "' + contentFileType 
-                    + '" was going to be saved as "' + fileType + '"! Correcting.')
-                if contentFileType == 'html':
-                    print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
-                        + ' [unsupported] ' + 'Skipped "' + url 
-                        + '" (file is html, not image; this might mean Access was Denied)')
-                    numUnsupportedImages += 1
-                    continue
+            if not shouldTrustUrl:
+                # If the file path doesn't match the content type, it's possible it's incorrect 
+                #  (e.g. a .png labeled as a .jpg)
+                contentFileType = convertContentTypeToFileType(urlContentType)
+                if contentFileType != fileType and (contentFileType != 'jpg' and fileType != 'jpeg'):
+                    print ('WARNING: Content type "' + contentFileType 
+                        + '" was going to be saved as "' + fileType + '"! Correcting.')
+                    if contentFileType == 'html':
+                        print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+                            + ' [unsupported] ' + 'Skipped "' + url 
+                            + '" (file is html, not image; this might mean Access was Denied)')
+                        numUnsupportedImages += 1
+                        continue
 
-                fileType = contentFileType
+                    fileType = contentFileType
 
             # Example path:
             # output/aww/My Cute Kitten_802984323.png
@@ -422,6 +429,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                         .format(url, e.errno, e.strerror))
                     numUnsupportedImages += 1
                     continue
+                except KeyboardInterrupt:
+                    exit()
                 except:
                     print('[ERROR] Url ' + url + 
                         ' raised an exception I was too lazy to handle. Open an issue at '

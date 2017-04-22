@@ -1,3 +1,7 @@
+#========================================
+# Reddit Settings
+#========================================
+
 # Enter your username in password, with no quotes and no /u/
 # Note that I am NOT responsible for security problems that may result
 #  from using this script. You can check my code if you're paranoid,
@@ -28,13 +32,17 @@ Client_secret=
 # Yes, this process is a pain in the ass, but it's for your own security
 # (see https://praw.readthedocs.io/en/latest/getting_started/authentication.html)
 
+# Increase this value to 1000 or so to get more submissions
+Reddit_Total_requests=400
+
+#========================================
+# General Settings
+#========================================
+
 #
 # Set this to false to actually download images!
 #
 Should_soft_retrieve=False
-
-# Increase this value to 1000 or so to get more submissions
-Total_requests=500
 
 # Output directory relative to where you executed the script
 Output_dir=output
@@ -52,11 +60,12 @@ Use_cached_submissions=False
 Skip_n_percent_submissions=0
 
 # Only output messages which are considered important (file saved, file unsupported)
-Only_important_messages=False
+Only_important_messages=True
 
 #========================================
 # Imgur API Settings
 #========================================
+
 # These need to be filled in so that the script can download Imgur albums. If not filled in,
 #  imgur albums will be ignored. Single images will still be downloaded. I've filled in a public
 #  imgur user's information. This isn't safe giving you hooligans the secret, but fuck it
@@ -69,3 +78,20 @@ Should_download_albums=True
 
 # If true, do not download single images, only submissions which are imgur albums
 Only_download_albums=False
+
+#========================================
+# Tumblr Settings
+#========================================
+
+# Follow the same procedure as reddit for Tumblr
+# Register the app here: https://www.tumblr.com/oauth/apps
+# Then go here to get your tokens: https://api.tumblr.com/console
+# (refer to https://github.com/tumblr/pytumblr for more details)
+
+Tumblr_Client_id=
+Tumblr_Client_secret=
+Tumblr_Client_token=
+Tumblr_Client_token_secret=
+
+# Increase this value to get more submissions
+Tumblr_Total_requests=400

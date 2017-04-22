@@ -9,3 +9,5 @@ Images*
 *jpg*
 output
 SubmissionCache.bin
+*.bin
+LOCAL_*
