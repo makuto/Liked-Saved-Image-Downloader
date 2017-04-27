@@ -342,6 +342,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
         submissionTitle = submission.title
         # Always trust tumblr submissions because we know 100% they're images
         shouldTrustUrl = (submission.source == u'Tumblr')
+        # Always use tumblr Submission titles because we generate them in tumblrScraper
+        shouldTrustTitle = (submission.source == u'Tumblr')
 
         if not url:
             continue
@@ -397,16 +399,20 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
 
                     fileType = contentFileType
 
-            # Example path:
-            # output/aww/My Cute Kitten_802984323.png
-            # output/subreddit/Submission Title_urlCRC.fileType
-            # The CRC is used so that if we are saving two images with the same
-            #  post title (e.g. 'me_irl') we get unique filenames because the URL is different
-            saveFilePath = (unicode(outputDir, errors='replace') + u'/' + subredditDir + u'/' 
-                + safeFileName(submissionTitle) + u'_' + unicode(crc32(url)) + u'.' + fileType)
+            if shouldTrustTitle:
+                saveFilePath = (unicode(outputDir, errors='replace') + u'/' + subredditDir + u'/' 
+                    + safeFileName(submissionTitle) + u'.' + fileType)
+            else:
+                # Example path:
+                # output/aww/My Cute Kitten_802984323.png
+                # output/subreddit/Submission Title_urlCRC.fileType
+                # The CRC is used so that if we are saving two images with the same
+                #  post title (e.g. 'me_irl') we get unique filenames because the URL is different
+                saveFilePath = (unicode(outputDir, errors='replace') + u'/' + subredditDir + u'/' 
+                    + safeFileName(submissionTitle) + u'_' + unicode(crc32(url)) + u'.' + fileType)
 
-            # Maybe not do this? Ubuntu at least can do Unicode folders etc. just fine
-            #saveFilePath = safeFileName(saveFilePath, file_path = True)
+                # Maybe not do this? Ubuntu at least can do Unicode folders etc. just fine
+                #saveFilePath = safeFileName(saveFilePath, file_path = True)
 
             # If we already saved the image, skip it
             # TODO: Try not to make make any HTTP requests on skips...

@@ -39,7 +39,11 @@ def getTumblrUserLikedSubmissions(clientId, clientSecret, tokenId, tokenSecret,
 
 					# Tumblr submissions don't have titles, so make one
 					# This'll look ugly in the file browser, unfortunately
-					newSubmission.title = unicode(crc32(post['short_url']))
+					if len(post['photos']) > 1:
+						newSubmission.title = unicode(crc32(post['short_url'])) + u'_' + unicode(photoIndex)
+					else:
+						newSubmission.title = unicode(crc32(post['short_url']))
+
 					newSubmission.author = post['blog']['name']
 
 					newSubmission.subreddit = post['blog']['url']
