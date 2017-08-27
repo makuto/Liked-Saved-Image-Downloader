@@ -44,10 +44,12 @@ def getTumblrUserLikedSubmissions(clientId, clientSecret, tokenId, tokenSecret,
 					else:
 						newSubmission.title = unicode(crc32(post['short_url']))
 
-					newSubmission.author = post['blog']['name']
+					"""print(post)
+					return"""
+					newSubmission.author = post['blog_name']
 
-					newSubmission.subreddit = post['blog']['url']
-					newSubmission.subredditTitle = post['blog']['title'] + '_Tumblr'
+					newSubmission.subreddit = post['short_url']
+					newSubmission.subredditTitle = post['blog_name'] + '_Tumblr'
 
 					newSubmission.body = post['caption']
 					newSubmission.bodyUrl = photo['original_size']['url']
