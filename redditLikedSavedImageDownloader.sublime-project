@@ -3,8 +3,15 @@
 	[
 		{
 			"name": "Run Script",
-			"shell_cmd": "python redditUserImageScraper.py"
-		}
+			"working_dir": "$project_path",
+			"shell_cmd": "python redditUserImageScraper.py",
+			"syntax": "RedditLikedSavedImagesOutput.sublime-syntax"
+		},
+		{
+            "name": "List",
+            "shell_cmd": "ls -l",
+            "working_dir": "$project_path/../../.."
+        },
 	],
 	"folders":
 	[

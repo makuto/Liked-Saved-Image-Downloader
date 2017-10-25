@@ -35,7 +35,7 @@ def getSubmissionsFromRedditList(redditList):
 
             submissions.append(newSubmission)
 
-            print percentageComplete(currentSubmissionIndex, numTotalSubmissions)
+            print(percentageComplete(currentSubmissionIndex, numTotalSubmissions))
         else:
             # TODO: Macoy: Look at https://praw.readthedocs.io/en/latest/getting_started/quick_start.html
             #  very bottom to learn how to enumerate what information a submission can provide
@@ -53,16 +53,16 @@ def getRedditUserLikedSavedSubmissions(user_name, user_password, client_id, clie
 
     #r.login(user_name, user_password)
 
-    print '\n\nCommunicating with reddit. This should only take a minute...\n'
+    print('\n\nCommunicating with reddit. This should only take a minute...\n')
     savedLinks = r.user.me().saved(limit=request_limit)
     savedLinks = list(savedLinks)
 
     likedLinks = r.user.me().upvoted(limit=request_limit)
     likedLinks = list(likedLinks)
 
-    print '\n\nRetrieving your saved submissions. This can take several minutes...\n'
+    print('\n\nRetrieving your saved submissions. This can take several minutes...\n')
     savedSubmissions = getSubmissionsFromRedditList(savedLinks)
-    print '\n\nRetrieving your liked submissions. This can take several minutes...\n'
+    print('\n\nRetrieving your liked submissions. This can take several minutes...\n')
     likedSubmissions = getSubmissionsFromRedditList(likedLinks)    
 
     return savedSubmissions + likedSubmissions

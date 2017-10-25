@@ -1,7 +1,8 @@
-Reddit User Image Scraper
---------------------------
+# Reddit User Image Scraper
 
-Use this awesome Python 2 script to download all of your reddit (*new:* Tumblr too!) saved and upvoted/liked images/imgur albums to disk.
+Use this awesome Python 2/3 script to download all of your reddit (*new:* Tumblr too!) saved and upvoted/liked images/imgur albums to disk.
+
+## Directions
 
 Make sure you have PRAW, pytumblr, jsonpickle, and ImgurPython installed:
 `pip install praw pytumblr ImgurPython jsonpickle`
@@ -16,5 +17,8 @@ Make sure you have PRAW, pytumblr, jsonpickle, and ImgurPython installed:
 If you want more images, set Reddit_Total_Requests and/or Tumblr_Total_Requests to a higher value. It's difficult to say how high to set it to get all of your images.
 
 Not actually getting images downloaded, but seeing the console say it downloaded images? Make sure `SHOULD_SOFT_RETRIEVE=False` in `settings.txt`
+
+
+## Issues
 
 Feel free to create Issues on this repo if you need help. I'm a nice guy, so don't be shy.

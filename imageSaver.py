@@ -72,7 +72,7 @@ def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
     # If a page has fewer than this number of lines, there is something wrong.
     # This is a somewhat arbitrary heuristic
     if len(pageSourceLines) <= SANE_NUM_LINES:
-        print 'Url "' + url + '" has a suspicious number of lines (' + str(len(pageSourceLines)) + ')'
+        print('Url "' + url + '" has a suspicious number of lines (' + str(len(pageSourceLines)) + ')')
 
     for line in pageSourceLines:
         foundSourcePosition = line.lower().find(sourceKey.lower())
@@ -446,12 +446,12 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                     continue
 
             # Output our progress
-            print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
+            print('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
                     + ' [save] ' + url + ' saved to "' + subredditDir + '"')
             numSavedImages += 1
 
         else:
-            print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+            print('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
                 + ' [unsupported] ' + 'Skipped "' + url + '" (content type "' + urlContentType + '")')
             unsupportedSubmissions.append(submission)
             numUnsupportedImages += 1

@@ -175,7 +175,7 @@ def main():
 		submission.saveSubmissionsAsJson(submissions, settings['Output_dir'] + u'/' 
 			+ 'AllSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
 
-	print 'Saving images. This will take several minutes...'
+	print('Saving images. This will take several minutes...')
 	unsupportedSubmissions = imageSaver.saveAllImages(settings['Output_dir'], submissions, 
 		imgur_auth = imgurAuth, only_download_albums = settings['Only_download_albums'],
 		skip_n_percent_submissions = settings['Skip_n_percent_submissions'],
