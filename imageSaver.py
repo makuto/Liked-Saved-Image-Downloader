@@ -180,7 +180,7 @@ def safeFileName(filename, file_path = False):
         safeName = 'badName_' + str(random.randint(1, 1000000))
 
     if not file_path:
-        MAX_NAME_LENGTH = 45
+        MAX_NAME_LENGTH = 254
         if len(safeName) > MAX_NAME_LENGTH:
             safeName = safeName[:MAX_NAME_LENGTH]
 
@@ -338,7 +338,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
 
     for currentSubmissionIndex, submission in enumerate(sortedSubmissions):
         url = submission.bodyUrl
-        subredditDir = submission.subreddit[3:-1] if submission.source == u'Reddit' else safeFileName(submission.subredditTitle)
+        subredditDir = submission.subreddit[3:-1] if submission.source == u'reddit' else safeFileName(submission.subredditTitle)
         submissionTitle = submission.title
         # Always trust tumblr submissions because we know 100% they're images
         shouldTrustUrl = (submission.source == u'Tumblr')
