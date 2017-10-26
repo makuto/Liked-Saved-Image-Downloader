@@ -180,7 +180,7 @@ def safeFileName(filename, file_path = False):
         safeName = 'badName_' + str(random.randint(1, 1000000))
 
     if not file_path:
-        MAX_NAME_LENGTH = 254
+        MAX_NAME_LENGTH = 250
         if len(safeName) > MAX_NAME_LENGTH:
             safeName = safeName[:MAX_NAME_LENGTH]
 
