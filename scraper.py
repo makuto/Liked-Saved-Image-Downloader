@@ -44,7 +44,7 @@ def getSubmissionsFromRedditList(redditList):
     return submissions
 
 def getRedditUserLikedSavedSubmissions(user_name, user_password, client_id, client_secret,
-                                       request_limit = 10):
+                                       request_limit = 10, saveLiked = True, saveSaved = True):
     r = praw.Reddit(client_id = client_id,
         client_secret=client_secret,
         username=user_name,
@@ -54,15 +54,27 @@ def getRedditUserLikedSavedSubmissions(user_name, user_password, client_id, clie
     #r.login(user_name, user_password)
 
     print('\n\nCommunicating with reddit. This should only take a minute...\n')
-    savedLinks = r.user.me().saved(limit=request_limit)
-    savedLinks = list(savedLinks)
 
-    likedLinks = r.user.me().upvoted(limit=request_limit)
-    likedLinks = list(likedLinks)
+    savedLinks = None
+    if saveSaved:
+        print('\tGetting saved links...')
+        savedLinks = r.user.me().saved(limit=request_limit)
+        savedLinks = list(savedLinks)
 
-    print('\n\nRetrieving your saved submissions. This can take several minutes...\n')
-    savedSubmissions = getSubmissionsFromRedditList(savedLinks)
-    print('\n\nRetrieving your liked submissions. This can take several minutes...\n')
-    likedSubmissions = getSubmissionsFromRedditList(likedLinks)    
+    likedLinks = None
+    if saveLiked:
+        print('\tGetting liked links')
+        likedLinks = r.user.me().upvoted(limit=request_limit)
+        likedLinks = list(likedLinks)
+
+    savedSubmissions = []
+    if saveSaved:
+        print('\n\nRetrieving your saved submissions. This can take several minutes...\n')
+        savedSubmissions = getSubmissionsFromRedditList(savedLinks)
+
+    likedSubmissions = []
+    if saveLiked:
+        print('\n\nRetrieving your liked submissions. This can take several minutes...\n')
+        likedSubmissions = getSubmissionsFromRedditList(likedLinks)    
 
     return savedSubmissions + likedSubmissions

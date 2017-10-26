@@ -39,6 +39,9 @@ settings = {
 # If True, don't actually download the images - just pretend to
 'Should_soft_retrieve' : True,
 
+'Reddit_Save_Liked' : True,
+'Reddit_Save_Saved' : True,
+
 'Only_important_messages' : False,
 
 # Total requests to reddit (actual results may vary)
@@ -153,7 +156,9 @@ def main():
 			redditSubmissions = scraper.getRedditUserLikedSavedSubmissions(
 				settings['Username'], settings['Password'], 
 				settings['Client_id'], settings['Client_secret'],
-				request_limit = settings['Reddit_Total_requests'])
+				request_limit = settings['Reddit_Total_requests'], 
+				saveLiked = settings['Reddit_Save_Liked'], 
+				saveSaved = settings['Reddit_Save_Saved'])
 			
 			# Cache them in case it's needed later
 			submission.writeCacheSubmissions(redditSubmissions, settings['Reddit_cache_file'])

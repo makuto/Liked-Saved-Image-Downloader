@@ -35,6 +35,9 @@ Client_secret=
 # Increase this value to 1000 or so to get more submissions
 Reddit_Total_requests=400
 
+Reddit_Save_Liked=True
+Reddit_Save_Saved=True
+
 #========================================
 # General Settings
 #========================================
