@@ -280,7 +280,10 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
                 else:
                     albumId = albumUrl[albumStartId:]
 
-                albumImages = imgurClient.get_album_images(albumId)
+                try:
+                    albumImages = imgurClient.get_album_images(albumId)
+                except:
+                    print('Imgur album url ' + albumURL + ' could not be retrieved!')
 
             if not albumImages:
                 continue

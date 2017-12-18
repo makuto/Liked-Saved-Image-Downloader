@@ -63,7 +63,7 @@ def getRedditUserLikedSavedSubmissions(user_name, user_password, client_id, clie
 
     likedLinks = None
     if saveLiked:
-        print('\tGetting liked links')
+        print('\tGetting liked links...')
         likedLinks = r.user.me().upvoted(limit=request_limit)
         likedLinks = list(likedLinks)
 
