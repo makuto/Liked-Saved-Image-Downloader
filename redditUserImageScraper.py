@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import time
+import os
 
 import scraper
 import tumblrScraper
@@ -41,6 +42,7 @@ settings = {
 
 'Reddit_Save_Liked' : True,
 'Reddit_Save_Saved' : True,
+'Reddit_Save_Comments' : True,
 
 'Only_important_messages' : False,
 
@@ -126,7 +128,15 @@ def hasImgurSettings():
 	return (settings['Imgur_client_id'] and settings['Imgur_client_secret'])
 
 def main():
-	readSettings(DEFAULT_SETTINGS_FILENAME)
+	# To make sure I don't accidentally commit my settings.txt, it's marked LOCAL_, 
+	# which is in .gitignore
+	hiddenSettingsFilename = "LOCAL_settings.txt"
+	if os.path.isfile(hiddenSettingsFilename):
+		print('Reading settings from ' + hiddenSettingsFilename)
+		readSettings(hiddenSettingsFilename)
+	else:
+		print('Reading settings from ' + DEFAULT_SETTINGS_FILENAME)
+		readSettings(DEFAULT_SETTINGS_FILENAME)
 
 	if (not settings['Use_cached_submissions'] 
 	    and not hasTumblrSettings() and not hasRedditSettings()):
@@ -153,7 +163,7 @@ def main():
 		submissions += submission.readCacheSubmissions(settings['Tumblr_cache_file'])
 	else:
 		if hasRedditSettings():
-			redditSubmissions = scraper.getRedditUserLikedSavedSubmissions(
+			redditSubmissions, redditComments = scraper.getRedditUserLikedSavedSubmissions(
 				settings['Username'], settings['Password'], 
 				settings['Client_id'], settings['Client_secret'],
 				request_limit = settings['Reddit_Total_requests'], 
@@ -164,6 +174,12 @@ def main():
 			submission.writeCacheSubmissions(redditSubmissions, settings['Reddit_cache_file'])
 
 			submissions += redditSubmissions
+
+			# For reddit only: write out comments to separate json file
+			if settings['Reddit_Save_Comments']:
+				submission.saveSubmissionsAsJson(redditComments, settings['Output_dir'] + u'/' 
+					+ 'Reddit_SavedComment_Submissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json')
+				print('Saved ' + str(len(redditComments)) + ' reddit comments')
 
 		if hasTumblrSettings():
 			tumblrSubmissions = tumblrScraper.getTumblrUserLikedSubmissions(

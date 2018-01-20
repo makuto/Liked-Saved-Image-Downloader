@@ -37,6 +37,7 @@ Reddit_Total_requests=400
 
 Reddit_Save_Liked=True
 Reddit_Save_Saved=True
+Reddit_Save_Comments=True
 
 #========================================
 # General Settings

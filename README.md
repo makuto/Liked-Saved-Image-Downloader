@@ -2,6 +2,8 @@
 
 Use this awesome Python 2/3 script to download all of your reddit (*new:* Tumblr too!) saved and upvoted/liked images/imgur albums to disk.
 
+The script will also write reddit saved comments to a .json file.
+
 ## Directions
 
 Make sure you have PRAW, pytumblr, jsonpickle, and ImgurPython installed:
