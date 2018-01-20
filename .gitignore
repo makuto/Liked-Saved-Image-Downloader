@@ -11,3 +11,4 @@ output
 SubmissionCache.bin
 *.bin
 LOCAL_*
+*.sublime-workspace
