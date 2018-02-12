@@ -57,6 +57,15 @@ settings = {
 'Reddit_cache_file' : 'Reddit_SubmissionCache.bin',
 'Tumblr_cache_file' : 'Tumblr_SubmissionCache.bin',
 
+# Attempt to only request and download new submissions (those which haven't been downloaded)
+# This uses the Reddit and Tumblr cache files to know what's already been downloaded,
+#  so it will only work if you've successfully run the script before
+'Reddit_Try_Request_Only_New' : True,
+'Tumblr_Try_Request_Only_New' : True,
+'Reddit_Try_Request_Only_New_Saved_Cache_File' : 'Reddit_RequestOnlyNewSaved.bin',
+'Reddit_Try_Request_Only_New_Liked_Cache_File' : 'Reddit_RequestOnlyNewLiked.bin',
+'Tumblr_Try_Request_Only_New_Cache_File' : 'Tumblr_RequestOnlyNew.bin',
+
 # If the script failed at say 70%, you could use toggle Use_cached_submissions and set this value to
 #  69. The script would then restart 69% of the way into the cached submissions nearer to where you
 #  left off. 
@@ -155,6 +164,16 @@ def main():
 
 	print('Output: ' + settings['Output_dir'])
 
+	# TODO: Only save one post for early out. Only save once all downloading is done
+	redditRequestOnlyNewCache = None
+	if settings['Reddit_Try_Request_Only_New']:
+		redditRequestOnlyNewSavedCache = submission.readCacheSubmissions(settings['Reddit_Try_Request_Only_New_Saved_Cache_File'])
+		redditRequestOnlyNewLikedCache = submission.readCacheSubmissions(settings['Reddit_Try_Request_Only_New_Liked_Cache_File'])
+
+	tumblrRequestOnlyNewCache = None
+	if settings['Tumblr_Try_Request_Only_New']:
+		tumblrRequestOnlyNewCache = submission.readCacheSubmissions(settings['Tumblr_Try_Request_Only_New_Cache_File'])
+
 	submissions = []
 
 	if settings['Use_cached_submissions']:
@@ -163,15 +182,23 @@ def main():
 		submissions += submission.readCacheSubmissions(settings['Tumblr_cache_file'])
 	else:
 		if hasRedditSettings():
-			redditSubmissions, redditComments = scraper.getRedditUserLikedSavedSubmissions(
+			redditSubmissions, redditComments, earlyOutPoints = scraper.getRedditUserLikedSavedSubmissions(
 				settings['Username'], settings['Password'], 
 				settings['Client_id'], settings['Client_secret'],
 				request_limit = settings['Reddit_Total_requests'], 
 				saveLiked = settings['Reddit_Save_Liked'], 
-				saveSaved = settings['Reddit_Save_Saved'])
+				saveSaved = settings['Reddit_Save_Saved'],
+				earlyOutPointSaved = redditRequestOnlyNewSavedCache, 
+				earlyOutPointLiked = redditRequestOnlyNewLikedCache)
 			
 			# Cache them in case it's needed later
 			submission.writeCacheSubmissions(redditSubmissions, settings['Reddit_cache_file'])
+
+			# Set new early out points
+			submission.writeCacheSubmissions([earlyOutPoints[0]],
+				settings['Reddit_Try_Request_Only_New_Saved_Cache_File'])
+			submission.writeCacheSubmissions([earlyOutPoints[1]],
+				settings['Reddit_Try_Request_Only_New_Liked_Cache_File'])
 
 			submissions += redditSubmissions
 
@@ -182,13 +209,18 @@ def main():
 				print('Saved ' + str(len(redditComments)) + ' reddit comments')
 
 		if hasTumblrSettings():
-			tumblrSubmissions = tumblrScraper.getTumblrUserLikedSubmissions(
+			tumblrSubmissions, earlyOutPoint = tumblrScraper.getTumblrUserLikedSubmissions(
 				settings['Tumblr_Client_id'], settings['Tumblr_Client_secret'], 
 				settings['Tumblr_Client_token'], settings['Tumblr_Client_token_secret'],
-				likeRequestLimit = settings['Tumblr_Total_requests'])
+				likeRequestLimit = settings['Tumblr_Total_requests'],
+				requestOnlyNewCache = tumblrRequestOnlyNewCache)
 			
 			# Cache them in case it's needed later
 			submission.writeCacheSubmissions(tumblrSubmissions, settings['Tumblr_cache_file'])
+
+			# Set new early out point
+			submission.writeCacheSubmissions([earlyOutPoint], 
+				settings['Tumblr_Try_Request_Only_New_Cache_File'])
 
 			submissions += tumblrSubmissions
 

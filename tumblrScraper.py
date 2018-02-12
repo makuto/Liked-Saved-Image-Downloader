@@ -3,7 +3,7 @@ from submission import Submission
 from zlib import crc32
 
 def getTumblrUserLikedSubmissions(clientId, clientSecret, tokenId, tokenSecret,
-	likeRequestLimit = 100):
+	likeRequestLimit = 100, requestOnlyNewCache = None):
 	tumblrClient = pytumblr.TumblrRestClient(
 		clientId, clientSecret, tokenId, tokenSecret)
 
@@ -13,6 +13,8 @@ def getTumblrUserLikedSubmissions(clientId, clientSecret, tokenId, tokenSecret,
 	oldestPageTimestamp = 0
 	totalRequests = 0
 	submissions = []
+
+	foundOldSubmission = False
 
 	while totalRequests < likeRequestLimit:
 		if oldestPageTimestamp:
@@ -58,8 +60,23 @@ def getTumblrUserLikedSubmissions(clientId, clientSecret, tokenId, tokenSecret,
 
 					submissions.append(newSubmission)
 
+					if (requestOnlyNewCache 
+						and requestOnlyNewCache[0] 
+						and newSubmission.postUrl == requestOnlyNewCache[0].postUrl):
+						print('Found early out point after ' + str(len(submissions)) + ' new submissions.'
+		                      ' If you e.g. changed your total requests value and want to go deeper, set'
+		                      ' Tumblr_Try_Request_Only_New to False in your settings.txt')
+						foundOldSubmission = True
+						break
+
 			else:
 				print('Skipped ' + post['short_url'] + ' (does not have images)')
+
+			if foundOldSubmission:
+				break
+
+		if foundOldSubmission:
+			break
 
 		oldestPageTimestamp = tumblrLikes['liked_posts'][-1]['liked_timestamp']
 
@@ -71,4 +88,5 @@ def getTumblrUserLikedSubmissions(clientId, clientSecret, tokenId, tokenSecret,
 
 		totalRequests += numPostsThisPage
 
-	return submissions
+	newEarlyOut = submissions[0] if len(submissions) else None
+	return submissions, newEarlyOut

@@ -55,6 +55,15 @@ Output_dir=output
 #  variable to True. It'll use the submissions it got last time and speed up the process
 Use_cached_submissions=False
 
+# Attempt to only request new submissions (those which haven't been downloaded)
+# This uses the Reddit and Tumblr cache files to know what's already been downloaded,
+#  so it will only work if you've successfully run the script before
+# If you ran the script and found you want to increase your total requests to get older posts, make
+#  sure to set these to False so it doesn't try to early-out. Set them back to True once you've
+#  downloaded as far back as desired
+Reddit_Try_Request_Only_New=True
+Tumblr_Try_Request_Only_New=True
+
 # If the script failed at say 70%, you could use toggle Use_cached_submissions and set this value to
 #  69. The script would then restart 69% of the way into the cached submissions nearer to where you
 #  left off. 
