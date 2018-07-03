@@ -165,7 +165,8 @@ def main():
 	print('Output: ' + settings['Output_dir'])
 
 	# TODO: Only save one post for early out. Only save once all downloading is done
-	redditRequestOnlyNewCache = None
+	redditRequestOnlyNewSavedCache = None
+	redditRequestOnlyNewLikedCache = None
 	if settings['Reddit_Try_Request_Only_New']:
 		redditRequestOnlyNewSavedCache = submission.readCacheSubmissions(settings['Reddit_Try_Request_Only_New_Saved_Cache_File'])
 		redditRequestOnlyNewLikedCache = submission.readCacheSubmissions(settings['Reddit_Try_Request_Only_New_Liked_Cache_File'])

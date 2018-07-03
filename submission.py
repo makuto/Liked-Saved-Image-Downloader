@@ -37,14 +37,14 @@ class Submission:
         return jsonpickle.encode(self)
 
 def writeOutSubmissionsAsJson(redditList, file):
-    file.write('{\n')
+    file.write('{\n'.encode('utf8'))
     for submission in redditList:
         outputString = submission.getJson() + u',\n'
         file.write(outputString.encode('utf8'))
-    file.write('}')
+    file.write('}'.encode('utf8'))
 
 def saveSubmissionsAsJson(submissions, fileName):
-    outputFile = open(fileName, 'w')
+    outputFile = open(fileName, 'wb')
     writeOutSubmissionsAsJson(submissions, outputFile)
     outputFile.close()
 
@@ -54,7 +54,7 @@ def writeOutSubmissionsAsXML(redditList, file):
         file.write(outputString.encode('utf8'))
 
 def saveSubmissionsAsXML(submissions, fileName):
-    outputFile = open(fileName, 'w')
+    outputFile = open(fileName, 'wb')
     writeOutSubmissionsAsXML(submissions, outputFile)
     outputFile.close()
 

@@ -1,6 +1,7 @@
 import pytumblr
-from submission import Submission 
-from zlib import crc32
+from submission import Submission
+from crcUtils import signedCrc32
+from builtins import str
 
 def getTumblrUserLikedSubmissions(clientId, clientSecret, tokenId, tokenSecret,
 	likeRequestLimit = 100, requestOnlyNewCache = None):
@@ -42,9 +43,11 @@ def getTumblrUserLikedSubmissions(clientId, clientSecret, tokenId, tokenSecret,
 					# Tumblr submissions don't have titles, so make one
 					# This'll look ugly in the file browser, unfortunately
 					if len(post['photos']) > 1:
-						newSubmission.title = unicode(crc32(post['short_url'])) + u'_' + unicode(photoIndex)
+						newSubmission.title = str(signedCrc32(post['short_url'].encode()))
+						newSubmission.title += u'_'
+						newSubmission.title += str(photoIndex)
 					else:
-						newSubmission.title = unicode(crc32(post['short_url']))
+						newSubmission.title = str(signedCrc32(post['short_url'].encode()))
 
 					"""print(post)
 					return"""

@@ -1,11 +1,19 @@
 # -*- coding: utf-8 -*-
 
-import urllib
+import sys
 import os
 import random
+from crcUtils import signedCrc32
 from operator import attrgetter
-from zlib import crc32
 import imgurpython as imgur
+from builtins import str
+
+import urllib
+if sys.version_info[0] >= 3:
+	from urllib.request import urlretrieve, urlopen
+        #from urllib.request import urlopen
+else:
+	from urllib import urlretrieve, urlopen
 
 SupportedTypes = ['jpg', 'jpeg', 'gif', 'png', 'webm', 'mp4']
 
@@ -30,17 +38,22 @@ def getUrlContentType(url):
     if url:
         openedUrl = None
         try:
-            openedUrl = urllib.urlopen(url)
+            openedUrl = urlopen(url)
         except IOError as e:
             print('[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'
                 .format(url, e.errno, e.strerror))
-        except:
+        except Exception as e:
+            print('[ERROR] Exception: Url {0} raised exception:\n\t {1}'
+                        .format(url, e))
             print('[ERROR] Url ' + url + 
-                ' raised an exception I was too lazy to handle. Open an issue at '
+                ' raised an exception I did not handle. Open an issue at '
                 '\n\thttps://github.com/makuto/redditLikedSavedImageDownloader/issues'
                 '\n and I will try to fix it')
         else:
-            return openedUrl.info().subtype
+            if sys.version_info[0] >= 3:
+                return openedUrl.info().get_content_subtype()
+            else:
+                return openedUrl.info().subtype
     return ''
 
 def isContentTypeSupported(contentType):
@@ -65,7 +78,7 @@ def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
     SANE_NUM_LINES = 30
 
     # Open the page to search for a saveable .gif or .webm
-    pageSource = urllib.urlopen(url)
+    pageSource = urlopen(url)
     pageSourceLines = pageSource.readlines()
     pageSource.close()
 
@@ -75,12 +88,16 @@ def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
         print('Url "' + url + '" has a suspicious number of lines (' + str(len(pageSourceLines)) + ')')
 
     for line in pageSourceLines:
-        foundSourcePosition = line.lower().find(sourceKey.lower())
+        lineStr = line
+        if sys.version_info[0] >= 3:
+            lineStr = line.decode()
+            
+        foundSourcePosition = lineStr.lower().find(sourceKey.lower())
         
         if foundSourcePosition > -1:
             urlStartPosition = -1
             if sourceKeyAttribute:
-                attributePosition = line[foundSourcePosition:].lower().find(sourceKeyAttribute.lower())
+                attributePosition = lineStr[foundSourcePosition:].lower().find(sourceKeyAttribute.lower())
                 # Find the first character of the URL specified by the attribute (add 1 for the ")
                 urlStartPosition = foundSourcePosition + attributePosition + len(sourceKeyAttribute) + 1
             else:
@@ -88,10 +105,10 @@ def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
                 urlStartPosition = foundSourcePosition + len(sourceKey) + 1
 
             # From the start of the url, search for the next '"' which is the end of the src link
-            urlEndPosition = line[urlStartPosition:].find('"')
+            urlEndPosition = lineStr[urlStartPosition:].find('"')
 
             if urlEndPosition > -1:
-                sourceUrl = line[urlStartPosition:urlStartPosition + urlEndPosition]
+                sourceUrl = lineStr[urlStartPosition:urlStartPosition + urlEndPosition]
 
                 return sourceUrl
 
@@ -232,7 +249,7 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
 
     subredditIndex = -1
     numSubreddits = len(subredditAlbums)
-    for subredditDir, albums in subredditAlbums.iteritems():
+    for subredditDir, albums in subredditAlbums.items():
         subredditIndex += 1
         print('[' + percentageComplete(subredditIndex, numSubreddits) + '] ' 
             + subredditDir)
@@ -254,7 +271,7 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
             # The CRC is used so that if we are saving two albums with the same
             #  post title (e.g. 'me_irl') we get unique folder names because the URL is different
             saveAlbumPath = (outputDir + u'/' + subredditDir + u'/' 
-                + safeFileName(albumTitle) + u'_' + unicode(crc32(albumUrl)))
+                + safeFileName(albumTitle) + u'_' + str(signedCrc32(albumUrl.encode())))
 
             #saveAlbumPath = safeFileName(saveAlbumPath, file_path = True)
 
@@ -296,7 +313,7 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
 
                 if not soft_retrieve_imgs:
                     # Retrieve the image and save it
-                    urllib.urlretrieve(imageUrl, saveFilePath)
+                    urlretrieve(imageUrl, saveFilePath)
 
                 print ('\t\t[' + percentageComplete(imageIndex, numImages) + '] ' 
                     + ' [save] ' + imageUrl + ' saved to "' + saveAlbumPath + '"')
@@ -403,7 +420,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                     fileType = contentFileType
 
             if shouldTrustTitle:
-                saveFilePath = (unicode(outputDir, errors='replace') + u'/' + subredditDir + u'/' 
+                saveFilePath = (outputDir + u'/' + subredditDir + u'/' 
                     + safeFileName(submissionTitle) + u'.' + fileType)
             else:
                 # Example path:
@@ -411,8 +428,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 # output/subreddit/Submission Title_urlCRC.fileType
                 # The CRC is used so that if we are saving two images with the same
                 #  post title (e.g. 'me_irl') we get unique filenames because the URL is different
-                saveFilePath = (unicode(outputDir, errors='replace') + u'/' + subredditDir + u'/' 
-                    + safeFileName(submissionTitle) + u'_' + unicode(crc32(url)) + u'.' + fileType)
+                saveFilePath = (outputDir + u'/' + subredditDir + u'/' + safeFileName(submissionTitle) 
+                                + u'_' + str(signedCrc32(url.encode())) + u'.' + fileType)
 
                 # Maybe not do this? Ubuntu at least can do Unicode folders etc. just fine
                 #saveFilePath = safeFileName(saveFilePath, file_path = True)
@@ -432,7 +449,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
 
                 # Retrieve the image and save it
                 try:
-                    urllib.urlretrieve(url, saveFilePath)
+                    urlretrieve(url, saveFilePath)
                 except IOError as e:
                     print('[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'
                         .format(url, e.errno, e.strerror))
@@ -440,9 +457,11 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                     continue
                 except KeyboardInterrupt:
                     exit()
-                except:
+                except Exception as e:
+                    print('[ERROR] Exception: Url {0} raised exception:\n\t {1}'
+                        .format(url, e))
                     print('[ERROR] Url ' + url + 
-                        ' raised an exception I was too lazy to handle. Open an issue at '
+                        ' raised an exception I did not handle. Open an issue at '
                         '\n\thttps://github.com/makuto/redditLikedSavedImageDownloader/issues'
                         '\n and I will try to fix it')
                     numUnsupportedImages += 1
