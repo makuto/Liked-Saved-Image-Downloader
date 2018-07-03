@@ -79,6 +79,15 @@ def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
 
     # Open the page to search for a saveable .gif or .webm
     pageSource = urlopen(url)
+
+    # This code doesn't quite work yet; if things are breaking near here you're not reading a .html
+    # Leaving this here for future work
+    pageEncoding = None
+    if sys.version_info[0] >= 3:
+        pageEncoding = pageSource.headers.get_content_charset()
+        #print(pageSource.headers.get_content_subtype())
+        #print(url)
+        
     pageSourceLines = pageSource.readlines()
     pageSource.close()
 
@@ -89,8 +98,9 @@ def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
 
     for line in pageSourceLines:
         lineStr = line
-        if sys.version_info[0] >= 3:
-            lineStr = line.decode()
+        if sys.version_info[0] >= 3 and pageEncoding:
+            # If things are breaking near here you're not reading a .html    
+            lineStr = line.decode(pageEncoding)
             
         foundSourcePosition = lineStr.lower().find(sourceKey.lower())
         
@@ -115,7 +125,9 @@ def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
     return ''
 
 def isGfycatUrl(url):
-    return 'gfycat' in url.lower()
+    return ('gfycat' in url.lower()
+            and '.webm' not in url.lower()
+            and '.gif' not in url.lower()[-4:])
 
 # Special handling for Gfycat links
 # Returns a URL to a webm which can be downloaded by urllib
@@ -348,7 +360,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
     # Start further into the list (in case the script failed early or something and you don't want 
     #  to redownload everything)
     if skip_n_percent_submissions:
-        newFirstSubmissionIndex = (len(sortedSubmissions) / 100) * skip_n_percent_submissions
+        newFirstSubmissionIndex = int((len(sortedSubmissions) / 100) * skip_n_percent_submissions)
         sortedSubmissions = sortedSubmissions[newFirstSubmissionIndex:]
 
         print('Starting at ' + str(skip_n_percent_submissions) + '%; skipped ' +
