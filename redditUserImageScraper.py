@@ -207,6 +207,8 @@ def main():
 			if settings['Reddit_Save_Comments']:
 				submission.saveSubmissionsAsJson(redditComments, settings['Output_dir'] + u'/' 
 					+ 'Reddit_SavedComment_Submissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json')
+				submission.saveSubmissionsAsHtml(redditComments, settings['Output_dir'] + u'/' 
+					+ 'Reddit_SavedComment_Submissions_' + time.strftime("%Y%m%d-%H%M%S") + '.html')
 				print('Saved ' + str(len(redditComments)) + ' reddit comments')
 
 		if hasTumblrSettings():

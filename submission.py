@@ -29,7 +29,19 @@ class Submission:
             + u'\t<bodyUrl>' + self.bodyUrl + u'</bodyUrl>\n'
             + u'\t<postUrl>' + self.postUrl + u'</postUrl>\n')
 
-        return unicode(baseString)
+        return str(baseString)
+
+    def getHtml(self):
+        baseString = (u'\t<p>' + self.source + u'</p>\n'
+            + u'\t<h2>' + self.title + u'</h2>\n'
+            + u'\t<h3>' + self.author + u'</h3>\n'
+            + u'\t<h4>' + self.subreddit + u'</h4>\n'
+            + u'\t<h4>' + self.subredditTitle + u'</h4>\n'
+            + u'\t<p>' + self.body + u'</p>\n'
+            # + u'\t<p>' + self.bodyUrl + u'</p>\n'
+            + u'\t<a href=' + self.postUrl + u'/>Link</a><br /><br />\n')
+
+        return baseString
 
     def getJson(self):
         jsonpickle.set_preferred_backend('json')
@@ -46,6 +58,33 @@ def writeOutSubmissionsAsJson(redditList, file):
 def saveSubmissionsAsJson(submissions, fileName):
     outputFile = open(fileName, 'wb')
     writeOutSubmissionsAsJson(submissions, outputFile)
+    outputFile.close()
+
+def writeOutSubmissionsAsHtml(redditList, file):
+    submissionsStr = ""
+    for submission in redditList:
+        submissionsStr += submission.getHtml() + u'\n'
+        
+    htmlStructure = u"""<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Reddit Saved Comments</title>
+</head>
+
+<body>
+{0}
+</body>
+</html>
+    """.format(submissionsStr)
+        
+    file.write(htmlStructure.encode('utf8'))
+
+def saveSubmissionsAsHtml(submissions, fileName):
+    outputFile = open(fileName, 'wb')
+    writeOutSubmissionsAsHtml(submissions, outputFile)
     outputFile.close()
 
 def writeOutSubmissionsAsXML(redditList, file):
