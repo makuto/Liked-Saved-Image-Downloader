@@ -22,6 +22,11 @@ Not actually getting images downloaded, but seeing the console say it downloaded
 
 `settings.txt` has several additional features. Read the comments to know how to use them.
 
+## Server Interface
+
+This repository includes a simple web server interface. Unlike the main script, the server is supported in Python 3 only.
+
+To use it, install tornado via `pip3 install tornado` then run `python3 LikedSavedDownloaderServer.py`.
 
 ## Issues
 

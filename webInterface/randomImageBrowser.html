@@ -1,44 +1,30 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <title>Browsing Liked Saved Images</title>
-  
-  <link rel="stylesheet" type="text/css" href="styles.css">
+    <title>Browsing Liked Saved Images</title>
+
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <script type="text/javascript" src="randomImageBrowser.js"></script>
 </head>
+
 <body>
-  <button class="previousImage" onclick="sendMessage('previousImage')">Previous</button>
-  <button class="nextImage" onclick="sendMessage('nextImage')">Next</button>
-  <button class="imageAddToFavorites" onclick="sendMessage('imageAddToFavorites')">Favorite</button>
-  <button class="previousFavorite" onclick="sendMessage('previousFavorite')">Previous Favorite</button>
-  <button class="nextFavorite" onclick="sendMessage('nextFavorite')">Next Favorite</button>
-  <p id="message"></p>
-  <script>
-    var ws = new WebSocket("ws://" + window.location.host + "/randomImageBrowserWebSocket");
-    var username = "likedSavedBrowserClient";
 
-    function sendMessage(message) {
-        var payload = {
-            "command": message,
-            "user": username
-        }
-        // Make the request to the WebSocket.
-        ws.send(JSON.stringify(payload));
-    }
+    <button class="previousImage affectOpacity" onclick="sendMessage('previousImage')">Previous</button>
+    <button class="nextImage affectOpacity" onclick="sendMessage('nextImage')">Next</button>
 
-    ws.onmessage = function(evt) {
-        var messageDict = JSON.parse(evt.data);
-    document.getElementById("message").innerHTML = messageDict.randomImagePath + ": " + messageDict.serverImagePath + " (" + messageDict.responseToCommand + ")";
-	if (messageDict.action == "setImage")
-	{
-	document.body.style.backgroundImage = "url('/"+messageDict.serverImagePath+"')";
-	}
-	
-    };
+    <button class="imageAddToFavorites affectOpacity" onclick="sendMessage('imageAddToFavorites')">Favorite</button>
+    <button class="previousFavorite affectOpacity" onclick="sendMessage('previousFavorite')">Previous Favorite</button>
+    <button class="nextFavorite affectOpacity" onclick="sendMessage('nextFavorite')">Next Favorite</button>
 
-	document.addEventListener("DOMContentLoaded", function(){
-	// This is a stupid hack because I couldn't figure out when the web socket actually connects (I'm so lazy)
-	setTimeout(function(){sendMessage("nextImage");}, 200);
-	}, false);
-  </script>
+    <button class="nextImageInFolder affectOpacity" onclick="sendMessage('nextImageInFolder')">Next In Folder</button>
+    <button class="previousImageInFolder affectOpacity" onclick="sendMessage('previousImageInFolder')">Previous In Folder</button>
+	<button class="toggleFullScreen affectOpacity" onclick="toggleFullScreen()">Toggle Fullscreen</button>
+
+    <input type="range" onchange="onOpacityChanged(this.value)" min="0.0" max="1.0" value="0.2" class="slider affectOpacity" step="0.1" id="opacitySlider">
+
+    <p class="affectOpacity" id="message"></p>
+	<div id="videoContainer"></div>
 </body>
+
 </html>
