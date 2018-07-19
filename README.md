@@ -22,14 +22,14 @@ Not actually getting images downloaded, but seeing the console say it downloaded
 
 `settings.txt` has several additional features. Read the comments to know how to use them.
 
-## Server Interface
+## Web Server Interface
 
 This repository includes a simple web server interface. Unlike the main script, the server is supported in Python 3 only.
 
-To use it, install tornado via `pip3 install tornado` then run `python3 LikedSavedDownloaderServer.py`.
+To use it, install tornado via `pip3 install tornado` then run `python3 LikedSavedDownloaderServer.py`. The interface can be seen by visiting `http://localhost:8888` in any web browser.
 
 ![Web interfae](/images/LikedSavedBrowser.png)
 
 ## Issues
 
-Feel free to create Issues on this repo if you need help. I'm a nice guy, so don't be shy.
+Feel free to create Issues on this repo if you need help. I'm friendly so don't be shy.
