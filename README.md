@@ -28,6 +28,8 @@ This repository includes a simple web server interface. Unlike the main script, 
 
 To use it, install tornado via `pip3 install tornado` then run `python3 LikedSavedDownloaderServer.py`.
 
+![Web interfae](/images/LikedSavedBrowser.png)
+
 ## Issues
 
 Feel free to create Issues on this repo if you need help. I'm a nice guy, so don't be shy.
