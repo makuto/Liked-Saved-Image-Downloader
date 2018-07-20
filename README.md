@@ -28,7 +28,9 @@ This repository includes a simple web server interface. Unlike the main script, 
 
 To use it, install tornado via `pip3 install tornado` then run `python3 LikedSavedDownloaderServer.py`. The interface can be seen by visiting `http://localhost:8888` in any web browser.
 
-![Web interfae](/images/LikedSavedBrowser.png)
+**The web server is not secure in any way and should NOT be run on an insecure network!**
+
+![Web interface](/images/LikedSavedBrowser.png)
 
 ## Issues
 

@@ -4,24 +4,42 @@
 <head>
     <title>Browsing Liked Saved Images</title>
 
-    <link rel="stylesheet" type="text/css" href="styles.css">
+    <link rel="stylesheet" type="text/css" href="randomImageBrowser.css">
     <script type="text/javascript" src="randomImageBrowser.js"></script>
 </head>
 
 <body>
 
-    <button class="previousImage affectOpacity" onclick="sendMessage('previousImage')">Previous</button>
-    <button class="nextImage affectOpacity" onclick="sendMessage('nextImage')">Next</button>
+    <!-- <button class="previousImage affectOpacity" onclick="sendMessage('previousImage')">Previous Random</button> -->
+    <!-- <button class="nextImage affectOpacity" onclick="sendMessage('nextImage')">Next Random</button> -->
 
-    <button class="imageAddToFavorites affectOpacity" onclick="sendMessage('imageAddToFavorites')">Favorite</button>
-    <button class="previousFavorite affectOpacity" onclick="sendMessage('previousFavorite')">Previous Favorite</button>
-    <button class="nextFavorite affectOpacity" onclick="sendMessage('nextFavorite')">Next Favorite</button>
+    <!-- <button class="imageAddToFavorites affectOpacity" onclick="sendMessage('imageAddToFavorites')">Favorite</button> -->
+    <!-- <button class="previousFavorite affectOpacity" onclick="sendMessage('previousFavorite')">Previous Favorite</button> -->
+    <!-- <button class="nextFavorite affectOpacity" onclick="sendMessage('nextFavorite')">Next Favorite</button> -->
 
-    <button class="nextImageInFolder affectOpacity" onclick="sendMessage('nextImageInFolder')">Next In Folder</button>
-    <button class="previousImageInFolder affectOpacity" onclick="sendMessage('previousImageInFolder')">Previous In Folder</button>
-	<button class="toggleFullScreen affectOpacity" onclick="toggleFullScreen()">Toggle Fullscreen</button>
+    <!-- <button class="nextImageInFolder affectOpacity" onclick="sendMessage('nextImageInFolder')">Next In Folder</button> -->
+    <!-- <button class="previousImageInFolder affectOpacity" onclick="sendMessage('previousImageInFolder')">Previous In Folder</button> -->
+	<!-- <button class="toggleFullScreen affectOpacity" onclick="toggleFullScreen()">Toggle Fullscreen</button> -->
 
-    <input type="range" onchange="onOpacityChanged(this.value)" min="0.0" max="1.0" value="0.2" class="slider affectOpacity" step="0.1" id="opacitySlider">
+	<div class="leftControls">
+	  <button class="previousImage affectOpacity" onclick="sendMessage('previousImage')">Previous Random</button>
+	  <button class="previousImageInFolder affectOpacity" onclick="sendMessage('previousImageInFolder')">Previous In Folder</button>
+	  <button class="previousFavorite affectOpacity" onclick="sendMessage('previousFavorite')">Previous Favorite</button>
+	</div>
+
+	<div class="rightControls">
+	  <button class="nextImage affectOpacity" onclick="sendMessage('nextImage')">Next Random</button>
+	  <button class="nextImageInFolder affectOpacity" onclick="sendMessage('nextImageInFolder')">Next In Folder</button>
+	  <button class="nextFavorite affectOpacity" onclick="sendMessage('nextFavorite')">Next Favorite</button>
+	</div>
+
+	<div class="centerControls">
+	  <input type="range" onchange="onOpacityChanged(this.value)" min="0.0" max="1.0" value="0.2" class="slider affectOpacity" step="0.1" id="opacitySlider">
+	  <div class="centerControlsButtons">
+		<button class="imageAddToFavorites affectOpacity" onclick="sendMessage('imageAddToFavorites')">Favorite</button>
+		<button class="toggleFullScreen affectOpacity" onclick="toggleFullScreen()">Toggle Fullscreen</button>
+	  </div>
+	</div>
 
     <p class="affectOpacity" id="message"></p>
 	<div id="videoContainer"></div>

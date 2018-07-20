@@ -12,9 +12,7 @@ import shutil
 import json
 
 from utilities import sort_naturally
-
-# TODO: Remove
-outputDir = '/media/macoy/Shared/Backups/Web/Reddit/output'
+import settings
 
 videoExtensions = ('.mp4')
 supportedExtensions = ('.gif', '.jpg', '.jpeg', '.png', '.mp4')
@@ -27,11 +25,11 @@ def generateSavedImagesCache(outputDir):
                 savedImagesCache.append(os.path.join(root, file))
 
 def outputPathToServerPath(path):
-    return 'output' + path.split(outputDir)[1]
+    return 'output' + path.split(settings.settings['Output_dir'])[1]
 
 def getRandomImage():
     if not savedImagesCache:
-        generateSavedImagesCache(outputDir)
+        generateSavedImagesCache(settings.settings['Output_dir'])
             
     randomImage = random.choice(savedImagesCache)
 
@@ -46,9 +44,105 @@ def getRandomImage():
 # Tornado handlers
 #
 
-class MainHandler(tornado.web.RequestHandler):
+class HomeHandler(tornado.web.RequestHandler):
     def get(self):
         self.render('webInterface/index.html')
+
+def settingsToHtmlForm():
+    settingsInputs = []
+
+    for sectionSettingsPair in settings.settingsStructure:
+        settingsInputs.append('<h2>{}</h2>'.format(sectionSettingsPair[0]))
+
+        for sectionOption in sectionSettingsPair[1]:
+            option = None
+            optionComment = ''
+            if type(sectionOption) == tuple:
+                option = sectionOption[0]
+                optionComment = '<p class="optionComment">{}</p>'.format(sectionOption[1])
+            else:
+                option = sectionOption
+                
+            if type(settings.settings[option]) == bool:
+                settingsInputs.append('''<label for="{option}">{optionName}</label>
+                                     <input type="checkbox" id="{option}" name="{option}" value="{optionValue}" {checkedState} />{comment}
+                                     <br />'''
+                                      .format(option=option, optionName=option.replace('_', ' '),
+                                              comment=optionComment,
+                                              checkedState=('checked' if settings.settings[option] else ''),
+                                              optionValue=('1' if settings.settings[option] else '0')))
+                
+            elif type(settings.settings[option]) == int:
+                settingsInputs.append('''<label for="{option}">{optionName}</label>
+                                     <input type="number" id="{option}" name="{option}" value="{optionValue}" />{comment}
+                                     <br />'''
+                                      .format(option=option, optionName=option.replace('_', ' '), comment=optionComment,
+                                              optionValue=settings.settings[option]))
+                
+            elif type(settings.settings[option]) == str:
+                settingsInputs.append('''<label for="{option}">{optionName}</label>
+                                     <input type="{type}" id="{option}" name="{option}" value="{optionValue}" />{comment}
+                                     <br />'''
+                                      .format(option=option, optionName=option.replace('_', ' '),
+                                              comment=optionComment, optionValue=settings.settings[option],
+                                              type=('password' if 'secret' in option.lower() or 'password' in option.lower() else 'text')))
+
+    return ''.join(settingsInputs)
+
+class SettingsHandler(tornado.web.RequestHandler):
+    def doSettings(self, afterSubmit):
+        htmlSettingsForm = settingsToHtmlForm()
+        settingsFilename = settings.getSettingsFilename()
+        
+        self.write('''<html>
+                            <head>
+                                  <link rel="stylesheet" type="text/css" href="webInterface/settings.css">
+                                  <script type="text/javascript" src="webInterface/settings.js"></script>
+                            </head>
+                            <body>
+                                  <h1>Liked Saved Downloader Settings</h1>
+                                  {}
+                                  <p>Settings being read from {}</p>
+                                  <form action="/settings" method="post">
+                                       <input type="submit" value="Submit">
+                                       {}
+                                       <input type="submit" value="Submit">
+                                  </form>
+                            </body>
+                      </html>'''
+                   .format(('<p><b>Settings updated</b></p>' if afterSubmit else ''),
+                           settingsFilename, htmlSettingsForm))
+        
+    def get(self):
+        self.doSettings(False)
+        
+    def post(self):
+        print('Received new settings')
+        for option in settings.settings:
+            newValue = self.get_argument(option, None)
+            if not newValue:
+                # It's okay if it's a boolean because POST doesn't send unchecked checkboxes
+                # This means the user set the value to false
+                if type(settings.settings[option]) == bool:
+                    settings.settings[option] = False
+                else:
+                    print('Warning: Option {} unset! The settingsStructure might be out of sync.'
+                          '\n\tIgnore this if the field is intentionally empty'.format(option))
+            else:
+                # All false bools are handed in the above if block, so we know they're true here
+                if type(settings.settings[option]) == bool:
+                    newValue = True
+                elif type(settings.settings[option]) == int:
+                    newValue = int(newValue)
+                
+                settings.settings[option] = newValue
+                # print('\tSet {} = {}'.format(option, newValue))
+
+        # Write out the new settings
+        settings.writeServerSettings()
+        
+        # Respond with a settings page saying we've updated the settings
+        self.doSettings(True)
 
 # Returns a html page with a random image from outputDir
 class GetRandomImageHandler(tornado.web.RequestHandler):
@@ -163,15 +257,35 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
 
 def make_app():
     return tornado.web.Application([
-        (r'/', MainHandler),
+        # Home page
+        (r'/', HomeHandler),
+
+        # Configure the script
+        (r'/settings', SettingsHandler),
+
+        # Handles messages for randomImageBrowser
         (r'/randomImageBrowserWebSocket', RandomImageBrowserWebSocket),
+
+        # Static files
+        (r'/webInterface/(.*)', tornado.web.StaticFileHandler, {'path' : 'webInterface'}),
+        (r'/output/(.*)', tornado.web.StaticFileHandler, {'path' : settings.settings['Output_dir']}),
+        
+        # The old random image handler
         (r'/random', GetRandomImageHandler),
-        (r'/webInterface/(.*)', tornado.web.StaticFileHandler, {'path':'webInterface'}),
-        (r'/output/(.*)', tornado.web.StaticFileHandler, {'path':outputDir})
     ])
 
 if __name__ == '__main__':
-    print("Starting LikedSavedDownloader Tornado Server...")
+    print('Grabbing settings...')
+    settings.getSettings()
+
+    print('Output: ' + settings.settings['Output_dir'])
+    
+    print('Creating cache...')
+    if not savedImagesCache:
+        generateSavedImagesCache(settings.settings['Output_dir'])
+    
+    port = 8888
+    print('Starting LikedSavedDownloader Tornado Server on port {}...'.format(port))
     app = make_app()
-    app.listen(8888)
+    app.listen(port)
     tornado.ioloop.IOLoop.current().start()

@@ -1,0 +1,16 @@
+body {
+    margin: 0 auto;
+	width: 80%;
+    height: 100%;
+    background-color: #333333;
+	max-width: 800px;
+}
+
+p,
+h1,
+h2,
+h3,
+a,
+label {
+    color: #cccccc;
+}
