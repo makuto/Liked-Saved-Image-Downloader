@@ -22,6 +22,9 @@ Not actually getting images downloaded, but seeing the console say it downloaded
 
 `settings.txt` has several additional features. Read the comments to know how to use them.
 
+**Alternatively,** use the Web Server Interface to configure the script. Follow instructions below to use the server.
+![Web settings](/images/LikedSavedSettings.png)
+
 ## Web Server Interface
 
 This repository includes a simple web server interface. Unlike the main script, the server is supported in Python 3 only.
