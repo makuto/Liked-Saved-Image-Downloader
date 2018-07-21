@@ -11,12 +11,19 @@ body {
     background-repeat: no-repeat;
 }
 
+input[type=text] {
+	font-size: 25px;
+	/* background-color: #333333; */
+	/* color: #000000; */
+}
+
 p,
 h1,
 h2,
 h3,
 a,
-label {
+label,
+input {
     color: #cccccc;
 }
 
@@ -69,6 +76,11 @@ button {
 	
 	display: flex;
 	flex-direction: column;
+}
+
+.filter {
+	opacity: 0.3;
+    flex: 1 1 auto;
 }
 
 #opacitySlider {

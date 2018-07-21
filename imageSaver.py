@@ -7,6 +7,7 @@ from crcUtils import signedCrc32
 from operator import attrgetter
 import imgurpython as imgur
 from builtins import str
+import logger
 
 import urllib
 if sys.version_info[0] >= 3:
@@ -40,12 +41,12 @@ def getUrlContentType(url):
         try:
             openedUrl = urlopen(url)
         except IOError as e:
-            print('[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'
+            logger.log('[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'
                 .format(url, e.errno, e.strerror))
         except Exception as e:
-            print('[ERROR] Exception: Url {0} raised exception:\n\t {1}'
+            logger.log('[ERROR] Exception: Url {0} raised exception:\n\t {1}'
                         .format(url, e))
-            print('[ERROR] Url ' + url + 
+            logger.log('[ERROR] Url ' + url + 
                 ' raised an exception I did not handle. Open an issue at '
                 '\n\thttps://github.com/makuto/redditLikedSavedImageDownloader/issues'
                 '\n and I will try to fix it')
@@ -85,8 +86,8 @@ def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
     pageEncoding = None
     if sys.version_info[0] >= 3:
         pageEncoding = pageSource.headers.get_content_charset()
-        #print(pageSource.headers.get_content_subtype())
-        #print(url)
+        #logger.log(pageSource.headers.get_content_subtype())
+        #logger.log(url)
         
     pageSourceLines = pageSource.readlines()
     pageSource.close()
@@ -94,7 +95,7 @@ def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
     # If a page has fewer than this number of lines, there is something wrong.
     # This is a somewhat arbitrary heuristic
     if len(pageSourceLines) <= SANE_NUM_LINES:
-        print('Url "' + url + '" has a suspicious number of lines (' + str(len(pageSourceLines)) + ')')
+        logger.log('Url "' + url + '" has a suspicious number of lines (' + str(len(pageSourceLines)) + ')')
 
     for line in pageSourceLines:
         lineStr = line
@@ -224,17 +225,17 @@ def cleanImgurAlbumUrl(url):
 
 # Returns whether or not there are credits remaining
 def checkImgurAPICredits(imgurClient):
-    print('Imgur API Credit Report:\n'
+    logger.log('Imgur API Credit Report:\n'
         + '\tUserRemaining: ' + str(imgurClient.credits['UserRemaining'])
         + '\n\tClientRemaining: ' + str(imgurClient.credits['ClientRemaining']))
 
     if not imgurClient.credits['UserRemaining']:
-        print('You have used up all of your Imgur API credits! Please wait an hour')
+        logger.log('You have used up all of your Imgur API credits! Please wait an hour')
         return False
 
     # Ensure that this user doesn't suck up all the credits (remove this if you're an asshole)
     if imgurClient.credits['ClientRemaining'] < 1000:
-        print('RedditLikedSavedImageDownloader Imgur Client is running low on Imgur API credits!\n'
+        logger.log('RedditLikedSavedImageDownloader Imgur Client is running low on Imgur API credits!\n'
             'Unfortunately, this means no one can download any Imgur albums until the end of the month.\n'
             'If you are really jonesing for access, authorize your own Imgur Client and fill in'
             ' its details in settings.txt.')
@@ -263,7 +264,7 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
     numSubreddits = len(subredditAlbums)
     for subredditDir, albums in subredditAlbums.items():
         subredditIndex += 1
-        print('[' + percentageComplete(subredditIndex, numSubreddits) + '] ' 
+        logger.log('[' + percentageComplete(subredditIndex, numSubreddits) + '] ' 
             + subredditDir)
 
         if not soft_retrieve_imgs:
@@ -274,7 +275,7 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
         for albumIndex, album in enumerate(albums):
             albumTitle = album[0]
             albumUrl = cleanImgurAlbumUrl(album[1])
-            print('\t[' + percentageComplete(albumIndex, numAlbums) + '] ' 
+            logger.log('\t[' + percentageComplete(albumIndex, numAlbums) + '] ' 
                 + '\t' + albumTitle + ' (' + albumUrl + ')')
 
             # Example path:
@@ -290,7 +291,7 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
             # If we already saved the album, skip it
             # Note that this means updating albums will not be updated
             if os.path.isdir(saveAlbumPath):
-                print ('\t\t[already saved] ' + 'Skipping album ' + albumTitle 
+                logger.log('\t\t[already saved] ' + 'Skipping album ' + albumTitle 
                     + ' (note that this script will NOT update albums)')
                 continue
 
@@ -312,7 +313,7 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
                 try:
                     albumImages = imgurClient.get_album_images(albumId)
                 except:
-                    print('Imgur album url ' + albumURL + ' could not be retrieved!')
+                    logger.log('Imgur album url ' + albumURL + ' could not be retrieved!')
 
             if not albumImages:
                 continue
@@ -327,7 +328,7 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
                     # Retrieve the image and save it
                     urlretrieve(imageUrl, saveFilePath)
 
-                print ('\t\t[' + percentageComplete(imageIndex, numImages) + '] ' 
+                logger.log('\t\t[' + percentageComplete(imageIndex, numImages) + '] ' 
                     + ' [save] ' + imageUrl + ' saved to "' + saveAlbumPath + '"')
 
             numSavedAlbumsTotal += 1
@@ -363,7 +364,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
         newFirstSubmissionIndex = int((len(sortedSubmissions) / 100) * skip_n_percent_submissions)
         sortedSubmissions = sortedSubmissions[newFirstSubmissionIndex:]
 
-        print('Starting at ' + str(skip_n_percent_submissions) + '%; skipped ' +
+        logger.log('Starting at ' + str(skip_n_percent_submissions) + '%; skipped ' +
             str(newFirstSubmissionIndex) + ' submissions')
 
     submissionsToSave = len(sortedSubmissions)
@@ -386,7 +387,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
             # Imgur Albums have special handling
             if isImgurAlbumUrl(url):
                 if not imgur_auth:
-                    print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+                    logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
                         + ' [unsupported] ' + 'Skipped "' + url + '" (imgur album)')
                     numUnsupportedAlbums += 1
                     continue
@@ -420,10 +421,10 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 #  (e.g. a .png labeled as a .jpg)
                 contentFileType = convertContentTypeToFileType(urlContentType)
                 if contentFileType != fileType and (contentFileType != 'jpg' and fileType != 'jpeg'):
-                    print ('WARNING: Content type "' + contentFileType 
+                    logger.log('WARNING: Content type "' + contentFileType 
                         + '" was going to be saved as "' + fileType + '"! Correcting.')
                     if contentFileType == 'html':
-                        print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+                        logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
                             + ' [unsupported] ' + 'Skipped "' + url 
                             + '" (file is html, not image; this might mean Access was Denied)')
                         numUnsupportedImages += 1
@@ -450,7 +451,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
             # TODO: Try not to make make any HTTP requests on skips...
             if os.path.isfile(saveFilePath):
                 if not only_important_messages:
-                    print ('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
+                    logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
                         + ' [already saved] ' + 'Skipping ' + saveFilePath)
                 numAlreadySavedImages += 1
                 continue
@@ -463,16 +464,16 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 try:
                     urlretrieve(url, saveFilePath)
                 except IOError as e:
-                    print('[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'
+                    logger.log('[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'
                         .format(url, e.errno, e.strerror))
                     numUnsupportedImages += 1
                     continue
                 except KeyboardInterrupt:
                     exit()
                 except Exception as e:
-                    print('[ERROR] Exception: Url {0} raised exception:\n\t {1}'
+                    logger.log('[ERROR] Exception: Url {0} raised exception:\n\t {1}'
                         .format(url, e))
-                    print('[ERROR] Url ' + url + 
+                    logger.log('[ERROR] Url ' + url + 
                         ' raised an exception I did not handle. Open an issue at '
                         '\n\thttps://github.com/makuto/redditLikedSavedImageDownloader/issues'
                         '\n and I will try to fix it')
@@ -480,12 +481,12 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                     continue
 
             # Output our progress
-            print('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
+            logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
                     + ' [save] ' + url + ' saved to "' + subredditDir + '"')
             numSavedImages += 1
 
         else:
-            print('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+            logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
                 + ' [unsupported] ' + 'Skipped "' + url + '" (content type "' + urlContentType + '")')
             unsupportedSubmissions.append(submission)
             numUnsupportedImages += 1
@@ -495,12 +496,12 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
         numSavedAlbums = saveAllImgurAlbums(outputDir, imgur_auth, imgurAlbumsToSave, 
             soft_retrieve_imgs = soft_retrieve_imgs)
 
-    print('Good:')
-    print('\t numSavedImages: ' + str(numSavedImages))
-    print('\t numAlreadySavedImages: ' + str(numAlreadySavedImages))
-    print('\t numSavedAlbums: ' + str(numSavedAlbums))
-    print('Bad:')
-    print('\t numUnsupportedImages: ' + str(numUnsupportedImages))
-    print('\t numUnsupportedAlbums: ' + str(numUnsupportedAlbums))
+    logger.log('Good:')
+    logger.log('\t numSavedImages: ' + str(numSavedImages))
+    logger.log('\t numAlreadySavedImages: ' + str(numAlreadySavedImages))
+    logger.log('\t numSavedAlbums: ' + str(numSavedAlbums))
+    logger.log('Bad:')
+    logger.log('\t numUnsupportedImages: ' + str(numUnsupportedImages))
+    logger.log('\t numUnsupportedAlbums: ' + str(numUnsupportedAlbums))
 
     return unsupportedSubmissions

@@ -9,18 +9,6 @@
 </head>
 
 <body>
-
-    <!-- <button class="previousImage affectOpacity" onclick="sendMessage('previousImage')">Previous Random</button> -->
-    <!-- <button class="nextImage affectOpacity" onclick="sendMessage('nextImage')">Next Random</button> -->
-
-    <!-- <button class="imageAddToFavorites affectOpacity" onclick="sendMessage('imageAddToFavorites')">Favorite</button> -->
-    <!-- <button class="previousFavorite affectOpacity" onclick="sendMessage('previousFavorite')">Previous Favorite</button> -->
-    <!-- <button class="nextFavorite affectOpacity" onclick="sendMessage('nextFavorite')">Next Favorite</button> -->
-
-    <!-- <button class="nextImageInFolder affectOpacity" onclick="sendMessage('nextImageInFolder')">Next In Folder</button> -->
-    <!-- <button class="previousImageInFolder affectOpacity" onclick="sendMessage('previousImageInFolder')">Previous In Folder</button> -->
-	<!-- <button class="toggleFullScreen affectOpacity" onclick="toggleFullScreen()">Toggle Fullscreen</button> -->
-
 	<div class="leftControls">
 	  <button class="previousImage affectOpacity" onclick="sendMessage('previousImage')">Previous Random</button>
 	  <button class="previousImageInFolder affectOpacity" onclick="sendMessage('previousImageInFolder')">Previous In Folder</button>
@@ -34,7 +22,8 @@
 	</div>
 
 	<div class="centerControls">
-	  <input type="range" onchange="onOpacityChanged(this.value)" min="0.0" max="1.0" value="0.2" class="slider affectOpacity" step="0.1" id="opacitySlider">
+	  <input type="range" onchange="onOpacityChanged(this.value)" min="0.0" max="1.0" value="0.3" class="slider affectOpacity" step="0.1" id="opacitySlider">
+	  <input class="filter affectOpacity" type="text" id="filter" name="filter" placeholder="Filter" oninput="filterChanged(this.value)" />
 	  <div class="centerControlsButtons">
 		<button class="imageAddToFavorites affectOpacity" onclick="sendMessage('imageAddToFavorites')">Favorite</button>
 		<button class="toggleFullScreen affectOpacity" onclick="toggleFullScreen()">Toggle Fullscreen</button>

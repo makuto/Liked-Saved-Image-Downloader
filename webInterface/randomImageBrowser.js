@@ -43,6 +43,8 @@ document.addEventListener("DOMContentLoaded", function() {
     // This is a stupid hack because I couldn't figure out when the web socket actually connects (I'm so lazy)
     setTimeout(function() {
         sendMessage("nextImage");
+		// Workaround for mobile not using opacity
+		onOpacityChanged('0.3');
     }, 200);
 }, false);
 
@@ -79,4 +81,15 @@ function toggleFullScreen() {
             document.webkitCancelFullScreen();
         }
     }
+}
+
+function filterChanged(newValue) {
+	var payload = {
+        "command": "setFilter",
+        "user": username,
+		"filter": newValue
+    }
+
+    // Make the request to the WebSocket.
+    ws.send(JSON.stringify(payload));
 }

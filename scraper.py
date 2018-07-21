@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logger
 import praw
 import submission
 from submission import Submission 
@@ -40,21 +41,21 @@ def getSubmissionsFromRedditList(redditList, earlyOutPoint = None):
 
             submissions.append(newSubmission)
 
-            print(percentageComplete(currentSubmissionIndex, numTotalSubmissions))
+            logger.log(percentageComplete(currentSubmissionIndex, numTotalSubmissions))
 
             # Check to see if we've already downloaded this submission; if so, early out
             if (earlyOutPoint 
                 and earlyOutPoint[0] 
                 and newSubmission.postUrl == earlyOutPoint[0].postUrl):
-                print('Found early out point after ' + str(len(submissions)) + ' new submissions.'
+                logger.log('Found early out point after ' + str(len(submissions)) + ' new submissions.'
                       ' If you e.g. changed your total requests value and want to go deeper, set'
                       ' Reddit_Try_Request_Only_New to False in your settings.txt')
                 break
         else:
             # I looked at https://praw.readthedocs.io/en/latest/getting_started/quick_start.html
             #  very bottom to learn how to enumerate what information a submission can provide
-            # print(singleSubmission.body)
-            # pprint.pprint(vars(singleSubmission))
+            # logger.log(singleSubmission.body)
+            # pprint.plogger.log(vars(singleSubmission))
             newSubmission = Submission()
 
             newSubmission.source = u'reddit'
@@ -83,30 +84,30 @@ def getRedditUserLikedSavedSubmissions(user_name, user_password, client_id, clie
         password=user_password,
         user_agent=user_agent)
 
-    print('\n\nCommunicating with reddit. This should only take a minute...\n')
+    logger.log('\n\nCommunicating with reddit. This should only take a minute...\n')
 
     savedLinks = None 
     if saveSaved: 
-        print('\tGetting saved links...') 
+        logger.log('\tGetting saved links...') 
         savedLinks = r.user.me().saved(limit=request_limit) 
         savedLinks = list(savedLinks) 
  
     likedLinks = None 
     if saveLiked: 
-        print('\tGetting liked links...') 
+        logger.log('\tGetting liked links...') 
         likedLinks = r.user.me().upvoted(limit=request_limit) 
         likedLinks = list(likedLinks)
 
     savedSubmissions = []
     savedComments = []
     if saveSaved: 
-        print('\n\nRetrieving your saved submissions. This can take several minutes...\n') 
+        logger.log('\n\nRetrieving your saved submissions. This can take several minutes...\n') 
         savedSubmissions, savedComments = getSubmissionsFromRedditList(savedLinks, earlyOutPointSaved) 
  
     likedSubmissions = []
     likedComments = []
     if saveLiked: 
-        print('\n\nRetrieving your liked submissions. This can take several minutes...\n') 
+        logger.log('\n\nRetrieving your liked submissions. This can take several minutes...\n') 
         likedSubmissions, likedComments = getSubmissionsFromRedditList(likedLinks, earlyOutPointLiked)     
  
     submissions = savedSubmissions + likedSubmissions

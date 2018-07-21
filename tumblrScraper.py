@@ -1,4 +1,5 @@
 import pytumblr
+import logger
 from submission import Submission
 from crcUtils import signedCrc32
 from builtins import str
@@ -29,7 +30,7 @@ def getTumblrUserLikedSubmissions(clientId, clientSecret, tokenId, tokenSecret,
 		if not numPostsThisPage:
 			break;
 
-		print(str(numPostsThisPage) 
+		logger.log(str(numPostsThisPage) 
 			+ ' Tumblr likes requested. Total likes: '
 			+ str(tumblrLikes['liked_count']))
 
@@ -49,7 +50,7 @@ def getTumblrUserLikedSubmissions(clientId, clientSecret, tokenId, tokenSecret,
 					else:
 						newSubmission.title = str(signedCrc32(post['short_url'].encode()))
 
-					"""print(post)
+					"""logger.log(post)
 					return"""
 					newSubmission.author = post['blog_name']
 
@@ -66,14 +67,14 @@ def getTumblrUserLikedSubmissions(clientId, clientSecret, tokenId, tokenSecret,
 					if (requestOnlyNewCache 
 						and requestOnlyNewCache[0] 
 						and newSubmission.postUrl == requestOnlyNewCache[0].postUrl):
-						print('Found early out point after ' + str(len(submissions)) + ' new submissions.'
+						logger.log('Found early out point after ' + str(len(submissions)) + ' new submissions.'
 		                      ' If you e.g. changed your total requests value and want to go deeper, set'
 		                      ' Tumblr_Try_Request_Only_New to False in your settings.txt')
 						foundOldSubmission = True
 						break
 
 			else:
-				print('Skipped ' + post['short_url'] + ' (does not have images)')
+				logger.log('Skipped ' + post['short_url'] + ' (does not have images)')
 
 			if foundOldSubmission:
 				break

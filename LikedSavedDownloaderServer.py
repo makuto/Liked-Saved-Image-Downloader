@@ -10,19 +10,49 @@ import os
 import random
 import shutil
 import json
+import multiprocessing
 
 from utilities import sort_naturally
 import settings
+import redditUserImageScraper
 
 videoExtensions = ('.mp4')
 supportedExtensions = ('.gif', '.jpg', '.jpeg', '.png', '.mp4')
 
 savedImagesCache = []
 def generateSavedImagesCache(outputDir):
+    global savedImagesCache
+    # Clear cache in case already created
+    savedImagesCache = []
+
+    print('Creating Liked Saved cache...')
+    
     for root, dirs, files in os.walk(outputDir):
         for file in files:
             if file.endswith(supportedExtensions):
                 savedImagesCache.append(os.path.join(root, file))
+
+    print('Finished creating Liked Saved cache ({} images/videos)'.format(len(savedImagesCache)))
+
+randomImageFilter = ''
+filteredImagesCache = []
+def cacheFilteredImages():
+    global filteredImagesCache
+
+    # Clear the cache
+    filteredImagesCache = []
+
+    if not randomImageFilter:
+        return
+
+    randomImageFilterLower = randomImageFilter.lower()
+    
+    for imagePath in savedImagesCache:
+        if randomImageFilterLower in imagePath.lower():
+            filteredImagesCache.append(imagePath)
+
+    print('\tFiltered images with "{}"; {} images matching filter'
+          .format(randomImageFilter, len(filteredImagesCache)))
 
 def outputPathToServerPath(path):
     return 'output' + path.split(settings.settings['Output_dir'])[1]
@@ -30,10 +60,13 @@ def outputPathToServerPath(path):
 def getRandomImage():
     if not savedImagesCache:
         generateSavedImagesCache(settings.settings['Output_dir'])
-            
-    randomImage = random.choice(savedImagesCache)
 
-    print('\tgetRandomImage(): Chose random image {}'.format(randomImage))
+    if filteredImagesCache:
+        randomImage = random.choice(filteredImagesCache)
+    else:
+        randomImage = random.choice(savedImagesCache)
+
+    print('\tgetRandomImage(): Chose random image {} (filter {})'.format(randomImage, randomImageFilter))
 
     # Dear gods, forgive me, this is weird; trim the full output path
     serverPath = outputPathToServerPath(randomImage)
@@ -117,7 +150,10 @@ class SettingsHandler(tornado.web.RequestHandler):
         self.doSettings(False)
         
     def post(self):
+        currentOutputDir = settings.settings['Output_dir']
+        
         print('Received new settings')
+        
         for option in settings.settings:
             newValue = self.get_argument(option, None)
             if not newValue:
@@ -144,14 +180,10 @@ class SettingsHandler(tornado.web.RequestHandler):
         # Respond with a settings page saying we've updated the settings
         self.doSettings(True)
 
-# Returns a html page with a random image from outputDir
-class GetRandomImageHandler(tornado.web.RequestHandler):
-    def get(self):
-        fullImagePath, serverImagePath = getRandomImage() 
-        
-        self.write('''<html><head><link rel="stylesheet" type="text/css" href="webInterface/styles.css"></head>
-                            <body><p>{}</p><img class="maximize" src="{}"/></body>
-                      </html>'''.format(fullImagePath, serverImagePath))
+        # Refresh the cache in case the output directory changed
+        if currentOutputDir != settings.settings['Output_dir']:
+            generateSavedImagesCache(settings.settings['Output_dir'])
+            
 
 class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
     connections = set()
@@ -237,6 +269,13 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
                 fullImagePath = imagesInFolder[nextImageIndex]
                 serverImagePath = outputPathToServerPath(fullImagePath)
 
+        if command == 'setFilter':
+            newFilter = parsedMessage['filter']
+            global randomImageFilter
+            if newFilter != randomImageFilter:
+                randomImageFilter = newFilter
+                cacheFilteredImages()
+
         # Only send a response if needed
         if action == 'setImage':
             # Stupid hack
@@ -251,6 +290,93 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
     def on_close(self):
         self.connections.remove(self)
 
+scriptPipeConnection = None
+scriptProcess = None
+
+def startScript():
+    global scriptPipeConnection, scriptProcess
+    
+    # Script already running
+    if scriptProcess and scriptProcess.is_alive():
+        return
+    
+    scriptPipeConnection, childConnection = multiprocessing.Pipe()
+    scriptProcess = multiprocessing.Process(target=redditUserImageScraper.runLikedSavedDownloader,
+                                            args=(childConnection,))
+    scriptProcess.start()
+
+runScriptWebSocketConnections = set()
+class RunScriptWebSocket(tornado.websocket.WebSocketHandler):
+    def open(self):
+        global runScriptWebSocketConnections
+        runScriptWebSocketConnections.add(self)
+
+    def on_message(self, message):
+        print('RunScriptWebSocket: Received message ', message)
+
+        parsedMessage = json.loads(message)
+        command = parsedMessage['command']
+
+        print('RunScriptWebSocket: Command ', command)
+        
+        if command == 'runScript':
+            if scriptProcess and scriptProcess.is_alive():
+                print('RunScriptWebSocket: Script already running')
+                responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                                   .format('Script already running\\n', 'printMessage'))
+                self.write_message(responseMessage)
+                
+            else:
+                print('RunScriptWebSocket: Starting script')
+
+                startScript()
+                
+                responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                                   .format('Running script\\n', 'printMessage'))
+                self.write_message(responseMessage)
+
+    def on_close(self):
+        global runScriptWebSocketConnections
+        runScriptWebSocketConnections.remove(self)
+
+def updateScriptStatus():
+    # If no pipe or no data to receive from pipe, we're done
+    # Poll() is non-blocking whereas recv is blocking
+    if (not runScriptWebSocketConnections
+        or not scriptPipeConnection
+        or not scriptPipeConnection.poll()):
+        return
+
+    pipeOutput = scriptPipeConnection.recv()
+    if pipeOutput:
+        responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                           .format(pipeOutput.replace('\n', '\\n').replace('\t', ''),
+                                   'printMessage'))
+        
+        for client in runScriptWebSocketConnections:
+            client.write_message(responseMessage)
+
+        if redditUserImageScraper.scriptFinishedSentinel in pipeOutput:
+            # Script finished; refresh image cache
+            print('Refreshing caches due to script finishing')
+            generateSavedImagesCache(settings.settings['Output_dir'])
+            cacheFilteredImages()
+            responseMessage = ('{{"action":"{}"}}'
+                               .format('scriptFinished'))
+            
+        for client in runScriptWebSocketConnections:
+            client.write_message(responseMessage)
+
+# Returns a html page with a random image from outputDir
+# Deprecated; use RandomImageBrowser instead
+class GetRandomImageHandler(tornado.web.RequestHandler):
+    def get(self):
+        fullImagePath, serverImagePath = getRandomImage() 
+        
+        self.write('''<html><head><link rel="stylesheet" type="text/css" href="webInterface/styles.css"></head>
+                            <body><p>{}</p><img class="maximize" src="{}"/></body>
+                      </html>'''.format(fullImagePath, serverImagePath))
+
 #
 # Startup
 #
@@ -262,6 +388,9 @@ def make_app():
 
         # Configure the script
         (r'/settings', SettingsHandler),
+
+        # Handles messages for run script
+        (r'/runScriptWebSocket', RunScriptWebSocket),
 
         # Handles messages for randomImageBrowser
         (r'/randomImageBrowserWebSocket', RandomImageBrowserWebSocket),
@@ -275,17 +404,24 @@ def make_app():
     ])
 
 if __name__ == '__main__':
-    print('Grabbing settings...')
+    print('\n\tWARNING: Do NOT run this server on the internet (e.g. port-forwarded)'
+          ' nor when\n\t connected to an insecure LAN! It is not protected against malicious use.\n')
+    
+    print('Loading settings...')
     settings.getSettings()
 
-    print('Output: ' + settings.settings['Output_dir'])
+    print('Liked Saved output directory: ' + settings.settings['Output_dir'])
+    if not settings.settings['Output_dir']:
+        print('WARNING: No output directory specified! This will probably break things')
     
-    print('Creating cache...')
     if not savedImagesCache:
         generateSavedImagesCache(settings.settings['Output_dir'])
     
     port = 8888
-    print('Starting LikedSavedDownloader Tornado Server on port {}...'.format(port))
+    print('\nStarting LikedSavedDownloader Server on port {}...'.format(port))
     app = make_app()
     app.listen(port)
-    tornado.ioloop.IOLoop.current().start()
+    ioLoop = tornado.ioloop.IOLoop.current()
+    updateStatusCallback = tornado.ioloop.PeriodicCallback(updateScriptStatus, 100)
+    updateStatusCallback.start()
+    ioLoop.start()

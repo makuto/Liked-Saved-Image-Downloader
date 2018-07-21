@@ -1,8 +1,14 @@
 # Reddit User Image Scraper
 
-Use this awesome Python 2 or 3 script to download all of your reddit and/or Tumblr saved and upvoted/liked images/imgur albums to disk.
-
-The script will also write reddit saved comments to a .json file.
+Use this awesome Python 2 or 3 script to download
+* Images
+* Gifs
+* Imgur Albums
+* Comments
+...which you've marked as Liked, Hearted, or Saved from
+* Reddit
+* Tumblr
+...to disk!
 
 ## Directions
 
