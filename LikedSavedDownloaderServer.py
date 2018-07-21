@@ -134,6 +134,7 @@ class SettingsHandler(tornado.web.RequestHandler):
                             </head>
                             <body>
                                   <h1>Liked Saved Downloader Settings</h1>
+                                  <a href="/">Back to Homepage</a><br /><br />
                                   {}
                                   <p>Settings being read from {}</p>
                                   <form action="/settings" method="post">
@@ -364,8 +365,8 @@ def updateScriptStatus():
             responseMessage = ('{{"action":"{}"}}'
                                .format('scriptFinished'))
             
-        for client in runScriptWebSocketConnections:
-            client.write_message(responseMessage)
+            for client in runScriptWebSocketConnections:
+                client.write_message(responseMessage)
 
 # Returns a html page with a random image from outputDir
 # Deprecated; use RandomImageBrowser instead
