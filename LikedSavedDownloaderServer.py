@@ -34,30 +34,10 @@ def generateSavedImagesCache(outputDir):
 
     print('Finished creating Liked Saved cache ({} images/videos)'.format(len(savedImagesCache)))
 
-randomImageFilter = ''
-filteredImagesCache = []
-def cacheFilteredImages():
-    global filteredImagesCache
-
-    # Clear the cache
-    filteredImagesCache = []
-
-    if not randomImageFilter:
-        return
-
-    randomImageFilterLower = randomImageFilter.lower()
-    
-    for imagePath in savedImagesCache:
-        if randomImageFilterLower in imagePath.lower():
-            filteredImagesCache.append(imagePath)
-
-    print('\tFiltered images with "{}"; {} images matching filter'
-          .format(randomImageFilter, len(filteredImagesCache)))
-
 def outputPathToServerPath(path):
     return 'output' + path.split(settings.settings['Output_dir'])[1]
 
-def getRandomImage():
+def getRandomImage(filteredImagesCache=None, randomImageFilter=''):
     if not savedImagesCache:
         generateSavedImagesCache(settings.settings['Output_dir'])
 
@@ -189,6 +169,22 @@ class SettingsHandler(tornado.web.RequestHandler):
 class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
     connections = set()
 
+    def cacheFilteredImages(self):
+        # Clear the cache
+        self.filteredImagesCache = []
+
+        if not self.randomImageFilter:
+            return
+
+        randomImageFilterLower = self.randomImageFilter.lower()
+    
+        for imagePath in savedImagesCache:
+            if randomImageFilterLower in imagePath.lower():
+                self.filteredImagesCache.append(imagePath)
+
+        print('\tFiltered images with "{}"; {} images matching filter'
+              .format(self.randomImageFilter, len(self.filteredImagesCache)))
+
     def open(self):
         self.connections.add(self)
         self.randomHistory = []
@@ -196,6 +192,8 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
         self.favorites = []
         self.favoritesIndex = 0
         self.currentImage = None
+        self.randomImageFilter = ''
+        self.filteredImagesCache = []
 
     def on_message(self, message):
         print('RandomImageBrowserWebSocket: Received message ', message)
@@ -232,7 +230,7 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
             action = 'setImage'
 
             if self.randomHistoryIndex == -1 or self.randomHistoryIndex >= len(self.randomHistory) - 1:
-                fullImagePath, serverImagePath = getRandomImage()
+                fullImagePath, serverImagePath = getRandomImage(self.filteredImagesCache, self.randomImageFilter)
                 self.randomHistory.append((fullImagePath, serverImagePath))
                 self.randomHistoryIndex = len(self.randomHistory) - 1
             else:
@@ -272,10 +270,9 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
 
         if command == 'setFilter':
             newFilter = parsedMessage['filter']
-            global randomImageFilter
-            if newFilter != randomImageFilter:
-                randomImageFilter = newFilter
-                cacheFilteredImages()
+            if newFilter != self.randomImageFilter:
+                self.randomImageFilter = newFilter
+                self.cacheFilteredImages()
 
         # Only send a response if needed
         if action == 'setImage':
@@ -359,9 +356,8 @@ def updateScriptStatus():
 
         if redditUserImageScraper.scriptFinishedSentinel in pipeOutput:
             # Script finished; refresh image cache
-            print('Refreshing caches due to script finishing')
+            print('Refreshing cache due to script finishing')
             generateSavedImagesCache(settings.settings['Output_dir'])
-            cacheFilteredImages()
             responseMessage = ('{{"action":"{}"}}'
                                .format('scriptFinished'))
             
