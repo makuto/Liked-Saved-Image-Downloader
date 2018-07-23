@@ -105,7 +105,7 @@ requestsInstructions = 'Increase this value to get more submissions'
 # [('header', ['option_to_include', ('another_option', 'this one has a comment')])]
 settingsStructure = [
     ('Output',
-     ['Output_dir']),
+     [('Output_dir', 'All images, videos, and comments will be saved to this directory. You will have to restart the server whenever you change this value when using the Random Image Browser')]),
     
     ('Reddit Auth',
      ['Username',
@@ -149,7 +149,7 @@ settingsStructure = [
 
     ('Debugging',
     [
-             ('Only_important_messages', 'Output minimal information to the console'),
+        ('Only_important_messages', 'Output minimal information to the console'),
         ('Use_cached_submissions', 'Do not get new stuff, just use the cache files from last run'),
         'Reddit_cache_file',
         'Tumblr_cache_file',
