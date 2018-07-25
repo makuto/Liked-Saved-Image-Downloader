@@ -3,7 +3,7 @@
 import time
 import os
 
-import scraper
+import redditScraper
 import tumblrScraper
 import submission
 import imageSaver
@@ -57,14 +57,16 @@ def runLikedSavedDownloader(pipeConnection):
 		submissions += submission.readCacheSubmissions(settings.settings['Tumblr_cache_file'])
 	else:
 		if settings.hasRedditSettings():
-			redditSubmissions, redditComments, earlyOutPoints = scraper.getRedditUserLikedSavedSubmissions(
+			redditSubmissions, redditComments, earlyOutPoints = redditScraper.getRedditUserLikedSavedSubmissions(
 				settings.settings['Username'], settings.settings['Password'], 
 				settings.settings['Client_id'], settings.settings['Client_secret'],
 				request_limit = settings.settings['Reddit_Total_requests'], 
 				saveLiked = settings.settings['Reddit_Save_Liked'], 
 				saveSaved = settings.settings['Reddit_Save_Saved'],
 				earlyOutPointSaved = redditRequestOnlyNewSavedCache, 
-				earlyOutPointLiked = redditRequestOnlyNewLikedCache)
+				earlyOutPointLiked = redditRequestOnlyNewLikedCache,
+				unlikeLiked = settings.settings['Reddit_Unlike_Liked'],
+				unsaveSaved = settings.settings['Reddit_Unsave_Saved'])
 			
 			# Cache them in case it's needed later
 			submission.writeCacheSubmissions(redditSubmissions, settings.settings['Reddit_cache_file'])

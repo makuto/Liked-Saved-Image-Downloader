@@ -39,6 +39,12 @@ Reddit_Save_Liked=True
 Reddit_Save_Saved=True
 Reddit_Save_Comments=True
 
+# Unlike/remove upvote after the submission has been recorded
+Reddit_Unlike_Liked=False
+
+# Unsave submission after it has been recorded
+Reddit_Unsave_Saved=False
+
 #========================================
 # General Settings
 #========================================

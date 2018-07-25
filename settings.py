@@ -39,6 +39,8 @@ settings = {
     'Reddit_Save_Liked' : True,
     'Reddit_Save_Saved' : True,
     'Reddit_Save_Comments' : True,
+    'Reddit_Unlike_Liked': False,
+    'Reddit_Unsave_Saved': False,
 
     'Only_important_messages' : False,
 
@@ -118,6 +120,8 @@ settingsStructure = [
       'Reddit_Save_Liked',
       'Reddit_Save_Saved',
       'Reddit_Save_Comments',
+      ('Reddit_Unlike_Liked', 'Unlike/remove upvote after the submission has been recorded'),
+      ('Reddit_Unsave_Saved', 'Unsave submission after it has been recorded'),
       ('Reddit_Try_Request_Only_New',
        "Attempt to only request and download new submissions (those which haven't been downloaded) This uses the Reddit cache files to know what's already been downloaded, so it will only work if you've successfully run the script before"),
       'Reddit_Try_Request_Only_New_Saved_Cache_File',
