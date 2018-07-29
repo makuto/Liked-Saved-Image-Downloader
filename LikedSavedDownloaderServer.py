@@ -16,8 +16,8 @@ from utilities import sort_naturally
 import settings
 import redditUserImageScraper
 
-videoExtensions = ('.mp4')
-supportedExtensions = ('.gif', '.jpg', '.jpeg', '.png', '.mp4')
+videoExtensions = ('.mp4', '.webm')
+supportedExtensions = ('.gif', '.jpg', '.jpeg', '.png', '.mp4', '.webm')
 
 savedImagesCache = []
 def generateSavedImagesCache(outputDir):
