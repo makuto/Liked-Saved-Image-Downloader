@@ -35,6 +35,7 @@ def generateSavedImagesCache(outputDir):
     print('Finished creating Liked Saved cache ({} images/videos)'.format(len(savedImagesCache)))
 
 def outputPathToServerPath(path):
+    # This is a little weird
     return 'output' + path.split(settings.settings['Output_dir'])[1]
 
 def getRandomImage(filteredImagesCache=None, randomImageFilter=''):
@@ -48,7 +49,6 @@ def getRandomImage(filteredImagesCache=None, randomImageFilter=''):
 
     print('\tgetRandomImage(): Chose random image {} (filter {})'.format(randomImage, randomImageFilter))
 
-    # Dear gods, forgive me, this is weird; trim the full output path
     serverPath = outputPathToServerPath(randomImage)
 
     return randomImage, serverPath
@@ -185,6 +185,19 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
         print('\tFiltered images with "{}"; {} images matching filter'
               .format(self.randomImageFilter, len(self.filteredImagesCache)))
 
+    def changeCurrentDirectory(self, newDirectory):
+        self.currentDirectoryPath = newDirectory
+        dirList = os.listdir(self.currentDirectoryPath)
+        
+        filteredDirList = []
+        for fileOrDir in dirList:
+            # The script spits out a lot of .json files the user probably doesn't want to see
+            if (not fileOrDir.endswith('.json')
+                and (not self.directoryFilter or self.directoryFilter.lower() in fileOrDir.lower())):
+                filteredDirList.append(fileOrDir)
+                
+        self.currentDirectoryCache = sorted(filteredDirList)
+
     def open(self):
         self.connections.add(self)
         self.randomHistory = []
@@ -194,6 +207,12 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
         self.currentImage = None
         self.randomImageFilter = ''
         self.filteredImagesCache = []
+        
+        self.currentDirectoryPath = ''
+        self.currentDirectoryCache = []
+        self.directoryFilter = ''
+        # Set up the directory cache with the top-level output
+        self.changeCurrentDirectory(settings.settings['Output_dir'])
 
     def on_message(self, message):
         print('RandomImageBrowserWebSocket: Received message ', message)
@@ -201,6 +220,10 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
         command = parsedMessage['command']
         print('RandomImageBrowserWebSocket: Command ', command)
         action = ''
+
+        """
+         Random Image Browser
+        """
 
         if command == 'imageAddToFavorites':
             if self.currentImage:
@@ -274,6 +297,48 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
                 self.randomImageFilter = newFilter
                 self.cacheFilteredImages()
 
+        """
+         Directory browser
+        """
+
+        if command == 'setDirectoryFilter':
+            newFilter = parsedMessage['filter']
+            if newFilter != self.directoryFilter:
+                self.directoryFilter = newFilter
+                # Refresh cache with new filter
+                self.changeCurrentDirectory(self.currentDirectoryPath)
+                action = 'sendDirectory'
+
+        if command == 'listCurrentDirectory':
+            action = 'sendDirectory'
+
+        if command == 'changeDirectory':
+            # Reset the filter (chances are the user only wanted to filter at one level
+            self.directoryFilter = ''
+            self.changeCurrentDirectory('{}/{}'.format(self.currentDirectoryPath, parsedMessage['path']));
+            action = 'sendDirectory'
+
+        if command == 'directoryUp':
+            # Don't allow going higher than output dir
+            if self.currentDirectoryPath != settings.settings['Output_dir']:
+                upDirectory = (settings.settings['Output_dir']  +
+                               self.currentDirectoryPath[len(settings.settings['Output_dir'])
+                                                         : self.currentDirectoryPath.rfind('/')])
+                # Reset the filter (chances are the user only wanted to filter at one level
+                self.directoryFilter = ''
+                self.changeCurrentDirectory(upDirectory)
+                action = 'sendDirectory'
+            
+        if command == 'directoryRoot':
+            # Reset the filter (chances are the user only wanted to filter at one level
+            self.directoryFilter = ''
+            self.changeCurrentDirectory(settings.settings['Output_dir'])
+            action = 'sendDirectory'
+
+        """
+         Actions
+        """
+
         # Only send a response if needed
         if action == 'setImage':
             # Stupid hack
@@ -284,6 +349,28 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
             responseMessage = ('{{"responseToCommand":"{}", "action":"{}", "fullImagePath":"{}", "serverImagePath":"{}"}}'
                                .format(command, action, fullImagePath, serverImagePath))
             self.write_message(responseMessage)
+
+        if action == 'sendDirectory':
+            directoryList = ''
+            for path in self.currentDirectoryCache:
+                isSupportedFile = path.endswith(supportedExtensions)
+                isFile = '.' in path
+                if path.endswith(videoExtensions):
+                    fileType = 'video'
+                elif isSupportedFile:
+                    fileType = 'image'
+                elif isFile:
+                    fileType = 'file'
+                else:
+                    fileType = 'dir'
+                serverPath = 'output' + self.currentDirectoryPath[len(settings.settings['Output_dir']):] + '/' + path
+                directoryList += '{{"path":"{}", "type":"{}", "serverPath":"{}"}},'.format(path, fileType, serverPath)
+
+            # Do directoryList[:-1] (yuck) to trim the final trailing comma because JSON doesn't like it
+            responseMessage = ('{{"responseToCommand":"{}", "action":"{}", "directoryList":[{}]}}'
+                               .format(command, action, directoryList[:-1]))
+            self.write_message(responseMessage)
+            
 
     def on_close(self):
         self.connections.remove(self)
@@ -394,6 +481,7 @@ def make_app():
 
         # Static files
         (r'/webInterface/(.*)', tornado.web.StaticFileHandler, {'path' : 'webInterface'}),
+        # Don't change this "output" here without changing the other places as well
         (r'/output/(.*)', tornado.web.StaticFileHandler, {'path' : settings.settings['Output_dir']}),
         
         # The old random image handler

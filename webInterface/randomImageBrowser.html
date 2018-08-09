@@ -9,29 +9,43 @@
 </head>
 
 <body>
-	<div class="leftControls">
-	  <button class="previousImage affectOpacity" onclick="sendMessage('previousImage')">Previous Random</button>
-	  <button class="previousImageInFolder affectOpacity" onclick="sendMessage('previousImageInFolder')">Previous In Folder</button>
-	  <button class="previousFavorite affectOpacity" onclick="sendMessage('previousFavorite')">Previous Favorite</button>
-	</div>
+    <div id="imageBrowserControls">
+        <div class="leftControls">
+            <button class="previousImage affectOpacity" onclick="sendMessage('previousImage')">Previous Random</button>
+            <button class="previousImageInFolder affectOpacity" onclick="sendMessage('previousImageInFolder')">Previous In Folder</button>
+            <button class="previousFavorite affectOpacity" onclick="sendMessage('previousFavorite')">Previous Favorite</button>
+        </div>
 
-	<div class="rightControls">
-	  <button class="nextImage affectOpacity" onclick="sendMessage('nextImage')">Next Random</button>
-	  <button class="nextImageInFolder affectOpacity" onclick="sendMessage('nextImageInFolder')">Next In Folder</button>
-	  <button class="nextFavorite affectOpacity" onclick="sendMessage('nextFavorite')">Next Favorite</button>
-	</div>
+        <div class="rightControls">
+            <button class="nextImage affectOpacity" onclick="sendMessage('nextImage')">Next Random</button>
+            <button class="nextImageInFolder affectOpacity" onclick="sendMessage('nextImageInFolder')">Next In Folder</button>
+            <button class="nextFavorite affectOpacity" onclick="sendMessage('nextFavorite')">Next Favorite</button>
+        </div>
 
-	<div class="centerControls">
-	  <input type="range" onchange="onOpacityChanged(this.value)" min="0.0" max="1.0" value="0.3" class="slider affectOpacity" step="0.1" id="opacitySlider">
-	  <input class="filter affectOpacity" type="text" id="filter" name="filter" placeholder="Filter" oninput="filterChanged(this.value)" />
-	  <div class="centerControlsButtons">
-		<button class="imageAddToFavorites affectOpacity" onclick="sendMessage('imageAddToFavorites')">Favorite</button>
-		<button class="toggleFullScreen affectOpacity" onclick="toggleFullScreen()">Toggle Fullscreen</button>
-	  </div>
-	</div>
+        <div class="centerControls">
+            <input type="range" onchange="onOpacityChanged(this.value)" min="0.0" max="1.0" value="0.3" class="slider affectOpacity" step="0.1" id="opacitySlider">
+            <input class="filter affectOpacity" type="text" id="filter" name="filter" placeholder="Filter" oninput="filterChanged(this.value)" />
+            <div class="centerControlsButtons">
+                <button class="imageAddToFavorites affectOpacity" onclick="sendMessage('imageAddToFavorites')">Favorite</button>
+                <button class="changeDirectory affectOpacity" onclick="toggleDirectoryControls()">Browse Directories</button>
+                <button class="toggleFullScreen affectOpacity" onclick="toggleFullScreen()">Toggle Fullscreen</button>
+            </div>
+        </div>
+    </div>
 
     <p class="affectOpacity" id="message"></p>
-	<div id="videoContainer"></div>
+    <div id="videoContainer"></div>
+
+    <div id="directoryControls" style="display:none">
+        <div class="directoryList">
+            <input type="range" onchange="onOpacityChanged(this.value)" min="0.0" max="1.0" value="0.3" class="slider affectOpacity" step="0.1" id="opacitySlider">
+            <input class="filter affectOpacity" type="text" id="directoryFilter" name="directoryFilter" placeholder="Filter" oninput="directoryFilterChanged(this.value)" />
+            <button class="affectOpacity directoryNavigationButton" onclick="toggleDirectoryControls()">Back to Random Browser</button>
+            <button class="affectOpacity directoryNavigationButton" onclick="directoryUpOnClick()">Up</button>
+            <button class="affectOpacity directoryNavigationButton" onclick="directoryRootOnClick()">Root</button>
+        </div>
+        <div id="directoryListContainer" class="directoryList"></div>
+    </div>
 </body>
 
 </html>

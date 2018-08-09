@@ -12,9 +12,9 @@ body {
 }
 
 input[type=text] {
-	font-size: 25px;
-	/* background-color: #333333; */
-	/* color: #000000; */
+    font-size: 25px;
+    /* background-color: #333333; */
+    /* color: #000000; */
 }
 
 p,
@@ -40,46 +40,81 @@ button {
 }
 
 .centerControls {
-	position: fixed;
-	bottom: 0;
+    position: fixed;
+    bottom: 0;
     width: 50%;
     height: 20%;
-	margin-left: 20%;
-	
-	display: flex;
-	flex-direction: column;
+    margin-left: 20%;
+
+    display: flex;
+    flex-direction: column;
 }
 
 .centerControlsButtons {
-	flex: 2 1 auto;
-	display: flex;
-	flex-direction: row;
+    flex: 2 1 auto;
+    display: flex;
+    flex-direction: row;
 }
 
 .leftControls {
-	position: fixed;
-	left: 0;
-	bottom: 0;
+    position: fixed;
+    left: 0;
+    bottom: 0;
     width: 20%;
     height: 70%;
-	
-	display: flex;
-	flex-direction: column;
+
+    display: flex;
+    flex-direction: column;
 }
 
 .rightControls {
-	position: fixed;
-	right: 0;
-	bottom: 0;
+    position: fixed;
+    right: 0;
+    bottom: 0;
     width: 20%;
     height: 70%;
-	
-	display: flex;
-	flex-direction: column;
+
+    display: flex;
+    flex-direction: column;
 }
 
+.directoryList {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 100%;
+}
+
+#directoryListContainer {
+    margin-top: 0px;
+}
+
+.directoryOrFileButton {
+	padding: 5px;
+}
+
+.directoryNavigationButton {
+	padding: 15px;
+}
+
+.directoryFilter {
+    opacity: 0.3;
+    flex: 1 1 auto;
+}
+
+.directoryButton_video {}
+
+.directoryButton_image {}
+
+.directoryButton_file {}
+
+.directoryButton_dir {}
+
+/*
+* Buttons
+*/
+
 .filter {
-	opacity: 0.3;
+    opacity: 0.3;
     flex: 1 1 auto;
 }
 
@@ -101,7 +136,7 @@ button {
 
 .nextImage {
     opacity: 0.3;
-	flex: 2 1 auto;
+    flex: 2 1 auto;
 }
 
 .imageAddToFavorites {
@@ -116,12 +151,13 @@ button {
 
 .nextFavorite {
     opacity: 0.3;
-	flex: 2 1 auto;
+    flex: 2 1 auto;
 }
 
 .nextImageInFolder {
     opacity: 0.3;
-    flex: 2 1 auto;;
+    flex: 2 1 auto;
+    ;
 }
 
 .previousImageInFolder {
@@ -130,6 +166,11 @@ button {
 }
 
 .toggleFullScreen {
+    opacity: 0.3;
+    flex: 1 1 auto;
+}
+
+.changeDirectory {
     opacity: 0.3;
     flex: 1 1 auto;
 }
