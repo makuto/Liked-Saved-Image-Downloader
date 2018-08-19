@@ -451,6 +451,8 @@ def updateScriptStatus():
             for client in runScriptWebSocketConnections:
                 client.write_message(responseMessage)
 
+            scriptPipeConnection.close()
+
 # Returns a html page with a random image from outputDir
 # Deprecated; use RandomImageBrowser instead
 class GetRandomImageHandler(tornado.web.RequestHandler):
