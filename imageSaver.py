@@ -102,8 +102,13 @@ def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
         if sys.version_info[0] >= 3 and pageEncoding:
             # If things are breaking near here you're not reading a .html    
             lineStr = line.decode(pageEncoding)
-            
-        foundSourcePosition = lineStr.lower().find(sourceKey.lower())
+
+        try:
+            foundSourcePosition = lineStr.lower().find(sourceKey.lower())
+        # Probably not reading a text file; we won't be able to determine the type
+        except TypeError:
+            logger.log('Unable to guess type for Url "' + url)
+            return ''
         
         if foundSourcePosition > -1:
             urlStartPosition = -1
