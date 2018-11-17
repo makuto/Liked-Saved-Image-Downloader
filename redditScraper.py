@@ -22,7 +22,9 @@ def getSubmissionsFromRedditList(redditList, source, earlyOutPoint = None, unlik
 
     numTotalSubmissions = len(redditList)
     for currentSubmissionIndex, singleSubmission in enumerate(redditList):
-
+        if currentSubmissionIndex and currentSubmissionIndex % 100 == 0:
+            logger.log('Got {} submissions...'.format(currentSubmissionIndex))
+            
         if type(singleSubmission) is praw.models.Submission:
             newSubmission = Submission()
 

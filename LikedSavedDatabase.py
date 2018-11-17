@@ -26,6 +26,7 @@ class LikedSavedDatabase:
         cursor = self.dbConnection.cursor()
         
         cursor.execute("create table Submissions (id integer primary key, source text, title text, author text, subreddit text, subredditTitle text, body text, bodyUrl text, postUrl text)")
+        cursor.execute("create table Comments (id integer primary key, source text, title text, author text, subreddit text, subredditTitle text, body text, bodyUrl text, postUrl text)")
         cursor.execute("create table Collections (id integer primary key, name text)")
         cursor.execute("create table SubmissionsToCollections (submissionKey integer, collectionKey integer)")
         
@@ -33,6 +34,13 @@ class LikedSavedDatabase:
         
     def save(self):
         self.dbConnection.commit()
+
+    def addComment(self, submission):
+        cursor = self.dbConnection.cursor()
+
+        cursor.execute("insert into Comments values (NULL,?,?,?,?,?,?,?,?)",
+                       submission.getAsList())
+        self.save()
 
     def addSubmission(self, submission):
         cursor = self.dbConnection.cursor()
@@ -44,9 +52,9 @@ class LikedSavedDatabase:
     def printSubmissions(self):
         cursor = self.dbConnection.cursor()
 
-        print("bunch of stuff: collections")
+        print("Submissions:")
         for row in cursor.execute("select * from Submissions"):
-            print(row)
+            print('\t', row)
         print("done")
     
     def getSubmissionByTitle(self, submissionTitle):

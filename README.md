@@ -43,7 +43,7 @@ To use it, install tornado via `pip3 install tornado` then run `python3 LikedSav
 5. Wait for a while
 6. Check your output directory (the default is `output` relative to where you ran the script) for all your images!
 
-If you want more images, set Reddit_Total_Requests and/or Tumblr_Total_Requests to a higher value. It's difficult to say how high to set it to get all of your images.
+If you want more images, set Reddit_Total_Requests and/or Tumblr_Total_Requests to a higher value. The maximum is 1000. Unfortunately, reddit does not allow you to get more than 1000 submissions of a single type (1000 liked, 1000 saved).
 
 Not actually getting images downloaded, but seeing the console say it downloaded images? Make sure `SHOULD_SOFT_RETRIEVE=False` in `settings.txt`
 
