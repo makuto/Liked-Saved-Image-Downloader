@@ -47,6 +47,11 @@ class Submission:
         jsonpickle.set_preferred_backend('json')
         jsonpickle.set_encoder_options('json', ensure_ascii=False, indent=4, separators=(',', ': '))
         return jsonpickle.encode(self)
+    
+    def getAsList(self):
+        return [self.source, self.title, self.author,
+                self.subreddit, self.subredditTitle,
+                self.body, self.bodyUrl, self.postUrl]
 
 def writeOutSubmissionsAsJson(redditList, file):
     file.write('{\n'.encode('utf8'))
