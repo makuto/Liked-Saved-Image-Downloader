@@ -521,6 +521,7 @@ if __name__ == '__main__':
         # Show the warning only if SSL is not enabled
         print('\n\tWARNING: Do NOT run this server on the internet (e.g. port-forwarded)'
           ' nor when\n\t connected to an insecure LAN! It is not protected against malicious use.\n')
+        app.listen(port)
         
     ioLoop = tornado.ioloop.IOLoop.current()
     updateStatusCallback = tornado.ioloop.PeriodicCallback(updateScriptStatus, 100)
