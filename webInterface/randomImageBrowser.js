@@ -1,4 +1,4 @@
-var ws = new WebSocket("ws://" + window.location.host + "/randomImageBrowserWebSocket");
+var ws = new WebSocket("wss://" + window.location.host + "/randomImageBrowserWebSocket");
 var username = "likedSavedBrowserClient";
 
 var currentOpacity = 0.3;

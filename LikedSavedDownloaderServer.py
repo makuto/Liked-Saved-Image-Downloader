@@ -507,7 +507,21 @@ if __name__ == '__main__':
     port = 8888
     print('\nStarting LikedSavedDownloader Server on port {}...'.format(port))
     app = make_app()
-    app.listen(port)
+
+    # Generating a self-signing certificate:
+    # openssl req -x509 -nodes -days 365 -newkey rsa:1024 -keyout certificates/server_jupyter_based.crt.key -out certificates/server_jupyter_based.crt.pem
+    # (from https://jupyter-notebook.readthedocs.io/en/latest/public_server.html)
+    # I then had to tell Firefox to trust this certificate even though it is self-signing (because
+    # I want a free certificate for this non-serious project)
+    useSSL = True
+    if useSSL:
+        app.listen(port, ssl_options={"certfile":"certificates/server_jupyter_based.crt.pem",
+                                      "keyfile":"certificates/server_jupyter_based.crt.key"})
+    else:
+        # Show the warning only if SSL is not enabled
+        print('\n\tWARNING: Do NOT run this server on the internet (e.g. port-forwarded)'
+          ' nor when\n\t connected to an insecure LAN! It is not protected against malicious use.\n')
+        
     ioLoop = tornado.ioloop.IOLoop.current()
     updateStatusCallback = tornado.ioloop.PeriodicCallback(updateScriptStatus, 100)
     updateStatusCallback.start()

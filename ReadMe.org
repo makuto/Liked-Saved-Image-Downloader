@@ -1,0 +1,85 @@
+* Reddit User Image Scraper
+
+Use this awesome Python 2 or 3 script to download
+- Images
+- Gifs
+- Imgur Albums
+- Comments
+
+...which you've marked as Liked, Hearted, or Saved from
+
+- Reddit
+- Tumblr
+
+...to disk!
+
+** Directions
+
+*** 1. Install python dependencies
+
+The following dependencies are required:
+
+#+BEGIN_SRC sh
+pip install praw pytumblr ImgurPython jsonpickle tornado
+#+END_SRC
+
+You'll want to use Python 3, which for your environment may require you to specify ~pip3~ instead of just ~pip~.
+
+*** 2. Generate SSL keys
+
+#+BEGIN_SRC sh
+mkdir certificates
+openssl req -x509 -nodes -days 365 -newkey rsa:1024 -keyout certificates/server_jupyter_based.crt.key -out certificates/server_jupyter_based.crt.pem
+#+END_SRC
+
+This step is only required if you want to use SSL, which ensures you have an encrypted connection to the server. You can disable this by opening ~LikedSavedDownloaderServer.py~ and setting ~useSSL=False~.
+
+*** 3. Run the server
+
+#+BEGIN_SRC sh
+python3 LikedSavedDownloaderServer.py
+#+END_SRC
+
+*** 4. Enter your account details and download the images
+
+1. Open [[https://localhost:8888][localhost:8888]] in any web browser
+
+If your web browser complains about the certificate, you may have to click ~Advanced~ and add the certificate as trustworthy, because you've signed the certificate and trust yourself :). If you want to get rid of this, you'll need to get a signing authority like ~LetsEncrypt~ to generate your certificate.
+
+2. Use the Web Server Interface to configure the script:
+[[file:images/LikedSavedSettings.png]]
+
+3. Go to the Run Script page and click "Run Script"
+
+4. Wait until the script finishes (it will say "Finished" at the bottom of the page)
+
+5. Enjoy! Use Random Image Browser to jump to random images you've downloaded, or browse your output directory
+
+**  Web Server Features
+
+This repository includes a simple web server interface. Unlike the main script, the server is supported in Python 3 only.
+
+To use it, install tornado via ~pip3 install tornado~ then run ~python3 LikedSavedDownloaderServer.py~. The interface can be seen by visiting ~https://localhost:8888~ in any web browser.
+
+*The web server is not secure in any way and should NOT be run on an insecure network!*
+
+[[file:images/LikedSavedBrowser.png]]
+
+** Running the script only
+
+1. Open ~settings.txt~
+2. Fill in your username and password
+3. Set ~SHOULD_SOFT_RETRIEVE~ to ~False~ if you are sure you want to do this
+4. Run the script: ~python redditUserImageScraper.py~
+5. Wait for a while
+6. Check your output directory (the default is ~output~ relative to where you ran the script) for all your images!
+
+If you want more images, set ~Reddit_Total_Requests~ and/or ~Tumblr_Total_Requests~ to a higher value. The maximum is 1000. Unfortunately, reddit does not allow you to get more than 1000 submissions of a single type (1000 liked, 1000 saved).
+
+Not actually getting images downloaded, but seeing the console say it downloaded images? Make sure ~SHOULD_SOFT_RETRIEVE=False~ in ~settings.txt~
+
+~settings.txt~ has several additional features. Read the comments to know how to use them.
+
+** Issues
+
+Feel free to create Issues on this repo if you need help. I'm friendly so don't be shy.
