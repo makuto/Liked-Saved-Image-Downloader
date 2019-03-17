@@ -23,11 +23,18 @@ The following dependencies are required:
 pip install praw pytumblr ImgurPython jsonpickle tornado
 #+END_SRC
 
+Download the repository first (obviously)
+
+#+BEGIN_SRC
+git clone https://github.com/makuto/redditLikedSavedImageDownloader
+#+END_SRC
+
 You'll want to use Python 3, which for your environment may require you to specify ~pip3~ instead of just ~pip~.
 
 *** 2. Generate SSL keys
 
 #+BEGIN_SRC sh
+cd redditLikedSavedImageDownloader
 mkdir certificates
 openssl req -x509 -nodes -days 365 -newkey rsa:1024 -keyout certificates/server_jupyter_based.crt.key -out certificates/server_jupyter_based.crt.pem
 #+END_SRC
