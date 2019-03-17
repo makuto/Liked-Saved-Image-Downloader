@@ -29,6 +29,7 @@ You'll want to use Python 3, which for your environment may require you to speci
 
 #+BEGIN_SRC sh
 mkdir certificates
+cd certificates
 openssl req -x509 -nodes -days 365 -newkey rsa:1024 -keyout certificates/server_jupyter_based.crt.key -out certificates/server_jupyter_based.crt.pem
 #+END_SRC
 
@@ -37,6 +38,7 @@ This step is only required if you want to use SSL, which ensures you have an enc
 *** 3. Run the server
 
 #+BEGIN_SRC sh
+cd redditLikedSavedImageDownloader
 python3 LikedSavedDownloaderServer.py
 #+END_SRC
 
