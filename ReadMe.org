@@ -15,7 +15,13 @@ Use this awesome Python 2 or 3 script to download
 
 ** Directions
 
-*** 1. Install python dependencies
+*** 1. You have to download this repository (obviously) 
+
+#+BEGIN_SRC sh
+git clone https://github.com/makuto/redditLikedSavedImageDownloader
+#END_SRC
+
+*** 2. Install python dependencies
 
 The following dependencies are required:
 
@@ -25,22 +31,23 @@ pip install praw pytumblr ImgurPython jsonpickle tornado
 
 You'll want to use Python 3, which for your environment may require you to specify ~pip3~ instead of just ~pip~.
 
-*** 2. Generate SSL keys
+*** 3. Generate SSL keys
 
 #+BEGIN_SRC sh
-mkdir certificates
+cd redditLikedSavedImageDownloader/
+mkdir certificates 
 openssl req -x509 -nodes -days 365 -newkey rsa:1024 -keyout certificates/server_jupyter_based.crt.key -out certificates/server_jupyter_based.crt.pem
 #+END_SRC
 
 This step is only required if you want to use SSL, which ensures you have an encrypted connection to the server. You can disable this by opening ~LikedSavedDownloaderServer.py~ and setting ~useSSL=False~.
 
-*** 3. Run the server
+*** 4. Run the server
 
 #+BEGIN_SRC sh
 python3 LikedSavedDownloaderServer.py
 #+END_SRC
 
-*** 4. Enter your account details and download the images
+*** 5.  Enter your account details and download the images
 
 1. Open [[https://localhost:8888][localhost:8888]] in any web browser
 
