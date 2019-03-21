@@ -19,7 +19,7 @@ Use this awesome Python 2 or 3 script to download
 
 #+BEGIN_SRC sh
 git clone https://github.com/makuto/redditLikedSavedImageDownloader
-#END_SRC
+#+END_SRC
 
 *** 2. Install python dependencies
 
