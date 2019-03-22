@@ -58,7 +58,7 @@ function directoryOrFileOnClick(path, serverPath, type) {
         }
 
         if (type == "video") {
-            window.open("http://" + window.location.host + "/" + serverPath);
+            window.open("https://" + window.location.host + "/" + serverPath);
         }
 
         if (type == "image") {
@@ -66,7 +66,7 @@ function directoryOrFileOnClick(path, serverPath, type) {
         }
 
         if (type == "file") {
-            window.open("http://" + window.location.host + "/" + serverPath);
+            window.open("https://" + window.location.host + "/" + serverPath);
         }
     }
 }
@@ -113,7 +113,7 @@ ws.onmessage = function(evt) {
         /*videoContainer.innerHTML = '<video class="video" width="500" height="500" autoplay loop="loop" controls><source src="'
         	+ messageDict.serverImagePath
         	+ '" type="video/mp4">Your browser does not support the video tag</video>';*/
-        videoContainer.innerHTML = '<a class="bigCenterLink" target="_blank" href="http://' +
+        videoContainer.innerHTML = '<a class="bigCenterLink" target="_blank" href="https://' +
             window.location.host + '/' + messageDict.serverImagePath +
             '">View Video</a>';
     }
