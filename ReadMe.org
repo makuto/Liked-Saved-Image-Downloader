@@ -31,6 +31,14 @@ pip install praw pytumblr ImgurPython jsonpickle tornado
 
 You'll want to use Python 3, which for your environment may require you to specify ~pip3~ instead of just ~pip~.
 
+**** Login-Protected Server
+
+If you want to require the user to login before they can interact with the server, you must install passlib:
+
+#+BEGIN_SRC sh
+pip install passlib bcrypt argon2_cffi
+#+END_SRC
+
 *** 3. Generate SSL keys
 
 #+BEGIN_SRC sh
@@ -66,11 +74,43 @@ If your web browser complains about the certificate, you may have to click ~Adva
 
 This repository includes a simple web server interface. Unlike the main script, the server is supported in Python 3 only.
 
-To use it, install tornado via ~pip3 install tornado~ then run ~python3 LikedSavedDownloaderServer.py~. The interface can be seen by visiting ~https://localhost:8888~ in any web browser.
+The interface can be seen by visiting ~https://localhost:8888~ in any web browser.
 
 *The web server is not secure in any way and should NOT be run on an insecure network!*
 
 [[file:images/LikedSavedBrowser.png]]
+
+*** Login-Authenticated Server
+
+The script includes an option to require login before running the script, changing settings, or browsing downloaded content.
+
+*I'm no expert, so use and trust at your own risk!* This security is essentially a cheap padlock which keeps honest people honest and undetermined intruders out.
+
+It requires some additional setup:
+
+**** 1. Enable it in ~LikedSavedDownloaderServer.py~
+
+Open ~LikedSavedDownloaderServer.py~ and find ~enable_authentication~. Set it equal to ~True~.
+
+**** 2. Create your account(s)
+
+Rather than have a web-based registration process, you'll create each account manually. This is because this service is only designed for private use.
+
+You'll use ~PasswordManager.py~ to generate a file ~passwords.txt~ with your hashed (and salted) passwords:
+
+#+BEGIN_SRC sh
+python3 PasswordManager.py "Your Password Here"
+#+END_SRC
+
+You can create multiple valid passwords, if desired.
+
+If you want to reset all passwords, simply delete ~passwords.txt~.
+
+**** 3. Restart your server
+
+You should now see a Login page before being able to access any content.
+
+Note that all login cookies will be invalidated each time you restart the server.
 
 ** Running the script only
 

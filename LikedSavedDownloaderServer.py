@@ -15,6 +15,14 @@ import multiprocessing
 from utilities import sort_naturally
 import settings
 import redditUserImageScraper
+import PasswordManager
+
+# Require a username and password in order to use the web interface. See ReadMe.org for details.
+enable_authentication = False
+#enable_authentication = True
+
+# List of valid user ids (used to compare user cookie)
+authenticated_users = []
 
 videoExtensions = ('.mp4', '.webm')
 supportedExtensions = ('.gif', '.jpg', '.jpeg', '.png', '.mp4', '.webm')
@@ -57,7 +65,87 @@ def getRandomImage(filteredImagesCache=None, randomImageFilter=''):
 # Tornado handlers
 #
 
-class HomeHandler(tornado.web.RequestHandler):
+# See https://github.com/tornadoweb/tornado/blob/stable/demos/blog/blog.py
+# https://www.tornadoweb.org/en/stable/guide/security.html
+
+def login_get_current_user(handler):
+    if enable_authentication:
+        cookie = handler.get_secure_cookie("user")
+        if cookie in authenticated_users:
+            return cookie
+        else:
+            print("Bad/expired cookie received")
+            return None
+    else:
+        return "authentication_disabled"
+
+class AuthHandler(tornado.web.RequestHandler):
+    def get_current_user(self):
+        return login_get_current_user(self)
+    
+class LoginHandler(AuthHandler):
+    def get(self):
+        if not enable_authentication:
+            self.redirect("/")
+        else:
+            self.write('<html>'
+                       '<head>'
+	               '<title>Liked Saved Downloader</title>'
+	               '<link rel="stylesheet" type="text/css" href="webInterfaceNoAuth/index.css">'
+                       '</head>'
+                       '<body><h1>Login Required</h1>'
+                       '<form action="/login" method="post">'
+                       'Name: <input type="text" name="name"><br />'
+                       'Password: <input type="password" name="password">'
+                       '{}'
+                       '<br /><input type="submit" value="Sign in">'
+                       '</form></body></html>'.format(self.xsrf_form_html()))
+
+    def post(self):
+        global authenticated_users
+        # Test password
+        if PasswordManager.verify(self.get_argument("password")):
+            # Generate new authenticated user session
+            randomGenerator = random.SystemRandom()
+            cookieSecret = str(randomGenerator.getrandbits(128))
+            authenticated_user = self.get_argument("name") + "_" + cookieSecret
+            authenticated_user = authenticated_user.encode()
+            authenticated_users.append(authenticated_user)
+            
+            # Set the cookie on the user's side
+            self.set_secure_cookie("user", authenticated_user)
+            
+            print("Authenticated user {}".format(self.get_argument("name")))
+            
+            # Let them in
+            self.redirect("/")
+        else:
+            print("Refused user {} (password doesn't match any in database)".format(self.get_argument("name")))
+            self.redirect("/login")
+            
+class LogoutHandler(AuthHandler):
+    @tornado.web.authenticated
+    def get(self):
+        global authenticated_users
+        
+        if enable_authentication:
+            print("User {} logging out".format(self.current_user))
+            if self.current_user in authenticated_users:
+                authenticated_users.remove(self.current_user)
+            self.redirect("/login")
+        else:
+            self.redirect("/")
+
+class AuthedStaticHandler(tornado.web.StaticFileHandler):
+    def get_current_user(self):
+        return login_get_current_user(self)
+    
+    @tornado.web.authenticated
+    def prepare(self):
+        pass
+
+class HomeHandler(AuthHandler):
+    @tornado.web.authenticated
     def get(self):
         self.render('webInterface/index.html')
 
@@ -102,7 +190,7 @@ def settingsToHtmlForm():
 
     return ''.join(settingsInputs)
 
-class SettingsHandler(tornado.web.RequestHandler):
+class SettingsHandler(AuthHandler):
     def doSettings(self, afterSubmit):
         htmlSettingsForm = settingsToHtmlForm()
         settingsFilename = settings.getSettingsFilename()
@@ -126,10 +214,12 @@ class SettingsHandler(tornado.web.RequestHandler):
                       </html>'''
                    .format(('<p><b>Settings updated</b></p>' if afterSubmit else ''),
                            settingsFilename, htmlSettingsForm))
-        
+
+    @tornado.web.authenticated
     def get(self):
         self.doSettings(False)
-        
+
+    @tornado.web.authenticated
     def post(self):
         currentOutputDir = settings.settings['Output_dir']
         
@@ -453,24 +543,22 @@ def updateScriptStatus():
 
             scriptPipeConnection.close()
 
-# Returns a html page with a random image from outputDir
-# Deprecated; use RandomImageBrowser instead
-class GetRandomImageHandler(tornado.web.RequestHandler):
-    def get(self):
-        fullImagePath, serverImagePath = getRandomImage() 
-        
-        self.write('''<html><head><link rel="stylesheet" type="text/css" href="webInterface/styles.css"></head>
-                            <body><p>{}</p><img class="maximize" src="{}"/></body>
-                      </html>'''.format(fullImagePath, serverImagePath))
-
 #
 # Startup
 #
 
 def make_app():
+    # Each time the server starts up, invalidate all cookies
+    randomGenerator = random.SystemRandom()
+    cookieSecret = str(randomGenerator.getrandbits(128))
+    
     return tornado.web.Application([
         # Home page
         (r'/', HomeHandler),
+        
+        # Login
+        (r'/login', LoginHandler),
+        (r'/logout', LogoutHandler),
 
         # Configure the script
         (r'/settings', SettingsHandler),
@@ -482,13 +570,17 @@ def make_app():
         (r'/randomImageBrowserWebSocket', RandomImageBrowserWebSocket),
 
         # Static files
-        (r'/webInterface/(.*)', tornado.web.StaticFileHandler, {'path' : 'webInterface'}),
+        (r'/webInterface/(.*)', AuthedStaticHandler, {'path' : 'webInterface'}),
         # Don't change this "output" here without changing the other places as well
-        (r'/output/(.*)', tornado.web.StaticFileHandler, {'path' : settings.settings['Output_dir']}),
-        
-        # The old random image handler
-        (r'/random', GetRandomImageHandler),
-    ])
+        (r'/output/(.*)', AuthedStaticHandler, {'path' : settings.settings['Output_dir']}),
+
+        # Files served regardless of whether the user is authenticated. Only login page resources
+        # should be in this folder, because anyone can see them
+        (r'/webInterfaceNoAuth/(.*)', tornado.web.StaticFileHandler, {'path' : 'webInterfaceNoAuth'}),
+    ],
+                                   xsrf_cookies=True,
+                                   cookie_secret=cookieSecret,
+                                   login_url="/login")
 
 if __name__ == '__main__':
     print('\n\tWARNING: Do NOT run this server on the internet (e.g. port-forwarded)'
