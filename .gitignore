@@ -8,3 +8,5 @@ LOCAL_*
 *.sublime-workspace
 *.db
 *.db-journal
+passwords.txt
+certificates

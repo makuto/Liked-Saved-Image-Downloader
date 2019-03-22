@@ -15,11 +15,13 @@ import multiprocessing
 from utilities import sort_naturally
 import settings
 import redditUserImageScraper
-import PasswordManager
 
 # Require a username and password in order to use the web interface. See ReadMe.org for details.
 enable_authentication = False
 #enable_authentication = True
+
+if enable_authentication:
+    import PasswordManager
 
 # List of valid user ids (used to compare user cookie)
 authenticated_users = []
@@ -104,7 +106,7 @@ class LoginHandler(AuthHandler):
     def post(self):
         global authenticated_users
         # Test password
-        if PasswordManager.verify(self.get_argument("password")):
+        if enable_authentication and PasswordManager.verify(self.get_argument("password")):
             # Generate new authenticated user session
             randomGenerator = random.SystemRandom()
             cookieSecret = str(randomGenerator.getrandbits(128))
@@ -289,6 +291,9 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
         self.currentDirectoryCache = sorted(filteredDirList)
 
     def open(self):
+        if not login_get_current_user(self):
+            return None
+        
         self.connections.add(self)
         self.randomHistory = []
         self.randomHistoryIndex = -1
@@ -305,6 +310,9 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
         self.changeCurrentDirectory(settings.settings['Output_dir'])
 
     def on_message(self, message):
+        if not login_get_current_user(self):
+            return None
+        
         print('RandomImageBrowserWebSocket: Received message ', message)
         parsedMessage = json.loads(message)
         command = parsedMessage['command']
@@ -483,10 +491,16 @@ def startScript():
 runScriptWebSocketConnections = set()
 class RunScriptWebSocket(tornado.websocket.WebSocketHandler):
     def open(self):
+        if not login_get_current_user(self):
+            return None
+        
         global runScriptWebSocketConnections
         runScriptWebSocketConnections.add(self)
 
     def on_message(self, message):
+        if not login_get_current_user(self):
+            return None
+        
         print('RunScriptWebSocket: Received message ', message)
 
         parsedMessage = json.loads(message)
