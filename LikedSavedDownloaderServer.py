@@ -211,11 +211,12 @@ class SettingsHandler(AuthHandler):
                                        <input type="submit" value="Submit">
                                        {}
                                        <input type="submit" value="Submit">
+                                       {}
                                   </form>
                             </body>
                       </html>'''
                    .format(('<p><b>Settings updated</b></p>' if afterSubmit else ''),
-                           settingsFilename, htmlSettingsForm))
+                           settingsFilename, htmlSettingsForm, self.xsrf_form_html()))
 
     @tornado.web.authenticated
     def get(self):
