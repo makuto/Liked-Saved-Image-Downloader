@@ -530,6 +530,7 @@ class RunScriptWebSocket(tornado.websocket.WebSocketHandler):
         runScriptWebSocketConnections.remove(self)
 
 def updateScriptStatus():
+    global scriptPipeConnection
     # If no pipe or no data to receive from pipe, we're done
     # Poll() is non-blocking whereas recv is blocking
     try:
