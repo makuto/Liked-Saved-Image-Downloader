@@ -17,8 +17,8 @@ import settings
 import redditUserImageScraper
 
 # Require a username and password in order to use the web interface. See ReadMe.org for details.
-enable_authentication = False
-#enable_authentication = True
+#enable_authentication = False
+enable_authentication = True
 
 if enable_authentication:
     import PasswordManager
