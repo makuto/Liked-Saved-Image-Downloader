@@ -146,9 +146,12 @@ def convertGfycatUrlToWebM(url):
     #   https://giant.gfycat.com/IndolentScalyIncatern.webm
 
     # Look for this key in the HTML document and get whatever src is
-    GFYCAT_SOURCE_KEY = '<source id="webmSource" src='
+    # GFYCAT_SOURCE_KEY = '<source id="webmSource" src='
 
-    return findSourceFromHTML(url, GFYCAT_SOURCE_KEY)
+    # return findSourceFromHTML(url, GFYCAT_SOURCE_KEY)
+
+    # Temporary solution while Gfycat API isn't set up
+    return "https://giant.gfycat.com/{}.webm".format(url[url.rfind("/") + 1:])
 
 def isGifVUrl(url):
     return getFileTypeFromUrl(url) == 'gifv'
