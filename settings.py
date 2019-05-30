@@ -145,8 +145,8 @@ settingsStructure = [
        " your new client.")]),
 
     ('Gfycat Auth',
-     ['Gfycat_client_id',
-      ('Gfycat_client_secret', "These need to be filled in so that the script can download Gfycat"
+     ['Gfycat_Client_id',
+      ('Gfycat_Client_secret', "These need to be filled in so that the script can download Gfycat"
        " media. If not filled in, many Gfycat links will fail to download."
        " Go <a href=\"https://developers.gfycat.com/signup/#/apiform\">here</a> to get your API keys.")]),
     
