@@ -19,7 +19,7 @@ def runLikedSavedDownloader(pipeConnection):
 	settings.getSettings()
 
 	if (not settings.settings['Use_cached_submissions'] 
-	    and not settings.hasTumblrSettings() and not settings.hasRedditSettings()):
+		and not settings.hasTumblrSettings() and not settings.hasRedditSettings()):
 		logger.log('Please provide Tumblr or Reddit account details settings.txt')
 		return
 
@@ -38,7 +38,7 @@ def runLikedSavedDownloader(pipeConnection):
 			   ' enabled. This is required to download Gfycat media reliably.')
 
 	logger.log('Output: ' + settings.settings['Output_dir'])
-    makeDirIfNonexistant(settings.settings['Output_dir'])
+	makeDirIfNonexistant(settings.settings['Output_dir'])
 
 	# TODO: Only save one post for early out. Only save once all downloading is done
 	redditRequestOnlyNewSavedCache = None

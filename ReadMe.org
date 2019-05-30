@@ -129,3 +129,8 @@ Not actually getting images downloaded, but seeing the console say it downloaded
 ** Issues
 
 Feel free to create Issues on this repo if you need help. I'm friendly so don't be shy.
+** When Updating
+
+If there were changes to ~settings.txt~ pushed, your server will start reading settings from there instead of your ~LOCAL_settings_from_server.txt~. This is because the server always reads the settings file with the newest timestamp.
+
+You can fix this by running ~touch LOCAL_settings_from_server.txt~ or opening your desired settings file and saving it in a text editor.
