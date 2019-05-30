@@ -39,7 +39,7 @@ def runLikedSavedDownloader(pipeConnection):
 			   ' enabled. This is required to download Gfycat media reliably.')
 
 	logger.log('Output: ' + settings.settings['Output_dir'])
-	makeDirIfNonexistant(settings.settings['Output_dir'])
+	utilities.makeDirIfNonexistant(settings.settings['Output_dir'])
 
 	# TODO: Only save one post for early out. Only save once all downloading is done
 	redditRequestOnlyNewSavedCache = None

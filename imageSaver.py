@@ -280,7 +280,7 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
         return 0
 
     if not soft_retrieve_imgs:
-        makeDirIfNonexistant(outputDir)
+        utilities.makeDirIfNonexistant(outputDir)
 
     subredditIndex = -1
     numSubreddits = len(subredditAlbums)
@@ -291,7 +291,7 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
 
         if not soft_retrieve_imgs:
             # Make directory for subreddit
-            makeDirIfNonexistant(outputDir + '/' + subredditDir)
+            utilities.makeDirIfNonexistant(outputDir + '/' + subredditDir)
 
         numAlbums = len(albums)
         for albumIndex, album in enumerate(albums):
@@ -319,7 +319,7 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
 
             if not soft_retrieve_imgs:
                 # Make directory for album
-                makeDirIfNonexistant(saveAlbumPath)            
+                utilities.makeDirIfNonexistant(saveAlbumPath)            
 
             albumImages = []
             # Don't talk to the API for soft retrieval (we don't want to waste our credits)
@@ -375,7 +375,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
     imgurAlbumsToSave = {}
 
     if not soft_retrieve_imgs:
-        makeDirIfNonexistant(outputDir)
+        utilities.makeDirIfNonexistant(outputDir)
     
     # Sort by subreddit, alphabetically
     sortedSubmissions = sorted(submissions, key=attrgetter('subreddit'))
@@ -480,7 +480,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
 
             if not soft_retrieve_imgs:
                 # Make directory for subreddit
-                makeDirIfNonexistant(outputDir + '/' + subredditDir)
+                utilities.makeDirIfNonexistant(outputDir + '/' + subredditDir)
 
                 # Retrieve the image and save it
                 try:
