@@ -101,6 +101,12 @@ Only_download_albums=False
 #========================================
 # Tumblr Settings
 #========================================
+Gfycat_Client_id=
+Gfycat_Client_secret=
+
+#========================================
+# Tumblr Settings
+#========================================
 
 # Follow the same procedure as reddit for Tumblr
 # Register the app here: https://www.tumblr.com/oauth/apps

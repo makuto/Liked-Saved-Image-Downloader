@@ -627,8 +627,15 @@ if __name__ == '__main__':
     # I want a free certificate for this non-serious project)
     useSSL = True
     if useSSL:
-        app.listen(port, ssl_options={"certfile":"certificates/server_jupyter_based.crt.pem",
-                                      "keyfile":"certificates/server_jupyter_based.crt.key"})
+        if os.path.exists("certificates/liked_saved_server.crt.pem"):
+            app.listen(port, ssl_options={"certfile":"certificates/liked_saved_server.crt.pem",
+                                          "keyfile":"certificates/liked_saved_server.crt.key"})
+        # For backwards compatibility
+        elif os.path.exists("certificates/server_jupyter_based.crt.pem"):
+            app.listen(port, ssl_options={"certfile":"certificates/server_jupyter_based.crt.pem",
+                                          "keyfile":"certificates/server_jupyter_based.crt.key"})
+        else:
+            print('\n\tERROR: Certificates non-existent! Run ./Generate_Certificates.sh to create them')
     else:
         # Show the warning only if SSL is not enabled
         print('\n\tWARNING: Do NOT run this server on the internet (e.g. port-forwarded)'

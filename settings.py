@@ -26,6 +26,12 @@ settings = {
     'Tumblr_Client_secret' : '',
     'Tumblr_Client_token' : '',
     'Tumblr_Client_token_secret' : '',
+    
+    # Gfycat authentication information
+    # https://developers.gfycat.com/signup/#/apiform
+    # Requires https://github.com/ankeshanand/py-gfycat
+    'Gfycat_Client_id' : '',
+    'Gfycat_Client_secret' : '',
 
     # Disable downloading albums by default.
     'Should_download_albums' : False,
@@ -123,13 +129,26 @@ settingsStructure = [
       ('Reddit_Unlike_Liked', 'Unlike/remove upvote after the submission has been recorded'),
       ('Reddit_Unsave_Saved', 'Unsave submission after it has been recorded'),
       ('Reddit_Try_Request_Only_New',
-       "Attempt to only request and download new submissions (those which haven't been downloaded) This uses the Reddit cache files to know what's already been downloaded, so it will only work if you've successfully run the script before"),
+       "Attempt to only request and download new submissions (those which haven't been downloaded) "
+       "This uses the Reddit cache files to know what's already been downloaded, so it will only"
+       "work if you've successfully run the script before"),
       'Reddit_Try_Request_Only_New_Saved_Cache_File',
       'Reddit_Try_Request_Only_New_Liked_Cache_File']),
     
     ('Imgur Auth',
      ['Imgur_client_id',
-      ('Imgur_client_secret',"These need to be filled in so that the script can download Imgur albums. If not filled in, imgur albums will be ignored. Single images will still be downloaded. I've filled in a public imgur user's information. This isn't safe giving you hooligans the secret, but fuck it. If you want to use your own Imgur Client, sign in to Imgur, then go <a href=\"https://api.imgur.com/oauth2/addclient\">here</a> and create your new client.")]),
+      ('Imgur_client_secret',"These need to be filled in so that the script can download Imgur "
+       "albums. If not filled in, imgur albums will be ignored. Single images will still be "
+       "downloaded. I've filled in a public imgur user's information. This isn't safe giving you"
+       " hooligans the secret, but fuck it. If you want to use your own Imgur Client, sign in to"
+       " Imgur, then go <a href=\"https://api.imgur.com/oauth2/addclient\">here</a> and create"
+       " your new client.")]),
+
+    ('Gfycat Auth',
+     ['Gfycat_client_id',
+      ('Gfycat_client_secret', "These need to be filled in so that the script can download Gfycat"
+       " media. If not filled in, many Gfycat links will fail to download."
+       " Go <a href=\"https://developers.gfycat.com/signup/#/apiform\">here</a> to get your API keys.")]),
     
     ('Tumblr Auth',
      ['Tumblr_Client_id',
@@ -140,7 +159,9 @@ settingsStructure = [
     ('Tumblr Settings',
      [('Tumblr_Total_requests', requestsInstructions),
       ('Tumblr_Try_Request_Only_New',
-       "Attempt to only request and download new submissions (those which haven't been downloaded) This uses the Reddit cache files to know what's already been downloaded, so it will only work if you've successfully run the script before"),
+       "Attempt to only request and download new submissions (those which haven't been downloaded) "
+       "This uses the Reddit cache files to know what's already been downloaded, so it will only "
+       "work if you've successfully run the script before"),
       'Tumblr_Try_Request_Only_New_Cache_File']),
     
     ('Download Settings',

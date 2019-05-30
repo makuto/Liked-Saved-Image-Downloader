@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 
-import sys
+import imgurpython as imgur
+import logger
 import os
 import random
-from crcUtils import signedCrc32
-from operator import attrgetter
-import imgurpython as imgur
+import re
+import settings
+import sys
+import utilities
+
 from builtins import str
-import logger
+from crcUtils import signedCrc32
+from gfycat.client import GfycatClient
+from operator import attrgetter
 
 import urllib
 if sys.version_info[0] >= 3:
@@ -135,23 +140,36 @@ def isGfycatUrl(url):
             and '.webm' not in url.lower()
             and '.gif' not in url.lower()[-4:])
 
+# Lazy initialize in case it's not needed
+gfycatClient = None
 # Special handling for Gfycat links
 # Returns a URL to a webm which can be downloaded by urllib
 def convertGfycatUrlToWebM(url):
+    global gfycatClient
     # Change this:
     #   https://gfycat.com/IndolentScalyIncatern
+    #   https://gfycat.com/IndolentScalyIncatern/
     # Into this:
     #   https://zippy.gfycat.com/IndolentScalyIncatern.webm
     # Or maybe this:
     #   https://giant.gfycat.com/IndolentScalyIncatern.webm
 
-    # Look for this key in the HTML document and get whatever src is
-    # GFYCAT_SOURCE_KEY = '<source id="webmSource" src='
+    # Lazy initialize client
+    if not gfycatClient and settings.settings['Gfycat_Client_id']:
+        gfycatClient = GfycatClient(settings.settings['Gfycat_Client_id'],settings.settings['Gfycat_Client_secret'])
 
-    # return findSourceFromHTML(url, GFYCAT_SOURCE_KEY)
-
-    # Temporary solution while Gfycat API isn't set up
-    return "https://giant.gfycat.com/{}.webm".format(url[url.rfind("/") + 1:])
+    # Still don't have a client?
+    if not gfycatClient:
+        # Hacky solution while Gfycat API isn't set up. This breaks if case is wrong
+        return "https://giant.gfycat.com/{}.webm".format(url[url.rfind("/") + 1:])
+    else:
+        # Get the gfyname from the url
+        matches = re.findall(r'gfycat\.com/([a-zA-Z]+)', url)
+        if not matches:
+            logger.log("Gfycat URL {} doesn't seem to match expected URL format")
+        else:
+            gfycatUrlInfo = gfycatClient.query_gfy(matches[0])
+            return gfycatUrlInfo['gfyItem']['mp4Url']
 
 def isGifVUrl(url):
     return getFileTypeFromUrl(url) == 'gifv'
@@ -195,10 +213,6 @@ def isImgurAlbumUrl(url):
     return ('imgur' in url.lower()
         and not getFileTypeFromUrl(url) 
         and '/a/' in url)
-
-def makeDirIfNonexistant(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
 
 # Make sure the filename is alphanumeric or has supported symbols, and is shorter than 45 characters
 def safeFileName(filename, file_path = False):

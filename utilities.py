@@ -17,3 +17,7 @@ def sort_naturally(l):
     """ Sort the given list in the way that humans expect.
     """
     l.sort(key=alphanum_key)
+
+def makeDirIfNonexistant(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
