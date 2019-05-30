@@ -33,7 +33,7 @@ def runLikedSavedDownloader(pipeConnection):
 			' enabled. This is required to download imgur albums. They will be ignored. Check'
 			' settings.txt for how to fill in these values.')
 		
-	if not settings.settings['Gfycat_client_id']:
+	if not settings.settings['Gfycat_Client_id']:
 		logger.log('No Gfycat Client ID and/or Gfycat Client Secret was provided, or album download is not'
 			   ' enabled. This is required to download Gfycat media reliably.')
 
