@@ -3,12 +3,13 @@
 import time
 import os
 
-import redditScraper
-import tumblrScraper
-import submission
 import imageSaver
-import settings
 import logger
+import redditScraper
+import settings
+import submission
+import tumblrScraper
+import utilities
 
 scriptFinishedSentinel = '>>> runLikedSavedDownloader() Process Finished <<<'
 
