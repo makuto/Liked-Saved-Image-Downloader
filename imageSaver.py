@@ -84,7 +84,11 @@ def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
     SANE_NUM_LINES = 30
 
     # Open the page to search for a saveable .gif or .webm
-    pageSource = urlopen(url)
+    try:
+        pageSource = urlopen(url)
+    except urllib.error.HTTPError, e:
+        print("URL {} had HTTP error:\n{}".format(str(e.reason)))
+        return None
 
     # This code doesn't quite work yet; if things are breaking near here you're not reading a .html
     # Leaving this here for future work
@@ -431,7 +435,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
             if isImgurIndirectUrl(url):
                 url = convertImgurIndirectUrlToImg(url)
 
-            urlContentType = getUrlContentType(url)
+            if url:
+                urlContentType = getUrlContentType(url)
 
         if shouldTrustUrl or isUrlSupportedType(url) or isContentTypeSupported(urlContentType):
             fileType = getFileTypeFromUrl(url)
