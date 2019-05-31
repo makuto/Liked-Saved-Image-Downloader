@@ -87,7 +87,7 @@ def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
     try:
         pageSource = urlopen(url)
     except urllib.error.HTTPError as e:
-        print("URL {} had HTTP error:\n{}".format(str(e.reason)))
+        print("URL {} had HTTP error:\n{}".format(url, str(e.reason)))
         return None
 
     # This code doesn't quite work yet; if things are breaking near here you're not reading a .html
