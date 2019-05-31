@@ -86,7 +86,7 @@ def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
     # Open the page to search for a saveable .gif or .webm
     try:
         pageSource = urlopen(url)
-    except urllib.error.HTTPError, e:
+    except urllib.error.HTTPError as e:
         print("URL {} had HTTP error:\n{}".format(str(e.reason)))
         return None
 
