@@ -435,9 +435,9 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
             # Massage special-case links so that they can be downloaded
             if isGfycatUrl(url):
                 url = convertGfycatUrlToWebM(url)
-            if isGifVUrl(url):
+            elif isGifVUrl(url):
                 url = convertGifVUrlToWebM(url)
-            if isImgurIndirectUrl(url):
+            elif isImgurIndirectUrl(url):
                 url = convertImgurIndirectUrlToImg(url)
 
             if url:
