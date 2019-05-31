@@ -172,7 +172,12 @@ def convertGfycatUrlToWebM(url):
         if not matches:
             logger.log("Gfycat URL {} doesn't seem to match expected URL format")
         else:
-            gfycatUrlInfo = gfycatClient.query_gfy(matches[0])
+            try:
+                gfycatUrlInfo = gfycatClient.query_gfy(matches[0])
+            except Exception as e:
+                logger.log('[ERROR] Exception: Url {0} raised exception:\n\t {1}'
+                           .format(url, e))
+                return None
             return gfycatUrlInfo['gfyItem']['mp4Url']
 
 def isGifVUrl(url):
