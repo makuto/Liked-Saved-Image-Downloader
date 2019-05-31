@@ -603,9 +603,6 @@ def make_app():
                                    login_url="/login")
 
 if __name__ == '__main__':
-    print('\n\tWARNING: Do NOT run this server on the internet (e.g. port-forwarded)'
-          ' nor when\n\t connected to an insecure LAN! It is not protected against malicious use.\n')
-    
     print('Loading settings...')
     settings.getSettings()
 

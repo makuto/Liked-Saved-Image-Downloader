@@ -164,7 +164,7 @@ def convertGfycatUrlToWebM(url):
         return "https://giant.gfycat.com/{}.webm".format(url[url.rfind("/") + 1:])
     else:
         # Get the gfyname from the url
-        matches = re.findall(r'gfycat\.com/([a-zA-Z]+)', url)
+        matches = re.findall(r'gfycat\.com.*/([a-zA-Z]+)', url)
         if not matches:
             logger.log("Gfycat URL {} doesn't seem to match expected URL format")
         else:
