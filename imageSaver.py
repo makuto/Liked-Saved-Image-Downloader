@@ -437,6 +437,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
 
             if url:
                 urlContentType = getUrlContentType(url)
+            else:
+                continue
 
         if shouldTrustUrl or isUrlSupportedType(url) or isContentTypeSupported(urlContentType):
             fileType = getFileTypeFromUrl(url)
