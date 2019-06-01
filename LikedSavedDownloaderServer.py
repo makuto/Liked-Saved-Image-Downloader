@@ -106,6 +106,7 @@ class LoginHandler(AuthHandler):
     def post(self):
         global authenticated_users
         # Test password
+        print("Attempting to authorize user {}...".format(self.get_argument("name")))
         if enable_authentication and PasswordManager.verify(self.get_argument("password")):
             # Generate new authenticated user session
             randomGenerator = random.SystemRandom()

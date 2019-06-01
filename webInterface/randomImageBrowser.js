@@ -111,11 +111,11 @@ ws.onmessage = function(evt) {
 
         // This would work except for the fact that the web server doesn't handle streaming video yet
         /*videoContainer.innerHTML = '<video class="video" width="500" height="500" autoplay loop="loop" controls><source src="'
-        	+ messageDict.serverImagePath
-        	+ '" type="video/mp4">Your browser does not support the video tag</video>';*/
+            + messageDict.serverImagePath
+            + '" type="video/mp4">Your browser does not support the video tag</video>';*/
         videoContainer.innerHTML = '<a class="bigCenterLink" target="_blank" href="https://' +
             window.location.host + '/' + messageDict.serverImagePath +
-            '">View Video</a>';
+            '">View Video ' + messageDict.serverImagePath + '</a>';
     }
 
     if (messageDict.action == "sendDirectory") {
@@ -144,15 +144,27 @@ ws.onmessage = function(evt) {
     }
 };
 
-document.addEventListener("DOMContentLoaded", function() {
-    // This is a stupid hack because I couldn't figure out when the web socket actually connects (I'm so lazy)
-    setTimeout(function() {
-        sendMessage("nextImage");
-        sendMessage("listCurrentDirectory")
+// As soon as the websocket opens, request the initial image
+ws.onopen = function(event) {
+    var serverStatus = document.getElementById("serverStatus");
+    // Hide it if the socket is open, so it doesn't get in the way
+    serverStatus.innerHTML = "";
+    sendMessage("nextImage");
+    sendMessage("listCurrentDirectory")
+}
 
+// As soon as the websocket opens, request the initial image
+ws.onclose = function(event) {
+    var serverStatus = document.getElementById("serverStatus");
+    // Hide it if the socket is open, so it doesn't get in the way
+    serverStatus.innerHTML = "Connection to server lost";
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    setTimeout(function() {
         // Workaround for mobile not using CSS starting opacity
         onOpacityChanged('0.3');
-    }, 200);
+    }, 100);
 }, false);
 
 // From https://stackoverflow.com/questions/19440344/html5-fullscreen-browser-toggle-button
