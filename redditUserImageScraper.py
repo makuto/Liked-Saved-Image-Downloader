@@ -3,6 +3,7 @@
 import time
 import os
 
+import LikedSavedDatabase
 import imageSaver
 import logger
 import redditScraper
@@ -14,124 +15,140 @@ import utilities
 scriptFinishedSentinel = '>>> runLikedSavedDownloader() Process Finished <<<'
 
 def runLikedSavedDownloader(pipeConnection):
-	if pipeConnection:
-		logger.setPipe(pipeConnection)
-		
-	settings.getSettings()
+    if pipeConnection:
+        logger.setPipe(pipeConnection)
+        
+    settings.getSettings()
+        
+    if not settings.settings['Database']:
+        logger.log('Please provide a location for the Database')
+        return
 
-	if (not settings.settings['Use_cached_submissions'] 
-		and not settings.hasTumblrSettings() and not settings.hasRedditSettings()):
-		logger.log('Please provide Tumblr or Reddit account details settings.txt')
-		return
+    # Do this early so we can use it anywhere
+    LikedSavedDatabase.initializeFromSettings(settings.settings)
 
-	imgurAuth = None
-	if (settings.settings['Should_download_albums'] 
-		and settings.hasImgurSettings()):
-		imgurAuth = imageSaver.ImgurAuth(settings.settings['Imgur_client_id'], 
-						 settings.settings['Imgur_client_secret'])
-	else:
-		logger.log('No Imgur Client ID and/or Imgur Client Secret was provided, or album download is not'
-			' enabled. This is required to download imgur albums. They will be ignored. Check'
-			' settings.txt for how to fill in these values.')
-		
-	if not settings.settings['Gfycat_Client_id']:
-		logger.log('No Gfycat Client ID and/or Gfycat Client Secret was provided, or album download is not'
-			   ' enabled. This is required to download Gfycat media reliably.')
+    if (not settings.settings['Use_cached_submissions'] 
+        and not settings.hasTumblrSettings() and not settings.hasRedditSettings()):
+        logger.log('Please provide Tumblr or Reddit account details in settings.txt'
+                   ' or via the Settings page provided by  LikedSavedDownloader server')
+        return
 
-	logger.log('Output: ' + settings.settings['Output_dir'])
-	utilities.makeDirIfNonexistant(settings.settings['Output_dir'])
+    imgurAuth = None
+    if (settings.settings['Should_download_albums'] 
+        and settings.hasImgurSettings()):
+        imgurAuth = imageSaver.ImgurAuth(settings.settings['Imgur_client_id'], 
+                                         settings.settings['Imgur_client_secret'])
+    else:
+        logger.log('No Imgur Client ID and/or Imgur Client Secret was provided, or album download is not'
+                   ' enabled. This is required to download imgur albums. They will be ignored. Check'
+                   ' settings.txt for how to fill in these values.')
+            
+    if not settings.settings['Gfycat_Client_id']:
+        logger.log('No Gfycat Client ID and/or Gfycat Client Secret was provided, or album download is not'
+                   ' enabled. This is required to download Gfycat media reliably.')
 
-	# TODO: Only save one post for early out. Only save once all downloading is done
-	redditRequestOnlyNewSavedCache = None
-	redditRequestOnlyNewLikedCache = None
-	if settings.settings['Reddit_Try_Request_Only_New']:
-		redditRequestOnlyNewSavedCache = submission.readCacheSubmissions(
-			settings.settings['Reddit_Try_Request_Only_New_Saved_Cache_File'])
-		redditRequestOnlyNewLikedCache = submission.readCacheSubmissions(
-			settings.settings['Reddit_Try_Request_Only_New_Liked_Cache_File'])
+    logger.log('Output: ' + settings.settings['Output_dir'])
+    utilities.makeDirIfNonexistant(settings.settings['Output_dir'])
+        
+    submissions = getSubmissionsToSave()
 
-	tumblrRequestOnlyNewCache = None
-	if settings.settings['Tumblr_Try_Request_Only_New']:
-		tumblrRequestOnlyNewCache = submission.readCacheSubmissions(
-			settings.settings['Tumblr_Try_Request_Only_New_Cache_File'])
+    logger.log('Saving images. This will take several minutes...')
+    unsupportedSubmissions = imageSaver.saveAllImages(settings.settings['Output_dir'], submissions, 
+                                                      imgur_auth = imgurAuth, only_download_albums = settings.settings['Only_download_albums'],
+                                                      skip_n_percent_submissions = settings.settings['Skip_n_percent_submissions'],
+                                                      soft_retrieve_imgs = settings.settings['Should_soft_retrieve'],
+                                                      only_important_messages = settings.settings['Only_important_messages'])
 
-	submissions = []
+    # Write out a .json file listing all of the submissions the script failed to download
+    submission.saveSubmissionsAsJson(unsupportedSubmissions, settings.settings['Output_dir'] + u'/' 
+                                     + 'UnsupportedSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
 
-	if settings.settings['Use_cached_submissions']:
-		logger.log('Using cached submissions')
-		submissions += submission.readCacheSubmissions(settings.settings['Reddit_cache_file'])
-		submissions += submission.readCacheSubmissions(settings.settings['Tumblr_cache_file'])
-	else:
-		if settings.hasRedditSettings():
-			redditSubmissions, redditComments, earlyOutPoints = redditScraper.getRedditUserLikedSavedSubmissions(
-				settings.settings['Username'], settings.settings['Password'], 
-				settings.settings['Client_id'], settings.settings['Client_secret'],
-				request_limit = settings.settings['Reddit_Total_requests'], 
-				saveLiked = settings.settings['Reddit_Save_Liked'], 
-				saveSaved = settings.settings['Reddit_Save_Saved'],
-				earlyOutPointSaved = redditRequestOnlyNewSavedCache, 
-				earlyOutPointLiked = redditRequestOnlyNewLikedCache,
-				unlikeLiked = settings.settings['Reddit_Unlike_Liked'],
-				unsaveSaved = settings.settings['Reddit_Unsave_Saved'])
-			
-			# Cache them in case it's needed later
-			submission.writeCacheSubmissions(redditSubmissions, settings.settings['Reddit_cache_file'])
+    if settings.settings['Should_soft_retrieve']:
+        logger.log('\nYou have run the script in Soft Retrieve mode - if you actually\n'
+                   'want to download images now, you should change SHOULD_SOFT_RETRIEVE\n'
+                   'to False in settings.txt')
 
-			# Set new early out points
-			submission.writeCacheSubmissions([earlyOutPoints[0]],
-				settings.settings['Reddit_Try_Request_Only_New_Saved_Cache_File'])
-			submission.writeCacheSubmissions([earlyOutPoints[1]],
-				settings.settings['Reddit_Try_Request_Only_New_Liked_Cache_File'])
+        if pipeConnection:
+            logger.log(scriptFinishedSentinel)
+            pipeConnection.close()
 
-			submissions += redditSubmissions
+def getSubmissionsToSave():
+    # TODO: Only save one post for early out. Only save once all downloading is done
+    redditRequestOnlyNewSavedCache = None
+    redditRequestOnlyNewLikedCache = None
+    if settings.settings['Reddit_Try_Request_Only_New']:
+        redditRequestOnlyNewSavedCache = submission.readCacheSubmissions(
+            settings.settings['Reddit_Try_Request_Only_New_Saved_Cache_File'])
+        redditRequestOnlyNewLikedCache = submission.readCacheSubmissions(
+            settings.settings['Reddit_Try_Request_Only_New_Liked_Cache_File'])
 
-			# For reddit only: write out comments to separate json file
-			if settings.settings['Reddit_Save_Comments']:
-				submission.saveSubmissionsAsJson(redditComments, settings.settings['Output_dir'] + u'/' 
-					+ 'Reddit_SavedComment_Submissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json')
-				submission.saveSubmissionsAsHtml(redditComments, settings.settings['Output_dir'] + u'/' 
-					+ 'Reddit_SavedComment_Submissions_' + time.strftime("%Y%m%d-%H%M%S") + '.html')
-				logger.log('Saved ' + str(len(redditComments)) + ' reddit comments')
+    tumblrRequestOnlyNewCache = None
+    if settings.settings['Tumblr_Try_Request_Only_New']:
+        tumblrRequestOnlyNewCache = submission.readCacheSubmissions(
+            settings.settings['Tumblr_Try_Request_Only_New_Cache_File'])
 
-		if settings.hasTumblrSettings():
-			tumblrSubmissions, earlyOutPoint = tumblrScraper.getTumblrUserLikedSubmissions(
-				settings.settings['Tumblr_Client_id'], settings.settings['Tumblr_Client_secret'], 
-				settings.settings['Tumblr_Client_token'], settings.settings['Tumblr_Client_token_secret'],
-				likeRequestLimit = settings.settings['Tumblr_Total_requests'],
-				requestOnlyNewCache = tumblrRequestOnlyNewCache)
-			
-			# Cache them in case it's needed later
-			submission.writeCacheSubmissions(tumblrSubmissions, settings.settings['Tumblr_cache_file'])
+    submissions = []
 
-			# Set new early out point
-			submission.writeCacheSubmissions([earlyOutPoint], 
-				settings.settings['Tumblr_Try_Request_Only_New_Cache_File'])
+    if settings.settings['Use_cached_submissions']:
+        logger.log('Using cached submissions')
+        submissions += submission.readCacheSubmissions(settings.settings['Reddit_cache_file'])
+        submissions += submission.readCacheSubmissions(settings.settings['Tumblr_cache_file'])
+    else:
+        if settings.hasRedditSettings():
+            redditSubmissions, redditComments, earlyOutPoints = redditScraper.getRedditUserLikedSavedSubmissions(
+                settings.settings['Username'], settings.settings['Password'], 
+                settings.settings['Client_id'], settings.settings['Client_secret'],
+                request_limit = settings.settings['Reddit_Total_requests'], 
+                saveLiked = settings.settings['Reddit_Save_Liked'], 
+                saveSaved = settings.settings['Reddit_Save_Saved'],
+                earlyOutPointSaved = redditRequestOnlyNewSavedCache, 
+                earlyOutPointLiked = redditRequestOnlyNewLikedCache,
+                unlikeLiked = settings.settings['Reddit_Unlike_Liked'],
+                unsaveSaved = settings.settings['Reddit_Unsave_Saved'])
+            
+            # Cache them in case it's needed later
+            submission.writeCacheSubmissions(redditSubmissions, settings.settings['Reddit_cache_file'])
 
-			submissions += tumblrSubmissions
+            # Set new early out points
+            submission.writeCacheSubmissions([earlyOutPoints[0]],
+                                             settings.settings['Reddit_Try_Request_Only_New_Saved_Cache_File'])
+            submission.writeCacheSubmissions([earlyOutPoints[1]],
+                                             settings.settings['Reddit_Try_Request_Only_New_Liked_Cache_File'])
 
-		# Write out a .json file with all of the submissions in case the user wants the data
-		submission.saveSubmissionsAsJson(submissions, settings.settings['Output_dir'] + u'/' 
-			+ 'AllSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
+            submissions += redditSubmissions
 
-	logger.log('Saving images. This will take several minutes...')
-	unsupportedSubmissions = imageSaver.saveAllImages(settings.settings['Output_dir'], submissions, 
-		imgur_auth = imgurAuth, only_download_albums = settings.settings['Only_download_albums'],
-		skip_n_percent_submissions = settings.settings['Skip_n_percent_submissions'],
-		soft_retrieve_imgs = settings.settings['Should_soft_retrieve'],
-		only_important_messages = settings.settings['Only_important_messages'])
+            # For reddit only: write out comments to separate json file
+            if settings.settings['Reddit_Save_Comments']:
+                submission.saveSubmissionsAsJson(redditComments, settings.settings['Output_dir'] + u'/' 
+                                                 + 'Reddit_SavedComment_Submissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json')
+                submission.saveSubmissionsAsHtml(redditComments, settings.settings['Output_dir'] + u'/' 
+                                                 + 'Reddit_SavedComment_Submissions_' + time.strftime("%Y%m%d-%H%M%S") + '.html')
+                logger.log('Saved ' + str(len(redditComments)) + ' reddit comments')
 
-	# Write out a .json file listing all of the submissions the script failed to download
-	submission.saveSubmissionsAsJson(unsupportedSubmissions, settings.settings['Output_dir'] + u'/' 
-		+ 'UnsupportedSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
+        if settings.hasTumblrSettings():
+            tumblrSubmissions, earlyOutPoint = tumblrScraper.getTumblrUserLikedSubmissions(
+                settings.settings['Tumblr_Client_id'], settings.settings['Tumblr_Client_secret'], 
+                settings.settings['Tumblr_Client_token'], settings.settings['Tumblr_Client_token_secret'],
+                likeRequestLimit = settings.settings['Tumblr_Total_requests'],
+                requestOnlyNewCache = tumblrRequestOnlyNewCache)
+                
+            # Cache them in case it's needed later
+            submission.writeCacheSubmissions(tumblrSubmissions, settings.settings['Tumblr_cache_file'])
+                
+            # Set new early out point
+            submission.writeCacheSubmissions([earlyOutPoint], 
+                                             settings.settings['Tumblr_Try_Request_Only_New_Cache_File'])
 
-	if settings.settings['Should_soft_retrieve']:
-		logger.log('\nYou have run the script in Soft Retrieve mode - if you actually\n'
-			  'want to download images now, you should change SHOULD_SOFT_RETRIEVE\n'
-			  'to False in settings.txt')
+            submissions += tumblrSubmissions
 
-	if pipeConnection:
-		logger.log(scriptFinishedSentinel)
-		pipeConnection.close()
+        # Write out a .json file with all of the submissions in case the user wants the data
+        submission.saveSubmissionsAsJson(submissions, settings.settings['Output_dir'] + u'/' 
+                                         + 'AllSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json')
+
+        LikedSavedDatabase.db.addSubmissions(submissions)
+                
+    return submissions
+
 
 if __name__ == '__main__':
-	runLikedSavedDownloader(None)
+    runLikedSavedDownloader(None)

@@ -2,6 +2,9 @@ import os
 import sqlite3
 import submission as Submissions
 
+# Global database
+db = None
+
 class LikedSavedDatabase:
     def __init__(self, databaseFilePath):
         isNewDatabase = not os.path.exists(databaseFilePath)
@@ -46,6 +49,13 @@ class LikedSavedDatabase:
                        submission.getAsList())
         self.save()
 
+    def addSubmissions(self, submissions):
+        cursor = self.dbConnection.cursor()
+
+        cursor.executemany("insert or ignore into Submissions values (NULL,?,?,?,?,?,?,?,?)",
+                       Submissions.getAsList_generator(submissions))
+        self.save()
+
     def printSubmissions(self):
         cursor = self.dbConnection.cursor()
 
@@ -73,11 +83,23 @@ class LikedSavedDatabase:
                        (submissionId, collectionId))
         self.save()
 
-    def associateFileToSubmission(self, filePath, submissionId):
+    def associateFileToSubmissionId(self, filePath, submissionId):
         cursor = self.dbConnection.cursor()
         cursor.execute("insert or ignore into FilesToSubmissions values (?,?)",
                        (filePath, submissionId))
         self.save()
+        
+    def associateFileToSubmission(self, filePath, submission):
+        cursor = self.dbConnection.cursor()
+        cursor.execute("select * from Submissions where postUrl=?", (submission.postUrl,))
+        submissionInDb = cursor.fetchone()
+        if submissionInDb:
+            submissionId = submissionInDb[0]
+            cursor.execute("insert or ignore into FilesToSubmissions values (?,?)",
+                           (filePath, submissionId))
+            self.save()
+        else:
+            print("DB error: couldn't find submission from post URL {}".format(submission.postUrl))
 
     def getAllSubmissionsInCollection(self, collectionId):
         cursor = self.dbConnection.cursor()
@@ -126,10 +148,14 @@ def testOnRealSubmissions():
             print("Couldn't find {}".format(title))
         else:
             db.addSubmissionToCollection(dbSubmission[0], dbCollection[0])
-            db.associateFileToSubmission("{}.png".format(title), dbSubmission[0])
+            db.associateFileToSubmissionId("{}.png".format(title), dbSubmission[0])
 
     print(db.getAllSubmissionsInCollection(dbCollection[0]))
     print(db.getAllFiles())
+    
+def initializeFromSettings(userSettings):
+    global db
+    db = LikedSavedDatabase(userSettings['Database'])
 
 if __name__ == '__main__':
     #testDatabase()

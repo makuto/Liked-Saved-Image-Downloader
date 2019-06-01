@@ -52,6 +52,11 @@ class Submission:
         return [self.source, self.title, self.author,
                 self.subreddit, self.subredditTitle,
                 self.body, self.bodyUrl, self.postUrl]
+    
+
+def getAsList_generator(submissions):
+    for submission in submissions:
+        yield submission.getAsList()
 
 def writeOutSubmissionsAsJson(redditList, file):
     file.write('{\n'.encode('utf8'))

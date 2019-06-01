@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import LikedSavedDatabase
 import imgurpython as imgur
 import logger
 import os
@@ -304,8 +305,9 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
 
         numAlbums = len(albums)
         for albumIndex, album in enumerate(albums):
-            albumTitle = album[0]
-            albumUrl = cleanImgurAlbumUrl(album[1])
+            albumSubmission = album[0]
+            albumTitle = album[1]
+            albumUrl = cleanImgurAlbumUrl(album[2])
             logger.log('\t[' + percentageComplete(albumIndex, numAlbums) + '] ' 
                 + '\t' + albumTitle + ' (' + albumUrl + ')')
 
@@ -358,6 +360,8 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
                 if not soft_retrieve_imgs:
                     # Retrieve the image and save it
                     urlretrieve(imageUrl, saveFilePath)
+                    LikedSavedDatabase.db.associateFileToSubmission(
+                            utilities.outputPathToDatabasePath(saveFilePath), albumSubmission)
 
                 logger.log('\t\t[' + percentageComplete(imageIndex, numImages) + '] ' 
                     + ' [save] ' + imageUrl + ' saved to "' + saveAlbumPath + '"')
@@ -425,9 +429,9 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 else:
                     # We're going to save Imgur Albums at a separate stage
                     if subredditDir in imgurAlbumsToSave:
-                        imgurAlbumsToSave[subredditDir].append((submissionTitle, url))
+                        imgurAlbumsToSave[subredditDir].append((submission, submissionTitle, url))
                     else:
-                        imgurAlbumsToSave[subredditDir] = [(submissionTitle, url)]
+                        imgurAlbumsToSave[subredditDir] = [(submission, submissionTitle, url)]
                     continue
             elif only_download_albums:
                 continue
@@ -497,6 +501,9 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 # Retrieve the image and save it
                 try:
                     urlretrieve(url, saveFilePath)
+
+                    LikedSavedDatabase.db.associateFileToSubmission(
+                            utilities.outputPathToDatabasePath(saveFilePath), submission)
                 except IOError as e:
                     logger.log('[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'
                         .format(url, e.errno, e.strerror))

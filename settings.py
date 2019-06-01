@@ -77,21 +77,22 @@ settings = {
     #  made previous submissions successfully download, so we always re-check submissions 
     'Skip_n_percent_submissions': 0,
 
-    'Output_dir' : 'output'
+    'Output_dir' : 'output',
+    'Database' : 'LikedSaved.db'
 }
 
 redditClientSecretInstructions = '''You need OAuth tokens to run the script. To get them follow these steps:</p>
     <ol>
-	<li>Go to <a href="https://www.reddit.com/prefs/apps/">Reddit app preferences</a> (while signed in to reddit)</li>
-	<li>Scroll down to the bottom and click "create app" (something like that)</li>
-	<li>Fill in the fields as such:</li>
+        <li>Go to <a href="https://www.reddit.com/prefs/apps/">Reddit app preferences</a> (while signed in to reddit)</li>
+        <li>Scroll down to the bottom and click "create app" (something like that)</li>
+        <li>Fill in the fields as such:</li>
             <ul>
-		<li><b>name:</b> Reddit Liked-Saved Image Downloader</li>
-		<li>Choose <b>"script"</b> as the type</li>
-		<li><b>about url:</b> https://github.com/makuto/redditLikedSavedImageDownloader</li>
- 		<li><b>redirect uri:</b> http://localhost:8080</li>
+                <li><b>name:</b> Reddit Liked-Saved Image Downloader</li>
+                <li>Choose <b>"script"</b> as the type</li>
+                <li><b>about url:</b> https://github.com/makuto/redditLikedSavedImageDownloader</li>
+                <li><b>redirect uri:</b> http://localhost:8080</li>
             </ul>
-	<li>Click create app</li>
+        <li>Click create app</li>
         <li>Copy the text which is right below "personal use script" for Client ID</li>
         <li>Copy the secret for Client Secret as well</li>
     </ol>
@@ -172,7 +173,7 @@ settingsStructure = [
           'If true, do not download single images, only submissions which are imgur albums')
      ]),
 
-    ('Debugging',
+    ('Debugging and Development',
     [
         ('Only_important_messages', 'Output minimal information to the console'),
         ('Use_cached_submissions', 'Do not get new stuff, just use the cache files from last run'),
@@ -180,7 +181,9 @@ settingsStructure = [
         'Tumblr_cache_file',
         ('Skip_n_percent_submissions', "If the script failed at say 70%, you could use toggle Use_cached_submissions and set this value to 69. The script would then restart 69% of the way into the cached submissions nearer to where you left off. The reason why this isn't default is because there might have been changes to the script which made previous submissions successfully download, so we always re-check submissions"),
         
-        ('Should_soft_retrieve', "If True, don't actually download the images - just pretend to")
+        ('Should_soft_retrieve', "If True, don't actually download the images - just pretend to"),
+        
+        ('Database')
     ]),
 ]
 
@@ -293,5 +296,7 @@ def writeServerSettings():
 
 def getSettings():
     settingsFilename = getSettingsFilename()
-    print('Reading settings from ' + settingsFilename)
+    print('Reading settings from settings file with most recent timestamp, which was:\n'
+          + settingsFilename
+          + "\nIf you want to read from a different settings file, make it more recent")
     readSettings(settingsFilename)

@@ -12,7 +12,7 @@ import shutil
 import json
 import multiprocessing
 
-from utilities import sort_naturally
+import utilities
 import settings
 import redditUserImageScraper
 
@@ -44,10 +44,6 @@ def generateSavedImagesCache(outputDir):
 
     print('Finished creating Liked Saved cache ({} images/videos)'.format(len(savedImagesCache)))
 
-def outputPathToServerPath(path):
-    # This is a little weird
-    return 'output' + path.split(settings.settings['Output_dir'])[1]
-
 def getRandomImage(filteredImagesCache=None, randomImageFilter=''):
     if not savedImagesCache:
         generateSavedImagesCache(settings.settings['Output_dir'])
@@ -59,7 +55,7 @@ def getRandomImage(filteredImagesCache=None, randomImageFilter=''):
 
     print('\tgetRandomImage(): Chose random image {} (filter {})'.format(randomImage, randomImageFilter))
 
-    serverPath = outputPathToServerPath(randomImage)
+    serverPath = utilities.outputPathToServerPath(randomImage)
 
     return randomImage, serverPath
 
@@ -377,7 +373,7 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
                 for file in files:
                     if file.endswith(supportedExtensions):
                         imagesInFolder.append(os.path.join(root, file))
-            sort_naturally(imagesInFolder)
+            utilities.sort_naturally(imagesInFolder)
             currentImageIndex = imagesInFolder.index(fullImagePath)
             if currentImageIndex >= 0:
                 action = 'setImage'
@@ -389,7 +385,7 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
                     nextImageIndex = len(imagesInFolder) - 1
                     
                 fullImagePath = imagesInFolder[nextImageIndex]
-                serverImagePath = outputPathToServerPath(fullImagePath)
+                serverImagePath = utilities.outputPathToServerPath(fullImagePath)
 
         if command == 'setFilter':
             newFilter = parsedMessage['filter']
