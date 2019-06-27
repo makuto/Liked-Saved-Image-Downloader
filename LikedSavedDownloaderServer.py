@@ -6,11 +6,12 @@ import tornado.websocket
 import tornado.httpclient
 import tornado.gen
 
+import json
+import multiprocessing
 import os
 import random
 import shutil
-import json
-import multiprocessing
+import threading
 
 import utilities
 import settings
@@ -25,6 +26,31 @@ if enable_authentication:
 
 # List of valid user ids (used to compare user cookie)
 authenticated_users = []
+
+class SessionData:
+    def __init__(self):
+        # Just in case, because tornado is multithreaded
+        self.lock = threading.Lock()
+        
+        self.randomHistory = []
+        self.randomHistoryIndex = -1
+        self.favorites = []
+        self.favoritesIndex = 0
+        self.currentImage = None
+        self.randomImageFilter = ''
+        self.filteredImagesCache = []
+        
+        self.currentDirectoryPath = ''
+        self.currentDirectoryCache = []
+        self.directoryFilter = ''
+
+    def acquire(self):
+        self.lock.acquire()
+    def release(self):
+        self.lock.release()
+
+# user id : session data
+userSessionData = {}
 
 videoExtensions = ('.mp4', '.webm')
 supportedExtensions = ('.gif', '.jpg', '.jpeg', '.png', '.mp4', '.webm')
@@ -261,54 +287,59 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
 
     def cacheFilteredImages(self):
         # Clear the cache
-        self.filteredImagesCache = []
+        self.sessionData.filteredImagesCache = []
 
-        if not self.randomImageFilter:
+        if not self.sessionData.randomImageFilter:
             return
 
-        randomImageFilterLower = self.randomImageFilter.lower()
+        randomImageFilterLower = self.sessionData.randomImageFilter.lower()
     
         for imagePath in savedImagesCache:
             if randomImageFilterLower in imagePath.lower():
-                self.filteredImagesCache.append(imagePath)
+                self.sessionData.filteredImagesCache.append(imagePath)
 
         print('\tFiltered images with "{}"; {} images matching filter'
-              .format(self.randomImageFilter, len(self.filteredImagesCache)))
+              .format(self.sessionData.randomImageFilter,
+                      len(self.sessionData.filteredImagesCache)))
 
     def changeCurrentDirectory(self, newDirectory):
-        self.currentDirectoryPath = newDirectory
-        dirList = os.listdir(self.currentDirectoryPath)
+        self.sessionData.currentDirectoryPath = newDirectory
+        dirList = os.listdir(self.sessionData.currentDirectoryPath)
         
         filteredDirList = []
         for fileOrDir in dirList:
             # The script spits out a lot of .json files the user probably doesn't want to see
             if (not fileOrDir.endswith('.json')
-                and (not self.directoryFilter or self.directoryFilter.lower() in fileOrDir.lower())):
+                and (not self.sessionData.directoryFilter
+                     or self.sessionData.directoryFilter.lower() in fileOrDir.lower())):
                 filteredDirList.append(fileOrDir)
                 
-        self.currentDirectoryCache = sorted(filteredDirList)
+        self.sessionData.currentDirectoryCache = sorted(filteredDirList)
 
     def open(self):
-        if not login_get_current_user(self):
+        global userSessionData
+        currentUser = login_get_current_user(self)
+        if not currentUser:
+            # Failed authorization
             return None
         
         self.connections.add(self)
-        self.randomHistory = []
-        self.randomHistoryIndex = -1
-        self.favorites = []
-        self.favoritesIndex = 0
-        self.currentImage = None
-        self.randomImageFilter = ''
-        self.filteredImagesCache = []
         
-        self.currentDirectoryPath = ''
-        self.currentDirectoryCache = []
-        self.directoryFilter = ''
+        if currentUser not in userSessionData:
+            newSessionData = SessionData()
+            userSessionData[currentUser] = newSessionData
+
+        self.sessionData = userSessionData[currentUser]
+
+        self.sessionData.acquire()
         # Set up the directory cache with the top-level output
         self.changeCurrentDirectory(settings.settings['Output_dir'])
-
+        self.sessionData.release()
+            
     def on_message(self, message):
-        if not login_get_current_user(self):
+        currentUser = login_get_current_user(self)
+        if not currentUser:
+            # Failed authorization
             return None
         
         print('RandomImageBrowserWebSocket: Received message ', message)
@@ -317,55 +348,57 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
         print('RandomImageBrowserWebSocket: Command ', command)
         action = ''
 
+        self.sessionData.acquire()
+        
         """
          Random Image Browser
         """
-
+        
         if command == 'imageAddToFavorites':
-            if self.currentImage:
-                self.favorites.append(self.currentImage)
-                self.favoritesIndex = len(self.favorites) - 1
+            if self.sessionData.currentImage:
+                self.sessionData.favorites.append(self.sessionData.currentImage)
+                self.sessionData.favoritesIndex = len(self.sessionData.favorites) - 1
 
         if command == 'nextFavorite':
-            self.favoritesIndex += 1
-            if self.favoritesIndex >= 0 and self.favoritesIndex < len(self.favorites):
+            self.sessionData.favoritesIndex += 1
+            if self.sessionData.favoritesIndex >= 0 and self.sessionData.favoritesIndex < len(self.sessionData.favorites):
                 action = 'setImage'
-                fullImagePath, serverImagePath = self.favorites[self.favoritesIndex]
+                fullImagePath, serverImagePath = self.sessionData.favorites[self.sessionData.favoritesIndex]
             else:
-                self.favoritesIndex = len(self.favorites) - 1
-                if len(self.favorites):
+                self.sessionData.favoritesIndex = len(self.sessionData.favorites) - 1
+                if len(self.sessionData.favorites):
                     action = 'setImage'
-                    fullImagePath, serverImagePath = self.favorites[self.favoritesIndex]
+                    fullImagePath, serverImagePath = self.sessionData.favorites[self.sessionData.favoritesIndex]
 
-        if command == 'previousFavorite' and len(self.favorites):
+        if command == 'previousFavorite' and len(self.sessionData.favorites):
             action = 'setImage'
 
-            if self.favoritesIndex > 0:
-                self.favoritesIndex -= 1
+            if self.sessionData.favoritesIndex > 0:
+                self.sessionData.favoritesIndex -= 1
                 
-            fullImagePath, serverImagePath = self.favorites[self.favoritesIndex]
+            fullImagePath, serverImagePath = self.sessionData.favorites[self.sessionData.favoritesIndex]
 
         if command == 'nextImage':
             action = 'setImage'
 
-            if self.randomHistoryIndex == -1 or self.randomHistoryIndex >= len(self.randomHistory) - 1:
-                fullImagePath, serverImagePath = getRandomImage(self.filteredImagesCache, self.randomImageFilter)
-                self.randomHistory.append((fullImagePath, serverImagePath))
-                self.randomHistoryIndex = len(self.randomHistory) - 1
+            if self.sessionData.randomHistoryIndex == -1 or self.sessionData.randomHistoryIndex >= len(self.sessionData.randomHistory) - 1:
+                fullImagePath, serverImagePath = getRandomImage(self.sessionData.filteredImagesCache, self.sessionData.randomImageFilter)
+                self.sessionData.randomHistory.append((fullImagePath, serverImagePath))
+                self.sessionData.randomHistoryIndex = len(self.sessionData.randomHistory) - 1
             else:
-                self.randomHistoryIndex += 1
-                fullImagePath, serverImagePath = self.randomHistory[self.randomHistoryIndex]
+                self.sessionData.randomHistoryIndex += 1
+                fullImagePath, serverImagePath = self.sessionData.randomHistory[self.sessionData.randomHistoryIndex]
 
         if command == 'previousImage':
             action = 'setImage'
 
-            if self.randomHistoryIndex > 0:
-                self.randomHistoryIndex -= 1
+            if self.sessionData.randomHistoryIndex > 0:
+                self.sessionData.randomHistoryIndex -= 1
                 
-            fullImagePath, serverImagePath = self.randomHistory[self.randomHistoryIndex]
+            fullImagePath, serverImagePath = self.sessionData.randomHistory[self.sessionData.randomHistoryIndex]
 
-        if command in ['nextImageInFolder', 'previousImageInFolder'] and len(self.randomHistory):
-            fullImagePath, serverImagePath = self.currentImage
+        if command in ['nextImageInFolder', 'previousImageInFolder'] and len(self.sessionData.randomHistory):
+            fullImagePath, serverImagePath = self.sessionData.currentImage
                 
             folder = fullImagePath[:fullImagePath.rfind('/')]
             imagesInFolder = []
@@ -389,8 +422,8 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
 
         if command == 'setFilter':
             newFilter = parsedMessage['filter']
-            if newFilter != self.randomImageFilter:
-                self.randomImageFilter = newFilter
+            if newFilter != self.sessionData.randomImageFilter:
+                self.sessionData.randomImageFilter = newFilter
                 self.cacheFilteredImages()
 
         """
@@ -399,10 +432,10 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
 
         if command == 'setDirectoryFilter':
             newFilter = parsedMessage['filter']
-            if newFilter != self.directoryFilter:
-                self.directoryFilter = newFilter
+            if newFilter != self.sessionData.directoryFilter:
+                self.sessionData.directoryFilter = newFilter
                 # Refresh cache with new filter
-                self.changeCurrentDirectory(self.currentDirectoryPath)
+                self.changeCurrentDirectory(self.sessionData.currentDirectoryPath)
                 action = 'sendDirectory'
 
         if command == 'listCurrentDirectory':
@@ -410,24 +443,24 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
 
         if command == 'changeDirectory':
             # Reset the filter (chances are the user only wanted to filter at one level
-            self.directoryFilter = ''
-            self.changeCurrentDirectory('{}/{}'.format(self.currentDirectoryPath, parsedMessage['path']));
+            self.sessionData.directoryFilter = ''
+            self.changeCurrentDirectory('{}/{}'.format(self.sessionData.currentDirectoryPath, parsedMessage['path']));
             action = 'sendDirectory'
 
         if command == 'directoryUp':
             # Don't allow going higher than output dir
-            if self.currentDirectoryPath != settings.settings['Output_dir']:
+            if self.sessionData.currentDirectoryPath != settings.settings['Output_dir']:
                 upDirectory = (settings.settings['Output_dir']  +
-                               self.currentDirectoryPath[len(settings.settings['Output_dir'])
-                                                         : self.currentDirectoryPath.rfind('/')])
+                               self.sessionData.currentDirectoryPath[len(settings.settings['Output_dir'])
+                                                         : self.sessionData.currentDirectoryPath.rfind('/')])
                 # Reset the filter (chances are the user only wanted to filter at one level
-                self.directoryFilter = ''
+                self.sessionData.directoryFilter = ''
                 self.changeCurrentDirectory(upDirectory)
                 action = 'sendDirectory'
             
         if command == 'directoryRoot':
             # Reset the filter (chances are the user only wanted to filter at one level
-            self.directoryFilter = ''
+            self.sessionData.directoryFilter = ''
             self.changeCurrentDirectory(settings.settings['Output_dir'])
             action = 'sendDirectory'
 
@@ -441,14 +474,14 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
             if serverImagePath.endswith(videoExtensions):
                 action = 'setVideo'
                 
-            self.currentImage = (fullImagePath, serverImagePath)
+            self.sessionData.currentImage = (fullImagePath, serverImagePath)
             responseMessage = ('{{"responseToCommand":"{}", "action":"{}", "fullImagePath":"{}", "serverImagePath":"{}"}}'
                                .format(command, action, fullImagePath, serverImagePath))
             self.write_message(responseMessage)
 
         if action == 'sendDirectory':
             directoryList = ''
-            for path in self.currentDirectoryCache:
+            for path in self.sessionData.currentDirectoryCache:
                 isSupportedFile = path.endswith(supportedExtensions)
                 isFile = '.' in path
                 if path.endswith(videoExtensions):
@@ -459,14 +492,16 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
                     fileType = 'file'
                 else:
                     fileType = 'dir'
-                serverPath = 'output' + self.currentDirectoryPath[len(settings.settings['Output_dir']):] + '/' + path
+                serverPath = 'output' + self.sessionData.currentDirectoryPath[len(settings.settings['Output_dir']):] + '/' + path
                 directoryList += '{{"path":"{}", "type":"{}", "serverPath":"{}"}},'.format(path, fileType, serverPath)
 
             # Do directoryList[:-1] (yuck) to trim the final trailing comma because JSON doesn't like it
             responseMessage = ('{{"responseToCommand":"{}", "action":"{}", "directoryList":[{}]}}'
                                .format(command, action, directoryList[:-1]))
             self.write_message(responseMessage)
-            
+
+        self.sessionData.release()
+    
 
     def on_close(self):
         self.connections.remove(self)
