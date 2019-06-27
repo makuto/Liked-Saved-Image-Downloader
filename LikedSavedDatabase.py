@@ -1,4 +1,7 @@
+import json
 import os
+import re
+import settings
 import sqlite3
 import submission as Submissions
 
@@ -114,6 +117,55 @@ class LikedSavedDatabase:
         cursor.execute("select * from FilesToSubmissions")
 
         return cursor.fetchall()
+    
+def initializeFromSettings(userSettings):
+    global db
+    db = LikedSavedDatabase(userSettings['Database'])
+'''
+Importing
+'''
+
+# This should only need to be executed if you ran the script before db support was added
+def importFromAllJsonInDir(dir):
+    global db
+    
+    jsonFilesToRead = []
+    for root, dirs, files in os.walk(dir):
+        for file in files:
+            match = re.search(r'AllSubmissions_(.*).json', file)
+            if match:
+                jsonFilesToRead.append(os.path.join(root, file))
+                
+    print("Importing {} json files...".format(len(jsonFilesToRead)))
+
+    totalSubmissions = 0
+    for filename in jsonFilesToRead:
+        file = open(filename, 'r')
+        # Ugh...
+        lines = file.readlines()
+        text = u''.join(lines)
+        # Fix the formatting so the json module understands it
+        text = "[{}]".format(text[1:-3])
+        
+        dictSubmissions = json.loads(text)
+        submissions = []
+        for dictSubmission in dictSubmissions:
+            submission = Submissions.Submission()
+            submission.initFromDict(dictSubmission)
+            submissions.append(submission)
+            
+        print("Read {} submissions from file {}".format(len(submissions), filename))
+        totalSubmissions += len(submissions)
+
+        # While we could do this all in one, I'd rather do it in batches in case a file trips it up
+        db.addSubmissions(submissions)
+        
+    print("Read {} submissions".format(totalSubmissions))
+
+
+'''
+Testing
+'''
 
 def testDatabase():
     db = LikedSavedDatabase('test.db')
@@ -152,12 +204,15 @@ def testOnRealSubmissions():
 
     print(db.getAllSubmissionsInCollection(dbCollection[0]))
     print(db.getAllFiles())
-    
-def initializeFromSettings(userSettings):
-    global db
-    db = LikedSavedDatabase(userSettings['Database'])
 
 if __name__ == '__main__':
+    # Old, may not work
     #testDatabase()
-    testOnRealSubmissions()
+    
+    # testOnRealSubmissions()
+    
+    # settings.getSettings()
+    # initializeFromSettings(settings.settings)
+    db = LikedSavedDatabase("TestImport.db")
+    importFromAllJsonInDir("../output")
 

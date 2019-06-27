@@ -53,6 +53,21 @@ class Submission:
                 self.subreddit, self.subredditTitle,
                 self.body, self.bodyUrl, self.postUrl]
     
+    def initFromDict(self, dictEntry):
+        # Old logs might not have source field; assume reddit
+        self.source = dictEntry['source'] if 'source' in dictEntry else 'reddit'
+
+        self.title = dictEntry['title']
+        self.author = dictEntry['author']
+
+        self.subreddit = dictEntry['subreddit']
+        self.subredditTitle = dictEntry['subredditTitle']
+
+        self.body = dictEntry['body']
+        self.bodyUrl = dictEntry['bodyUrl']
+        self.postUrl = dictEntry['postUrl']
+
+    
 
 def getAsList_generator(submissions):
     for submission in submissions:
