@@ -211,8 +211,8 @@ if __name__ == '__main__':
     
     # testOnRealSubmissions()
     
-    # settings.getSettings()
+    settings.getSettings()
     # initializeFromSettings(settings.settings)
     db = LikedSavedDatabase("TestImport.db")
-    importFromAllJsonInDir("../output")
+    importFromAllJsonInDir(settings.settings["Output_dir"])
 
