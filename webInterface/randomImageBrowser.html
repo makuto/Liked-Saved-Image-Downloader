@@ -10,13 +10,13 @@
 
 <body>
     <div id="imageBrowserControls">
-        <div class="leftControls">
+        <div class="leftControls singleImageControls">
             <button class="previousImage affectOpacity" onclick="sendMessage('previousImage')">Previous Random</button>
             <button class="previousImageInFolder affectOpacity" onclick="sendMessage('previousImageInFolder')">Previous In Folder</button>
             <button class="previousFavorite affectOpacity" onclick="sendMessage('previousFavorite')">Previous Favorite</button>
         </div>
 
-        <div class="rightControls">
+        <div class="rightControls singleImageControls">
             <button class="nextImage affectOpacity" onclick="sendMessage('nextImage')">Next Random</button>
             <button class="nextImageInFolder affectOpacity" onclick="sendMessage('nextImageInFolder')">Next In Folder</button>
             <button class="nextFavorite affectOpacity" onclick="sendMessage('nextFavorite')">Next Favorite</button>
@@ -28,7 +28,8 @@
             <div class="centerControlsButtons">
                 <button class="imageAddToFavorites affectOpacity" onclick="sendMessage('imageAddToFavorites')">Favorite</button>
                 <button class="changeDirectory affectOpacity" onclick="toggleDirectoryControls()">Browse Directories</button>
-                <button class="toggleFullScreen affectOpacity" onclick="toggleFullScreen()">Toggle Fullscreen</button>
+				<button class="toggleFullScreen affectOpacity" onclick="toggleFullScreen()">Toggle Fullscreen</button>
+				<button class="toggleInfiniteScroll affectOpacity" onclick="toggleInfiniteScroll()">Infinite Scroll</button>
             </div>
         </div>
     </div>
@@ -36,6 +37,8 @@
     <p class="affectOpacity" id="message"></p>
 	<p id="serverStatus"></p>
     <div id="videoContainer"></div>
+	
+	<div id="infiniteScrollContainer"></div>
 
     <div id="directoryControls" style="display:none">
         <div class="directoryList">

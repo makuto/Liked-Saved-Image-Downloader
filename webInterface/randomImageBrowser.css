@@ -35,6 +35,15 @@ input {
     transform: translate(-50%, -50%);
 }
 
+.infiniteScrollVideoLink {
+    font-size: 50px;
+}
+
+.infiniteScrollImage {
+    width: 100%;
+    max-height: 100%;
+}
+
 button {
     font-size: 30px;
 }
@@ -175,6 +184,10 @@ button {
     flex: 1 1 auto;
 }
 
+.toggleInfiniteScroll {
+    opacity: 0.3;
+    flex: 1 1 auto;
+}
 
 /* Slider */
 

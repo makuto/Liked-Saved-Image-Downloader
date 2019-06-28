@@ -3,6 +3,8 @@ var username = "likedSavedBrowserClient";
 
 var currentOpacity = 0.3;
 
+var infiniteScroll = false;
+
 function onOpacityChanged(newValue) {
     var elements = document.getElementsByClassName("affectOpacity");
     var newOpacity = parseFloat(newValue);
@@ -19,6 +21,11 @@ function onOpacityChanged(newValue) {
 }
 
 function sendMessage(message) {
+	if (!ws) {
+		console.log("No websocket");
+		return;
+	}
+	
     var payload = {
         "command": message,
         "user": username
@@ -89,33 +96,67 @@ function directoryRootOnClick() {
     ws.send(JSON.stringify(payload));
 }
 
+function handleSetImage(messageDict) {
+	document.getElementById("message").innerHTML = messageDict.serverImagePath + " (" + messageDict.responseToCommand + ")";
+
+	if (infiniteScroll) {
+		var infiniteScrollContainer = document.getElementById("infiniteScrollContainer");
+		var imageElement = document.createElement("img");
+		imageElement.src = 'https://' + window.location.host + '/' + messageDict.serverImagePath;
+		imageElement.className = "infiniteScrollImage";
+		infiniteScrollContainer.appendChild(imageElement);
+		// var infiniteScrollContainer = document.getElementById("infiniteScrollContainer");
+		// var imageElement = document.createElement("div");
+		// imageElement.style.backgroundImage = "url('/" + messageDict.serverImagePath + "')";
+		// imageElement.style.backgroundSize = "contain";
+		// imageElement.style.backgroundRepeat = "no-repeat";
+		// imageElement.className = "infiniteScrollImage";
+		// infiniteScrollContainer.appendChild(imageElement);
+	} else {
+		// Clear any video
+		var videoContainer = document.getElementById("videoContainer");
+		videoContainer.innerHTML = null;
+
+		document.body.style.backgroundImage = "url('/" + messageDict.serverImagePath + "')";
+	}
+}
+
+function handleSetVideo(messageDict) {
+	document.getElementById("message").innerHTML = messageDict.serverImagePath + " (" + messageDict.responseToCommand + ")";
+
+	if (infiniteScroll) {
+		var infiniteScrollContainer = document.getElementById("infiniteScrollContainer");
+		var videoElement = document.createElement("a");
+		videoElement.href = 'https://' + window.location.host + '/' + messageDict.serverImagePath;
+		videoElement.className = "infiniteScrollVideoLink";
+		var linkText = document.createTextNode("View Video " + messageDict.serverImagePath);
+		videoElement.appendChild(linkText);
+		infiniteScrollContainer.appendChild(videoElement);
+	} else {
+		// Clear the image
+		document.body.style.backgroundImage = null;
+
+		// This would work except for the fact that the web server doesn't handle streaming video yet
+		/*videoContainer.innerHTML = '<video class="video" width="500" height="500" autoplay loop="loop" controls><source src="'
+		  + messageDict.serverImagePath
+		  + '" type="video/mp4">Your browser does not support the video tag</video>';*/
+		var videoContainer = document.getElementById("videoContainer");
+		videoContainer.innerHTML = '<a class="bigCenterLink" target="_blank" href="https://' +
+			window.location.host + '/' + messageDict.serverImagePath +
+			'">View Video ' + messageDict.serverImagePath + '</a>';
+	}
+}
+
 ws.onmessage = function(evt) {
     var messageDict = JSON.parse(evt.data);
 
-    var videoContainer = document.getElementById("videoContainer");
 
     if (messageDict.action == "setImage") {
-        document.getElementById("message").innerHTML = messageDict.serverImagePath + " (" + messageDict.responseToCommand + ")";
-
-        // Clear any video
-        videoContainer.innerHTML = null;
-
-        document.body.style.backgroundImage = "url('/" + messageDict.serverImagePath + "')";
+        handleSetImage(messageDict);
     }
 
     if (messageDict.action == "setVideo") {
-        document.getElementById("message").innerHTML = messageDict.serverImagePath + " (" + messageDict.responseToCommand + ")";
-
-        // Clear the image
-        document.body.style.backgroundImage = null;
-
-        // This would work except for the fact that the web server doesn't handle streaming video yet
-        /*videoContainer.innerHTML = '<video class="video" width="500" height="500" autoplay loop="loop" controls><source src="'
-            + messageDict.serverImagePath
-            + '" type="video/mp4">Your browser does not support the video tag</video>';*/
-        videoContainer.innerHTML = '<a class="bigCenterLink" target="_blank" href="https://' +
-            window.location.host + '/' + messageDict.serverImagePath +
-            '">View Video ' + messageDict.serverImagePath + '</a>';
+        handleSetVideo(messageDict);
     }
 
     if (messageDict.action == "sendDirectory") {
@@ -188,6 +229,52 @@ function toggleFullScreen() {
         }
     }
 }
+
+function toggleInfiniteScroll() {
+	infiniteScroll = !infiniteScroll;
+	
+	if (infiniteScroll) {
+		// Clear the image
+        document.body.style.backgroundImage = null;
+		var videoContainer = document.getElementById("videoContainer");
+		// Clear any video
+        videoContainer.innerHTML = null;
+		// Hide controls
+		let singleImageControls = document.getElementsByClassName("singleImageControls");
+		for (var i = 0; i < singleImageControls.length; i++) {
+			singleImageControls[i].style.display = 'none';
+		}
+
+		// Add some images to get the scroll going
+		for (let i = 0; i < 10; i++) {
+			sendMessage('nextImage');
+		}
+		// Show infinite scroll
+		var infiniteScrollContainer = document.getElementById("infiniteScrollContainer");
+		infiniteScrollContainer.style.display = '';
+	} else {
+		// Hide infinite scroll
+		var infiniteScrollContainer = document.getElementById("infiniteScrollContainer");
+		infiniteScrollContainer.style.display = 'none';
+		
+		// Show controls
+		let singleImageControls = document.getElementsByClassName("singleImageControls");
+		for (var i = 0; i < singleImageControls.length; i++) {
+			singleImageControls[i].style.display = '';
+		}
+		// To populate the background, just get the next image
+		sendMessage('nextImage');
+	}
+}
+
+window.onscroll = function(ev) {
+	if (!infiniteScroll)
+		return;
+	
+    if ((window.innerHeight + window.scrollY) >= document.body.scrollHeight) { 
+		sendMessage('nextImage');
+    }
+};
 
 function filterChanged(newValue) {
     var payload = {
