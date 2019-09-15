@@ -27,6 +27,9 @@ if enable_authentication:
 # List of valid user ids (used to compare user cookie)
 authenticated_users = []
 
+# If "next" isn't specified from login, redirect here after login instead
+landingPage = "/"
+
 class SessionData:
     def __init__(self):
         # Just in case, because tornado is multithreaded
@@ -112,18 +115,9 @@ class LoginHandler(AuthHandler):
         if not enable_authentication:
             self.redirect("/")
         else:
-            self.write('<html>'
-                       '<head>'
-	               '<title>Liked Saved Downloader</title>'
-	               '<link rel="stylesheet" type="text/css" href="webInterfaceNoAuth/index.css">'
-                       '</head>'
-                       '<body><h1>Login Required</h1>'
-                       '<form action="/login" method="post">'
-                       'Name: <input type="text" name="name"><br />'
-                       'Password: <input type="password" name="password">'
-                       '{}'
-                       '<br /><input type="submit" value="Sign in">'
-                       '</form></body></html>'.format(self.xsrf_form_html()))
+            self.render("templates/Login.html",
+                        next=self.get_argument("next", landingPage),
+                        xsrf_form_html=self.xsrf_form_html())
 
     def post(self):
         global authenticated_users
@@ -143,7 +137,7 @@ class LoginHandler(AuthHandler):
             print("Authenticated user {}".format(self.get_argument("name")))
             
             # Let them in
-            self.redirect("/")
+            self.redirect(self.get_argument("next", landingPage))
         else:
             print("Refused user {} (password doesn't match any in database)".format(self.get_argument("name")))
             self.redirect("/login")
