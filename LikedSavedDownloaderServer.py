@@ -624,7 +624,7 @@ if __name__ == '__main__':
     if not savedImagesCache:
         generateSavedImagesCache(settings.settings['Output_dir'])
     
-    port = 8888
+    port = settings.settings['Port'] if settings.settings['Port'] else 8888
     print('\nStarting LikedSavedDownloader Server on port {}...'.format(port))
     app = make_app()
 
