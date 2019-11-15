@@ -11,6 +11,7 @@ import settings
 import submission
 import tumblrScraper
 import utilities
+import LikedSavedDatabase
 
 scriptFinishedSentinel = '>>> runLikedSavedDownloader() Process Finished <<<'
 
@@ -143,9 +144,13 @@ def getSubmissionsToSave():
 
         # Write out a .json file with all of the submissions in case the user wants the data
         submission.saveSubmissionsAsJson(submissions, settings.settings['Output_dir'] + u'/' 
+<<<<<<< Updated upstream
                                          + 'AllSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json')
 
         LikedSavedDatabase.db.addSubmissions(submissions)
+=======
+                                         + 'AllSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
+>>>>>>> Stashed changes
                 
     return submissions
 

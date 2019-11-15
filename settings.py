@@ -78,8 +78,12 @@ settings = {
     'Skip_n_percent_submissions': 0,
 
     'Output_dir' : 'output',
+<<<<<<< Updated upstream
     'Database' : 'LikedSaved.db',
     'Port' : 8888
+=======
+    'Database' : 'LikedSaved.db'
+>>>>>>> Stashed changes
 }
 
 redditClientSecretInstructions = '''You need OAuth tokens to run the script. To get them follow these steps:</p>
@@ -182,10 +186,15 @@ settingsStructure = [
         
         ('Should_soft_retrieve', "If True, don't actually download the images - just pretend to"),
         
+<<<<<<< Updated upstream
         ('Database'),
 
         ('Port', 'The port number the server will listen on. Note that ports 80 (HTTP default) and 443 (HTTPS'
          ' default) require the server to be run as root. <b>You must restart the server for this change to take effect.</b>')
+=======
+
+        ('Database', "Location of the database")
+>>>>>>> Stashed changes
     ]),
 ]
 

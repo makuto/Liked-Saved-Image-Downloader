@@ -37,12 +37,36 @@ def AddAllFromReddit(database, settings):
         database.addComment(comment)
 
     logger.log('Done! Saved {} submissions and {} comments'.format(len(redditSubmissions), len(redditComments)))
+    
+def AddAllFromDirectory(fileDatabase, directory):
+    logger.log('Scanning {} to create FileCollectionDatabase'.format(directory))
+    numFiles = 0
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            fileDatabase.addFileNoSave(file, os.path.relpath(os.path.join(root, file), directory))
+            numFiles += 1
+            
+    fileDatabase.save()
+
+    logger.log('Done; {} files in database'.format(numFiles))
 
 if __name__ == '__main__':
-    databaseFilename = 'LikedSavedDatabase.db'
-    isNewDatabase = not os.path.exists(databaseFilename)
-    if isNewDatabase:
-        db = LikedSavedDatabase.LikedSavedDatabase(databaseFilename)
-        settings.getSettings()
-
-        AddAllFromReddit(db, settings)
+    createSubmissionsDatabase = False
+    createFileCollectionDatabase = True
+    if createSubmissionsDatabase:
+        databaseFilename = 'LikedSavedDatabase.db'
+        isNewDatabase = not os.path.exists(databaseFilename)
+        if isNewDatabase:
+            db = LikedSavedDatabase.LikedSavedDatabase(databaseFilename)
+            settings.getSettings()
+            
+            AddAllFromReddit(db, settings)
+            
+    if createFileCollectionDatabase:
+        databaseFilename = 'FileCollectionDatabase.db'
+        isNewDatabase = not os.path.exists(databaseFilename)
+        if isNewDatabase:
+            db = LikedSavedDatabase.FileCollectionDatabase(databaseFilename)
+            settings.getSettings()
+            
+            AddAllFromDirectory(db, settings.settings['Output_dir'])

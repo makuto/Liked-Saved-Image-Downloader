@@ -16,6 +16,7 @@ import threading
 import utilities
 import settings
 import redditUserImageScraper
+import LikedSavedDatabase
 
 # Require a username and password in order to use the web interface. See ReadMe.org for details.
 #enable_authentication = False
@@ -334,9 +335,16 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
         """
         
         if command == 'imageAddToFavorites':
+<<<<<<< Updated upstream
             if self.sessionData.currentImage:
                 self.sessionData.favorites.append(self.sessionData.currentImage)
                 self.sessionData.favoritesIndex = len(self.sessionData.favorites) - 1
+=======
+            if self.currentImage:
+                self.favorites.append(self.currentImage)
+                self.favoritesIndex = len(self.favorites) - 1
+                LikedSavedDatabase.db.addFileToCollection(self.currentImage, "Favorites")
+>>>>>>> Stashed changes
 
         if command == 'nextFavorite':
             self.sessionData.favoritesIndex += 1

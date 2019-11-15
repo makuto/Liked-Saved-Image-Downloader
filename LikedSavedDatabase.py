@@ -25,8 +25,16 @@ class LikedSavedDatabase:
 
         cursor.execute("create table Submissions (id integer primary key, source text, title text, author text, subreddit text, subredditTitle text, body text, bodyUrl text, postUrl text, unique(postUrl))")
         cursor.execute("create table Comments (id integer primary key, source text, title text, author text, subreddit text, subredditTitle text, body text, bodyUrl text, postUrl text, unique(postUrl))")
+        
         cursor.execute("create table Collections (id integer primary key, name text)")
+        # TODO: Does it not make sense to have unique files and
+        # submissions because it should be possible for the same file
+        # to be in multiple collections?
         cursor.execute("create table SubmissionsToCollections (submissionKey integer, collectionKey integer, unique(submissionKey))")
+        # For files in the output directory but not related to a submission (in case the user manually
+        #put files they wanted to browse with the web interface
+        cursor.execute("create table FilesToCollections (filePath text, collectionKey integer, unique(filePath))")
+
         # Note that filePath is local to the server output directory,
         # not the root filesystem. Submission key doesn't have to be
         # unique so that multiple files can be associated with the
@@ -86,7 +94,21 @@ class LikedSavedDatabase:
                        (submissionId, collectionId))
         self.save()
 
+<<<<<<< Updated upstream
     def associateFileToSubmissionId(self, filePath, submissionId):
+=======
+    # Collection by name or ID, whichever's more convenient
+    def addFileToCollection(self, filePath, collection):
+        cursor = self.dbConnection.cursor()
+        if type(collection) == str:
+            # cursor.execute(
+        else:
+            cursor.execute("insert or ignore into FilesToCollections values (?,?)",
+                           (filePath, collection))
+        self.save()
+
+    def associateFileToSubmission(self, filePath, submissionId):
+>>>>>>> Stashed changes
         cursor = self.dbConnection.cursor()
         cursor.execute("insert or ignore into FilesToSubmissions values (?,?)",
                        (filePath, submissionId))
@@ -108,6 +130,14 @@ class LikedSavedDatabase:
         cursor = self.dbConnection.cursor()
 
         cursor.execute("select * from Submissions, SubmissionsToCollections where Submissions.id = SubmissionsToCollections.submissionKey and SubmissionsToCollections.collectionKey = ?", (collectionId,))
+
+        return cursor.fetchall()
+    
+    def getAllFilesInCollection(self, collectionId):
+        cursor = self.dbConnection.cursor()
+
+        cursor.execute("select * from FilesToCollections "
+                       "whre FilesToCollections.collectionKey = ?", (collectionId,))
 
         return cursor.fetchall()
 
@@ -204,6 +234,10 @@ def testOnRealSubmissions():
 
     print(db.getAllSubmissionsInCollection(dbCollection[0]))
     print(db.getAllFiles())
+    
+def initializeFromSettings(userSettings):
+    global db
+    db = LikedSavedDatabase(userSettings['Database'])
 
 if __name__ == '__main__':
     # Old, may not work

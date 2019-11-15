@@ -360,8 +360,12 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
                 if not soft_retrieve_imgs:
                     # Retrieve the image and save it
                     urlretrieve(imageUrl, saveFilePath)
+<<<<<<< Updated upstream
                     LikedSavedDatabase.db.associateFileToSubmission(
                             utilities.outputPathToDatabasePath(saveFilePath), albumSubmission)
+=======
+                    LikedSavedDatabase.db.associateFileToSubmission(saveFilePath, albumSubmission)
+>>>>>>> Stashed changes
 
                 logger.log('\t\t[' + percentageComplete(imageIndex, numImages) + '] ' 
                     + ' [save] ' + imageUrl + ' saved to "' + saveAlbumPath + '"')
@@ -502,8 +506,12 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 try:
                     urlretrieve(url, saveFilePath)
 
+<<<<<<< Updated upstream
                     LikedSavedDatabase.db.associateFileToSubmission(
                             utilities.outputPathToDatabasePath(saveFilePath), submission)
+=======
+                    LikedSavedDatabase.db.associateFileToSubmission(saveFilePath, submission)
+>>>>>>> Stashed changes
                 except IOError as e:
                     logger.log('[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'
                         .format(url, e.errno, e.strerror))
