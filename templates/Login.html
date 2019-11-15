@@ -13,11 +13,11 @@
 	<h1>Login Required</h1>
 	
     <form action="/login" method="post">
-      Name: <input type="text" name="name"><br />
-      Password: <input type="password" name="password">
-      <input type="hidden" name="next" value="{{ next }}"><br />
-	  {% raw xsrf_form_html %}
-      <br /><input type="submit" value="Sign in">
+		<label>Name</label><input type="text" name="name" autofocus><br />
+		<label>Password</label><input type="password" name="password">
+		<input type="hidden" name="next" value="{{ next }}"><br />
+		{% raw xsrf_form_html %}
+		<br /><input type="submit" value="Sign in">
 	</form>
 	
   </body>

@@ -1,15 +1,18 @@
 <html>
     <head>
+		<title>Settings</title>
+
 		<meta charset="utf-8">
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<!-- For mobile: set scale to native -->
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		
-        <link rel="stylesheet" type="text/css" href="webInterface/settings.css">
+        <link rel="stylesheet" type="text/css" href="webInterfaceNoAuth/index.css">
+		<link rel="stylesheet" type="text/css" href="webInterface/settings.css">
         <script type="text/javascript" src="webInterface/settings.js"></script>
     </head>
     <body>
-        <h1>Liked Saved Downloader Settings</h1>
+        <h1>Content Collector Settings</h1>
         <a href="/">Back to Homepage</a><br /><br />
         {% raw status_html %}
         <p>Settings being read from {{ settings_filename }}</p>

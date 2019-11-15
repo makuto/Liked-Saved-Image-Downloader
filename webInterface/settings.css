@@ -1,29 +1,35 @@
-body {
-    margin: 0 auto;
-	width: 80%;
-    height: 100%;
-    background-color: #333333;
-	max-width: 800px;
+
+/* li, .optionComment { */
+/* 	margin-top: 0px; */
+/* 	margin-bottom: 0px; */
+/* 	margin-left: 20px; */
+/* 	font-size: small; */
+/* 	color: #aaaaaa; */
+/* } */
+
+/* body {
+   margin: 0 auto;
+   width: 80%;
+   height: 100%;
+   background-color: #333333;
+   max-width: 800px;
+   }
+
+   p,
+   h1,
+   h2,
+   h3,
+   a,
+   label,
+   form {
+   color: #cccccc;
+   }
+ */
+
+input {
+	margin-bottom: 3px;
 }
 
-p,
-h1,
-h2,
-h3,
-a,
-li {
-    color: #cccccc;
-}
-
-label {
-	font-size: large;
-	color: #cccccc;
-}
-
-li, .optionComment {
-	margin-top: 0px;
-	margin-bottom: 0px;
+.optionComment {
 	margin-left: 20px;
-	font-size: small;
-	color: #aaaaaa;
 }

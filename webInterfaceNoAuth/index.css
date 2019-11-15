@@ -1,21 +1,3 @@
-body {
-    margin: 0 auto;
-	width: 80%;
-    height: 100%;
-    background-color: #333333;
-	max-width: 800px;
-}
-
-p,
-h1,
-h2,
-h3,
-a,
-label,
-form {
-    color: #cccccc;
-}
-
 footer {
 	margin-top: 40px;
 	font-size: small;
@@ -28,3 +10,157 @@ footer a {
 navigation a {
 	font-size: x-large;
 }
+
+html {
+	margin: 15 15 15 15;
+    background-color: #1c2023;
+}
+
+body {
+	/* Center body */
+    margin: 0 auto;
+	padding: 30px;
+	/* Make sure lines don't get too long */
+	max-width: 700px;
+}
+
+p,
+blockquote,
+h1,
+h2,
+h3,
+a,
+li,
+tr,
+td,
+th,
+time,
+label {
+    color: #c7ae95;
+	font-family: Arial;
+	line-height: 1.65;
+}
+
+table {
+	border-collapse: separate;
+	border-spacing: 20px 0;
+}
+
+th {
+	text-align: left;
+}
+
+/* unvisited link */
+a:link {
+	/* color: red; */
+	text-decoration: none;
+}
+
+/* visited link */
+a:visited {
+	color: #c7c795;
+	text-decoration: none;
+}
+
+/* mouse over link */
+a:hover {
+	color: #aec795;
+	text-decoration: underline;
+}
+
+/* selected link */
+a:active {
+	color: #95c7ae;
+	text-decoration: underline;
+} 
+
+/* Regular body text */
+p,
+blockquote,
+li,
+tr,
+td,
+input,
+button {
+    color: #95aec7;
+}
+
+time,
+.timeLabel {
+	/* color: #95aec7; */
+	color: #7c91a5;
+	font-style: italic;
+}
+
+/* Font sizes for consistently sized text */
+p,
+blockquote,
+a,
+li,
+input {
+    font-size: medium;
+}
+
+label {
+	font-size: large;
+	color: #B08989;
+}
+
+img {
+	width: 100%;
+	height: auto;
+}
+
+::selection {
+    background-color: #c7ae95;
+    color: #000000;
+}
+
+input {
+	background-color: #22282d;
+	font-family: Arial;
+}
+
+input[type=text],
+input[type=password],
+input[type=number] {
+	border: 2px solid #7c91a5;
+	border-radius: 4px;
+	width: 100%;
+	padding: 12px 20px;
+	margin: 8px 0;
+	box-sizing: border-box;
+}
+
+input[type=text]:focus,
+input[type=password]:focus,
+input[type=number]:focus,
+input[type=button]:focus,
+input[type=button]:focus-within,
+input[type=submit]:focus-within,
+input[type=reset]:focus-within,
+button:focus-within {
+	border: 3px solid #ffce9a;
+}
+
+input[type=button], input[type=submit], input[type=reset], button {
+	border: 3px solid #9c7575;
+	border-radius: 4px;
+	padding: 16px 32px;
+	text-decoration: none;
+	cursor: pointer;
+
+	background-color: #775050;
+	color: #ffffea;
+	font-family: Arial;
+	font-size: large;
+}
+
+input[type=button]:hover, input[type=submit]:hover, input[type=reset]:hover, button:hover {
+	border: 3px solid #c7c795;
+}
+
+input[type=checkbox] {
+	transform: scale(1.3,1.3);
+}
+
