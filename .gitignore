@@ -10,3 +10,5 @@ LOCAL_*
 *.db-journal
 passwords.txt
 certificates
+build*/
+dist*/

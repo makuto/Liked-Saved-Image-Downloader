@@ -266,6 +266,15 @@ def getSettingsFilename():
     if os.path.isfile(DEFAULT_SETTINGS_FILENAME):
         candidates.append(DEFAULT_SETTINGS_FILENAME)
 
+    # No settings files at all; create one
+    if not candidates:
+        writeServerSettings()
+        if os.path.isfile(serverSettingsFilename):
+            candidates.append(serverSettingsFilename)
+        else:
+            print("Error: can't seem to create settings file")
+            return None
+
     # Choose the most recently edited file
     # From http://code.activestate.com/recipes/576804-find-the-oldest-or-yougest-of-a-list-of-files/
     timeNow = time.time()

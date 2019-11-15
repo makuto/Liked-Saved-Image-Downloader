@@ -1,8 +1,20 @@
+#!/usr/bin/env python
 #
 # Password manager: handles hashing and comparing for passwords used in LikedSavedDownloaderServer
 # I'm no expert so use and trust at your own risk!
 #
 from passlib.context import CryptContext
+
+# It's not strictly necessary to import these, but I do it here for PyInstaller
+# (see https://github.com/pyinstaller/pyinstaller/issues/649)
+import argon2
+import cffi
+import configparser
+import passlib.handlers
+import passlib.handlers.argon2
+import passlib.handlers.sha2_crypt
+import passlib.handlers.bcrypt
+
 import sys
 
 # Even if this file gets compromised, it'll still be hard to use for anything
