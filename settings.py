@@ -141,10 +141,8 @@ settingsStructure = [
      ['Imgur_client_id',
       ('Imgur_client_secret',"These need to be filled in so that the script can download Imgur "
        "albums. If not filled in, imgur albums will be ignored. Single images will still be "
-       "downloaded. I've filled in a public imgur user's information. This isn't safe giving you"
-       " hooligans the secret, but fuck it. If you want to use your own Imgur Client, sign in to"
-       " Imgur, then go <a href=\"https://api.imgur.com/oauth2/addclient\">here</a> and create"
-       " your new client.")]),
+       "downloaded. If you want to use Imgur, sign in to Imgur, then go "
+       "<a href=\"https://api.imgur.com/oauth2/addclient\">here</a> and create your new client.")]),
 
     ('Gfycat Auth',
      ['Gfycat_Client_id',
