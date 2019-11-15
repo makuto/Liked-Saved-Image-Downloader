@@ -17,10 +17,14 @@ form {
 }
 
 footer {
-	margin-top: 100px;
+	margin-top: 40px;
 	font-size: small;
 }
 
 footer a {
 	margin-right: 10px;
+}
+
+navigation a {
+	font-size: x-large;
 }
