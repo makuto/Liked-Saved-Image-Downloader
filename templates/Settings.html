@@ -1,0 +1,23 @@
+<html>
+    <head>
+		<meta charset="utf-8">
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<!-- For mobile: set scale to native -->
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		
+        <link rel="stylesheet" type="text/css" href="webInterface/settings.css">
+        <script type="text/javascript" src="webInterface/settings.js"></script>
+    </head>
+    <body>
+        <h1>Liked Saved Downloader Settings</h1>
+        <a href="/">Back to Homepage</a><br /><br />
+        {% raw status_html %}
+        <p>Settings being read from {{ settings_filename }}</p>
+        <form action="/settings" method="post">
+            <input type="submit" value="Submit">
+            {% raw settings_form_html %}
+            <input type="submit" value="Submit">
+            {% raw xsrf_form_html %}
+        </form>
+    </body>
+</html>
