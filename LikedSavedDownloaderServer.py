@@ -12,6 +12,7 @@ import os
 import random
 import shutil
 import threading
+import webbrowser
 
 import utilities
 import settings
@@ -675,7 +676,12 @@ if __name__ == '__main__':
         print('\n\tWARNING: Do NOT run this server on the internet (e.g. port-forwarded)'
           ' nor when\n\t connected to an insecure LAN! It is not protected against malicious use.\n')
         app.listen(port)
-        
+
+    if settings.settings['Launch_Browser_On_Startup']:
+        browseUrl  ="{}://localhost:{}".format('https' if useSSL else 'http', port)
+        print("Attempting to launch user's default browser to {}".format(browseUrl))
+        webbrowser.open(browseUrl)
+
     ioLoop = tornado.ioloop.IOLoop.current()
     updateStatusCallback = tornado.ioloop.PeriodicCallback(updateScriptStatus, 100)
     updateStatusCallback.start()
