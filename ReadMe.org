@@ -113,12 +113,13 @@ Note that all login cookies will be invalidated each time you restart the server
 
 ** Running the script only
 
-1. Open ~settings.txt~
-2. Fill in your username and password
-3. Set ~SHOULD_SOFT_RETRIEVE~ to ~False~ if you are sure you want to do this
-4. Run the script: ~python redditUserImageScraper.py~
-5. Wait for a while
-6. Check your output directory (the default is ~output~ relative to where you ran the script) for all your images!
+1. Copy ~settings_template.txt~ into a new file called ~settings.txt~
+2. Open ~settings.txt~
+3. Fill in your username and password
+4. Set ~SHOULD_SOFT_RETRIEVE~ to ~False~ if you are sure you want to do this
+5. Run the script: ~python redditUserImageScraper.py~
+6. Wait for a while
+7. Check your output directory (the default is ~output~ relative to where you ran the script) for all your images!
 
 If you want more images, set ~Reddit_Total_Requests~ and/or ~Tumblr_Total_Requests~ to a higher value. The maximum is 1000. Unfortunately, reddit does not allow you to get more than 1000 submissions of a single type (1000 liked, 1000 saved).
 
@@ -129,8 +130,4 @@ Not actually getting images downloaded, but seeing the console say it downloaded
 ** Issues
 
 Feel free to create Issues on this repo if you need help. I'm friendly so don't be shy.
-** When Updating
 
-If there were changes to ~settings.txt~ pushed, your server will start reading settings from there instead of your ~LOCAL_settings_from_server.txt~. This is because the server always reads the settings file with the newest timestamp.
-
-You can fix this by running ~touch LOCAL_settings_from_server.txt~ or opening your desired settings file and saving it in a text editor.
