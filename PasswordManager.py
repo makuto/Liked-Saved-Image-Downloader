@@ -16,6 +16,7 @@ import passlib.handlers.sha2_crypt
 import passlib.handlers.bcrypt
 
 import sys
+import os
 
 # Even if this file gets compromised, it'll still be hard to use for anything
 passwordsFilename = "passwords.txt"
@@ -44,6 +45,9 @@ def cachePasswords():
     passwords = passwordsFile.readlines()
     passwordsFile.close()
     
+def havePasswordsBeenSet():
+    return os.path.exists(passwordsFilename)
+    
 def verify(password):
     if not len(passwords):
         cachePasswords()
@@ -55,14 +59,17 @@ def verify(password):
             return True
     return False
 
+def createPassword(password):
+    passwordHashed = password_context.hash(password)
+        
+    passwordsOut = open(passwordsFilename, "a")
+    passwordsOut.write(passwordHashed + "\n")
+    passwordsOut.close()
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Wrong number of arguments!\n"
               "PasswordManager: Adds a password to the passwords file.\n"
               "Usage:\n  python PasswordManager.py \"your password\"")
     else:
-        passwordHashed = password_context.hash(sys.argv[1])
-        
-        passwordsOut = open(passwordsFilename, "a")
-        passwordsOut.write(passwordHashed + "\n")
-        passwordsOut.close()
+        createPassword(sys.argv[1])

@@ -115,9 +115,15 @@ class LoginHandler(AuthHandler):
         if not enable_authentication:
             self.redirect("/")
         else:
-            self.render("templates/Login.html",
-                        next=self.get_argument("next", landingPage),
-                        xsrf_form_html=self.xsrf_form_html())
+            if PasswordManager.havePasswordsBeenSet():
+                self.render("templates/Login.html",
+                            next=self.get_argument("next", landingPage),
+                            xsrf_form_html=self.xsrf_form_html())
+            else:
+                # New password setup
+                self.render("templates/LoginCreate.html",
+                            next=self.get_argument("next", landingPage),
+                            xsrf_form_html=self.xsrf_form_html())
 
     def post(self):
         global authenticated_users
@@ -154,6 +160,25 @@ class LogoutHandler(AuthHandler):
             self.redirect("/login")
         else:
             self.redirect("/")
+
+class SetPasswordHandler(AuthHandler):
+    def get(self):
+        pass
+
+    def post(self):
+        if not enable_authentication:
+            self.redirect("/")
+        else:
+            print("Attempting to set password")
+            if PasswordManager.havePasswordsBeenSet():
+                print("Rejected: Password has already been set!")
+            elif self.get_argument("password") != self.get_argument("password_verify"):
+                print("Rejected: password doesn't match verify field!")
+            else:
+                PasswordManager.createPassword(self.get_argument("password"))
+                print("Success: Set password")
+
+            self.redirect("/login")
 
 class AuthedStaticHandler(tornado.web.StaticFileHandler):
     def get_current_user(self):
@@ -590,7 +615,8 @@ def make_app():
         # Login
         (r'/login', LoginHandler),
         (r'/logout', LogoutHandler),
-
+        (r'/setPassword', SetPasswordHandler),
+        
         # Configure the script
         (r'/settings', SettingsHandler),
 
