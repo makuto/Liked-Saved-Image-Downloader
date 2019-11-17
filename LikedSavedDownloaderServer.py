@@ -65,14 +65,14 @@ def generateSavedImagesCache(outputDir):
     # Clear cache in case already created
     savedImagesCache = []
 
-    print('Creating Liked Saved cache...')
+    print('Creating content cache...')
     
     for root, dirs, files in os.walk(outputDir):
         for file in files:
             if file.endswith(supportedExtensions):
                 savedImagesCache.append(os.path.join(root, file))
 
-    print('Finished creating Liked Saved cache ({} images/videos)'.format(len(savedImagesCache)))
+    print('Finished creating content cache ({} images/videos)'.format(len(savedImagesCache)))
 
 def getRandomImage(filteredImagesCache=None, randomImageFilter=''):
     if not savedImagesCache:
@@ -644,7 +644,7 @@ if __name__ == '__main__':
     print('Loading settings...')
     settings.getSettings()
 
-    print('Liked Saved output directory: ' + settings.settings['Output_dir'])
+    print('Content output directory: ' + settings.settings['Output_dir'])
     if not settings.settings['Output_dir']:
         print('WARNING: No output directory specified! This will probably break things')
     
@@ -652,7 +652,7 @@ if __name__ == '__main__':
         generateSavedImagesCache(settings.settings['Output_dir'])
     
     port = settings.settings['Port'] if settings.settings['Port'] else 8888
-    print('\nStarting LikedSavedDownloader Server on port {}...'.format(port))
+    print('\nStarting Content Collector Server on port {}...'.format(port))
     app = make_app()
 
     # Generating a self-signing certificate:
