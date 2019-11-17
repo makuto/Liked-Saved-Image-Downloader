@@ -183,12 +183,12 @@ settingsStructure = [
         
         ('Should_soft_retrieve', "If True, don't actually download the images - just pretend to"),
         
-        ('Database'),
-
         ('Port', 'The port number the server will listen on. Note that ports 80 (HTTP default) and 443 (HTTPS'
          ' default) require the server to be run as root. <b>You must restart the server for this change to take effect.</b>'),
 
-        ('Launch_Browser_On_Startup', 'Open default browser to localhost:port once the server has started')
+        ('Launch_Browser_On_Startup', 'Open default browser to localhost:port once the server has started'),
+
+        ('Database', "Location of the database")
     ]),
 ]
 

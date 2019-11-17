@@ -17,6 +17,7 @@ import webbrowser
 import utilities
 import settings
 import redditUserImageScraper
+import LikedSavedDatabase
 
 # Require a username and password in order to use the web interface. See ReadMe.org for details.
 #enable_authentication = False
@@ -363,7 +364,8 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
             if self.sessionData.currentImage:
                 self.sessionData.favorites.append(self.sessionData.currentImage)
                 self.sessionData.favoritesIndex = len(self.sessionData.favorites) - 1
-
+                LikedSavedDatabase.db.addFileToCollection(self.sessionData.currentImage[1], "Favorites")
+                 
         if command == 'nextFavorite':
             self.sessionData.favoritesIndex += 1
             if self.sessionData.favoritesIndex >= 0 and self.sessionData.favoritesIndex < len(self.sessionData.favorites):
@@ -650,6 +652,8 @@ if __name__ == '__main__':
     
     if not savedImagesCache:
         generateSavedImagesCache(settings.settings['Output_dir'])
+
+    LikedSavedDatabase.initializeFromSettings(settings.settings)
     
     port = settings.settings['Port'] if settings.settings['Port'] else 8888
     print('\nStarting Content Collector Server on port {}...'.format(port))
