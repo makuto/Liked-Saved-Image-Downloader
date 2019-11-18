@@ -8,19 +8,20 @@ var verifyPasswords =
     function() {
 	if (!passwordField.value)
 	{
-		statusField.style.display = 'block';
+		/* statusField.style.display = 'block'; */
 		statusField.innerText = 'Password must not be empty';
 		setPasswordSubmitButton.disabled = true;
 	}
 	else if (verifyPasswordField.value != passwordField.value)
 	{
-		statusField.style.display = 'block';
+		/* statusField.style.display = 'block'; */
 		statusField.innerText = 'Passwords do not match';
 		setPasswordSubmitButton.disabled = true;
 	}
 	else
 	{
-		statusField.style.display = 'none';
+		/* statusField.style.display = 'none'; */
+		statusField.innerText = '';
 		setPasswordSubmitButton.disabled = false;
 	}
 }
