@@ -236,6 +236,42 @@ def settingsToHtmlForm():
 
     return ''.join(settingsInputs)
 
+unsupportedSubmissionShownColumns = ['source',
+                                     'title',
+                                     'postUrl',
+                                     'reasonForFailure']
+class UnsupportedSubmissionsHandler(AuthHandler):
+    def unsupportedSubmissionToTableColumns(self, unsupportedSubmission):
+        rowHtml = ''
+        for columnName in unsupportedSubmissionShownColumns:
+            rowHtml += '\t<td>{}</td>\n'.format(unsupportedSubmission[columnName])
+        return rowHtml
+
+    def createTableHeader(self):
+        tableHeaderHtml = '<thead>\n<tr class="header">\n'
+
+        for columnName in unsupportedSubmissionShownColumns:
+            tableHeaderHtml +='<th>{}</th>'.format(columnName)
+
+        tableHeaderHtml += '</tr>\n</thead>\n<tbody>\n'
+        return tableHeaderHtml
+    
+    @tornado.web.authenticated
+    def get(self):
+        unsupportedSubmissionsListHtml = self.createTableHeader()
+        unsupportedSubmissions = LikedSavedDatabase.db.getAllUnsupportedSubmissions()
+        i = 0
+        for unsupportedSubmission in unsupportedSubmissions:
+            unsupportedSubmissionsListHtml += ('<tr class="{}">{}</tr>\n'
+                                               .format('even' if i % 2 == 0 else 'odd',
+                                                       self.unsupportedSubmissionToTableColumns(unsupportedSubmission)))
+            i += 1
+
+        unsupportedSubmissionsListHtml += '</tbody>\n'
+
+        self.render("templates/UnsupportedSubmissions.html",
+                    unsupported_submissions_html=unsupportedSubmissionsListHtml)
+
 class SettingsHandler(AuthHandler):
     def doSettings(self, afterSubmit):
         htmlSettingsForm = settingsToHtmlForm()
@@ -629,7 +665,11 @@ def make_app():
         # Handles messages for randomImageBrowser
         (r'/randomImageBrowserWebSocket', RandomImageBrowserWebSocket),
 
+        (r'/unsupportedSubmissions', UnsupportedSubmissionsHandler),
+
+        #
         # Static files
+        #
         (r'/webInterface/(.*)', AuthedStaticHandler, {'path' : 'webInterface'}),
         # Don't change this "output" here without changing the other places as well
         (r'/output/(.*)', AuthedStaticHandler, {'path' : settings.settings['Output_dir']}),
@@ -654,6 +694,23 @@ if __name__ == '__main__':
         generateSavedImagesCache(settings.settings['Output_dir'])
 
     LikedSavedDatabase.initializeFromSettings(settings.settings)
+
+    # Backwards compatibility: Read the old .json files into the database. This can be slow for old
+    # repositories, so only do it once
+    if not settings.settings['Database_Has_Imported_All_Submissions']:
+        LikedSavedDatabase.importFromAllJsonInDir(settings.settings['Output_dir'])
+        settings.settings['Database_Has_Imported_All_Submissions'] = True
+        settings.writeServerSettings()
+        print('Successfully imported "All" Submissions into database')
+    if not settings.settings['Database_Has_Imported_Unsupported_Submissions']:
+        LikedSavedDatabase.importUnsupportedSubmissionsFromAllJsonInDir(settings.settings['Output_dir'])
+        settings.settings['Database_Has_Imported_Unsupported_Submissions'] = True
+        settings.writeServerSettings()
+        print('Successfully imported Unsupported Submissions into database')
+        # TODO
+    # if not settings.settings['Database_Has_Imported_Comments']:
+        # LikedSavedDatabase.importFromAllJsonInDir(settings.settings['Output_dir'])
+        # settings.settings['Database_Has_Imported_Comments'] = True
     
     port = settings.settings['Port'] if settings.settings['Port'] else 8888
     print('\nStarting Content Collector Server on port {}...'.format(port))

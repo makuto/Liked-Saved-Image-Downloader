@@ -11,6 +11,11 @@ navigation a {
 	font-size: x-large;
 }
 
+a.small {
+	/* Lol */
+	font-size: large;
+}
+
 html {
 	margin: 15 15 15 15;
     background-color: #1c2023;
@@ -44,10 +49,17 @@ label {
 table {
 	border-collapse: separate;
 	border-spacing: 20px 0;
+
+	/* table-layout: fixed; */
+	/* width: 100%; */
 }
 
 th {
 	text-align: left;
+}
+
+tr.odd {
+	background-color: #282e32;
 }
 
 /* unvisited link */

@@ -424,6 +424,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 if not imgur_auth:
                     logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
                         + ' [unsupported] ' + 'Skipped "' + url + '" (imgur album)')
+                    LikedSavedDatabase.db.addUnsupportedSubmission(submission, "Imgur albums not supported")
                     numUnsupportedAlbums += 1
                     continue
                 else:
@@ -505,19 +506,21 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                     LikedSavedDatabase.db.associateFileToSubmission(
                             utilities.outputPathToDatabasePath(saveFilePath), submission)
                 except IOError as e:
-                    logger.log('[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'
-                        .format(url, e.errno, e.strerror))
+                    errorMessage = '[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'.format(url, e.errno, e.strerror)
+                    logger.log(errorMessage)
+                    LikedSavedDatabase.db.addUnsupportedSubmission(submission, errorMessage)
                     numUnsupportedImages += 1
                     continue
                 except KeyboardInterrupt:
                     exit()
                 except Exception as e:
-                    logger.log('[ERROR] Exception: Url {0} raised exception:\n\t {1}'
-                        .format(url, e))
+                    errorMessage = '[ERROR] Exception: Url {0} raised exception:\n\t {1}'.format(url, e)
+                    logger.log(errorMessage)
                     logger.log('[ERROR] Url ' + url + 
                         ' raised an exception I did not handle. Open an issue at '
                         '\n\thttps://github.com/makuto/redditLikedSavedImageDownloader/issues'
                         '\n and I will try to fix it')
+                    LikedSavedDatabase.db.addUnsupportedSubmission(submission, errorMessage)
                     numUnsupportedImages += 1
                     continue
 
@@ -530,6 +533,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
             logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
                 + ' [unsupported] ' + 'Skipped "' + url + '" (content type "' + urlContentType + '")')
             unsupportedSubmissions.append(submission)
+            LikedSavedDatabase.db.addUnsupportedSubmission(submission,
+                                                           "URL or content type {} not supported".format(urlContentType))
             numUnsupportedImages += 1
 
     numSavedAlbums = 0

@@ -1,0 +1,25 @@
+<html>
+    <head>
+		<title>Unsupported Content</title>
+
+		<meta charset="utf-8">
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<!-- For mobile: set scale to native -->
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		
+        <link rel="stylesheet" type="text/css" href="webInterfaceNoAuth/index.css">
+    </head>
+    <body>
+        <h1>Failed to Download</h1>
+		
+        <a href="/">Back to Homepage</a><br /><br />
+		
+        <p>The following submissions could not be downloaded.
+			This could be a problem with your <a href="/settings">Settings</a>, or the website is not supported.
+			If you think it should be supported, please <a href="https://github.com/makuto/Liked-Saved-Image-Downloader/issues">open an issue</a> (please label it with "Downloader Integration").</p>
+
+		<table>
+			{% raw unsupported_submissions_html %}
+		</table>
+    </body>
+</html>

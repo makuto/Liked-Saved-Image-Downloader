@@ -45,8 +45,8 @@ def runLikedSavedDownloader(pipeConnection):
                    ' settings.txt for how to fill in these values.')
             
     if not settings.settings['Gfycat_Client_id']:
-        logger.log('No Gfycat Client ID and/or Gfycat Client Secret was provided, or album download is not'
-                   ' enabled. This is required to download Gfycat media reliably.')
+        logger.log('No Gfycat Client ID and/or Gfycat Client Secret was provided. '
+                   'This is required to download Gfycat media reliably.')
 
     logger.log('Output: ' + settings.settings['Output_dir'])
     utilities.makeDirIfNonexistant(settings.settings['Output_dir'])

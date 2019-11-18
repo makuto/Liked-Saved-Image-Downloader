@@ -13,33 +13,45 @@ class LikedSavedDatabase:
         isNewDatabase = not os.path.exists(databaseFilePath)
         self.dbConnection = sqlite3.connect(databaseFilePath)
 
-        if isNewDatabase:
-            self.initializeEmptyDatabase()
+        # This gives us the ability to access results by column name
+        # See https://docs.python.org/3/library/sqlite3.html#row-objects
+        self.dbConnection.row_factory = sqlite3.Row
+
+        self.initializeDatabaseTables()
 
     def __del__(self):
         self.save()
         self.dbConnection.close()
 
-    def initializeEmptyDatabase(self):
+    def initializeDatabaseTables(self):
         cursor = self.dbConnection.cursor()
 
-        cursor.execute("create table Submissions (id integer primary key, source text, title text, author text, subreddit text, subredditTitle text, body text, bodyUrl text, postUrl text, unique(postUrl))")
-        cursor.execute("create table Comments (id integer primary key, source text, title text, author text, subreddit text, subredditTitle text, body text, bodyUrl text, postUrl text, unique(postUrl))")
+        cursor.execute("create table if not exists Submissions"
+                       "(id integer primary key, source text, title text, author text, subreddit text, subredditTitle text, body text, bodyUrl text, postUrl text, unique(postUrl))")
+        cursor.execute("create table if not exists Comments"
+                       " (id integer primary key, source text, title text, author text, subreddit text, subredditTitle text, body text, bodyUrl text, postUrl text, unique(postUrl))")
         
-        cursor.execute("create table Collections (id integer primary key, name text)")
+        cursor.execute("create table if not exists Collections"
+                       "(id integer primary key, name text)")
         # TODO: Does it not make sense to have unique files and
         # submissions because it should be possible for the same file
         # to be in multiple collections?
-        cursor.execute("create table SubmissionsToCollections (submissionKey integer, collectionKey integer, unique(submissionKey))")
+        cursor.execute("create table if not exists SubmissionsToCollections"
+                       " (submissionKey integer, collectionKey integer, unique(submissionKey))")
         # For files in the output directory but not related to a submission (in case the user manually
         #put files they wanted to browse with the web interface
-        cursor.execute("create table FilesToCollections (filePath text, collectionKey integer, unique(filePath))")
+        cursor.execute("create table if not exists FilesToCollections"
+                       "(filePath text, collectionKey integer, unique(filePath))")
 
         # Note that filePath is local to the server output directory,
         # not the root filesystem. Submission key doesn't have to be
         # unique so that multiple files can be associated with the
         # same submission (e.g. an album, or self-uploaded files)
-        cursor.execute("create table FilesToSubmissions (filePath text, submissionKey integer, unique(filePath))")
+        cursor.execute("create table if not exists FilesToSubmissions"
+                       " (filePath text, submissionKey integer, unique(filePath))")
+
+        cursor.execute("create table if not exists UnsupportedSubmissions"
+                       "(submissionKey integer, reasonForFailure text, unique(submissionKey))")
 
         self.save()
 
@@ -52,6 +64,13 @@ class LikedSavedDatabase:
         cursor.execute("insert or ignore into Comments values (NULL,?,?,?,?,?,?,?,?)",
                        submission.getAsList())
         self.save()
+        
+    def findSubmissionInDb(self, submission):
+        cursor = self.dbConnection.cursor()
+        
+        # Find submission
+        cursor.execute("select * from Submissions where postUrl=?", (submission.postUrl,))
+        return cursor.fetchone()        
 
     def addSubmission(self, submission):
         cursor = self.dbConnection.cursor()
@@ -154,6 +173,32 @@ class LikedSavedDatabase:
         cursor.execute("select * from FilesToSubmissions")
 
         return cursor.fetchall()
+
+    def addUnsupportedSubmission(self, submission, reasonForFailure):
+        cursor = self.dbConnection.cursor()
+        
+        # Find submission
+        submissionInDb = self.findSubmissionInDb(submission)
+        # Submission not found
+        if not submissionInDb:
+            print("Submission not found; database out of sync? Adding it")
+            self.addSubmission(submission)
+
+        submissionInDb = self.findSubmissionInDb(submission)
+        if not submissionInDb:
+            print("Could not find submission after add. Something's wrong")
+            return
+
+        cursor.execute("insert or ignore into UnsupportedSubmissions values (?,?)",
+                       (submissionInDb[0], reasonForFailure))
+
+    def getAllUnsupportedSubmissions(self):
+        cursor = self.dbConnection.cursor()
+
+        cursor.execute("select * from Submissions, UnsupportedSubmissions "
+                       "where Submissions.id = UnsupportedSubmissions.submissionKey")
+
+        return cursor.fetchall()
     
 def initializeFromSettings(userSettings):
     global db
@@ -174,7 +219,7 @@ def importFromAllJsonInDir(dir):
             if match:
                 jsonFilesToRead.append(os.path.join(root, file))
                 
-    print("Importing {} json files...".format(len(jsonFilesToRead)))
+    print("Importing {} AllSubmissions json files...".format(len(jsonFilesToRead)))
 
     totalSubmissions = 0
     for filename in jsonFilesToRead:
@@ -197,6 +242,43 @@ def importFromAllJsonInDir(dir):
 
         # While we could do this all in one, I'd rather do it in batches in case a file trips it up
         db.addSubmissions(submissions)
+        
+    print("Read {} submissions".format(totalSubmissions))
+
+def importUnsupportedSubmissionsFromAllJsonInDir(dir):
+    global db
+    
+    jsonFilesToRead = []
+    for root, dirs, files in os.walk(dir):
+        for file in files:
+            match = re.search(r'UnsupportedSubmissions_(.*).json', file)
+            if match:
+                jsonFilesToRead.append(os.path.join(root, file))
+                
+    print("Importing {} UnsupportedSubmissions json files...".format(len(jsonFilesToRead)))
+
+    totalSubmissions = 0
+    for filename in jsonFilesToRead:
+        file = open(filename, 'r')
+        # Ugh...
+        lines = file.readlines()
+        text = u''.join(lines)
+        # Fix the formatting so the json module understands it
+        text = "[{}]".format(text[1:-3])
+        
+        dictSubmissions = json.loads(text)
+        submissions = []
+        for dictSubmission in dictSubmissions:
+            submission = Submissions.Submission()
+            submission.initFromDict(dictSubmission)
+            submissions.append(submission)
+            
+        print("Read {} submissions from file {}".format(len(submissions), filename))
+        totalSubmissions += len(submissions)
+
+        # While we could do this all in one, I'd rather do it in batches in case a file trips it up
+        for submission in submissions:
+            db.addUnsupportedSubmission(submission, "Reason unknown (legacy)")
         
     print("Read {} submissions".format(totalSubmissions))
 
@@ -257,4 +339,3 @@ if __name__ == '__main__':
     # initializeFromSettings(settings.settings)
     db = LikedSavedDatabase("TestImport.db")
     importFromAllJsonInDir(settings.settings["Output_dir"])
-

@@ -79,6 +79,12 @@ settings = {
 
     'Output_dir' : 'output',
     'Database' : 'LikedSaved.db',
+    # These are gross: for existing output directories, store whether the user has updated their
+    # database from the JSON files with the new features. These will automatically set themselves
+    'Database_Has_Imported_Unsupported_Submissions' : False,
+    'Database_Has_Imported_All_Submissions' : False,
+    'Database_Has_Imported_Comments' : False,
+
     'Port' : 8888,
     'Launch_Browser_On_Startup' : True
 }
