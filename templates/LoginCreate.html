@@ -23,10 +23,13 @@
 			
 			<input type="hidden" name="next" value="{{ next }}"><br />
 			
-			<p id="passwordStatus" style="display: none"></p>
-			
 			{% raw xsrf_form_html %}
-				<br /><input type="submit" value="Set password" id="setPasswordSubmit">
+			
+			<br />
+			<span style="width: 100%">
+				<input type="submit" value="Set password" id="setPasswordSubmit">
+				<p id="passwordStatus"></p>
+			</span>
 		</form>
 
 
