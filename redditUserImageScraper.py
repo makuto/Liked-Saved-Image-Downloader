@@ -4,12 +4,13 @@ import time
 import os
 
 import LikedSavedDatabase
-import imageSaver
 import logger
+import imageSaver
 import redditScraper
+import tumblrScraper
+import imgurDownloader
 import settings
 import submission
-import tumblrScraper
 import utilities
 import LikedSavedDatabase
 
@@ -37,8 +38,8 @@ def runLikedSavedDownloader(pipeConnection):
     imgurAuth = None
     if (settings.settings['Should_download_albums'] 
         and settings.hasImgurSettings()):
-        imgurAuth = imageSaver.ImgurAuth(settings.settings['Imgur_client_id'], 
-                                         settings.settings['Imgur_client_secret'])
+        imgurAuth = imgurDownloader.ImgurAuth(settings.settings['Imgur_client_id'], 
+                                              settings.settings['Imgur_client_secret'])
     else:
         logger.log('No Imgur Client ID and/or Imgur Client Secret was provided, or album download is not'
                    ' enabled. This is required to download imgur albums. They will be ignored. Check'
@@ -61,8 +62,9 @@ def runLikedSavedDownloader(pipeConnection):
                                                       only_important_messages = settings.settings['Only_important_messages'])
 
     # Write out a .json file listing all of the submissions the script failed to download
-    submission.saveSubmissionsAsJson(unsupportedSubmissions, settings.settings['Output_dir'] + u'/' 
-                                     + 'UnsupportedSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
+    if unsupportedSubmissions:
+        submission.saveSubmissionsAsJson(unsupportedSubmissions, settings.settings['Output_dir'] + u'/' 
+                                         + 'UnsupportedSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
 
     if settings.settings['Should_soft_retrieve']:
         logger.log('\nYou have run the script in Soft Retrieve mode - if you actually\n'

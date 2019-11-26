@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 
 import LikedSavedDatabase
-import imgurpython as imgur
+import imgurDownloader
+import json
 import logger
 import os
 import random
 import re
 import settings
+import submission as Submissions
 import sys
 import utilities
+import videoDownloader
 
 from builtins import str
 from crcUtils import signedCrc32
@@ -205,25 +208,6 @@ def convertGifVUrlToWebM(url):
 
     return gifvSource
 
-def isImgurIndirectUrl(url):
-    # If it is imgur domain, has no file type, and isn't an imgur album
-    return ('imgur' in url.lower() 
-        and not getFileTypeFromUrl(url) 
-        and not '/a/' in url)
-
-def convertImgurIndirectUrlToImg(url):
-    IMGUR_INDIRECT_SOURCE_KEY = '<link rel="image_src"'
-    IMGUR_INDIRECT_SOURCE_KEY_ATTRIBUTE = 'href='
-    
-    return findSourceFromHTML(url, IMGUR_INDIRECT_SOURCE_KEY, 
-                              sourceKeyAttribute = IMGUR_INDIRECT_SOURCE_KEY_ATTRIBUTE)
-
-def isImgurAlbumUrl(url):
-    # If it is imgur domain, has no file type, and is an imgur album
-    return ('imgur' in url.lower()
-        and not getFileTypeFromUrl(url) 
-        and '/a/' in url)
-
 # Make sure the filename is alphanumeric or has supported symbols, and is shorter than 45 characters
 def safeFileName(filename, file_path = False):
     acceptableChars = ['_', ' ']
@@ -248,135 +232,148 @@ def safeFileName(filename, file_path = False):
 
     return safeName
 
-# Obnoxious special case: imgur album urls with anchors (eg /a/erere#0)
-def cleanImgurAlbumUrl(url):
-    anchor = url.rfind('#')
-    if anchor > -1:
-        return url[:anchor]
-    return url
+# returns (WasSuccessful, Status)
+# def saveContent(submission):
+#     url = submission.bodyUrl
+#     subredditDir = submission.subreddit[3:-1] if submission.source == u'reddit' else safeFileName(submission.subredditTitle)
+#     submissionTitle = submission.title
+#     # Always trust tumblr submissions because we know 100% they're images
+#     shouldTrustUrl = (submission.source == u'Tumblr')
+#     # Always use tumblr Submission titles because we generate them in tumblrScraper
+#     shouldTrustTitle = (submission.source == u'Tumblr')
 
-# Returns whether or not there are credits remaining
-def checkImgurAPICredits(imgurClient):
-    logger.log('Imgur API Credit Report:\n'
-        + '\tUserRemaining: ' + str(imgurClient.credits['UserRemaining'])
-        + '\n\tClientRemaining: ' + str(imgurClient.credits['ClientRemaining']))
+#     if not url:
+#         return (False, 'Empty url given')
 
-    if not imgurClient.credits['UserRemaining']:
-        logger.log('You have used up all of your Imgur API credits! Please wait an hour')
-        return False
+#     urlContentType = ''
 
-    # Ensure that this user doesn't suck up all the credits (remove this if you're an asshole)
-    if imgurClient.credits['ClientRemaining'] < 1000:
-        logger.log('RedditLikedSavedImageDownloader Imgur Client is running low on Imgur API credits!\n'
-            'Unfortunately, this means no one can download any Imgur albums until the end of the month.\n'
-            'If you are really jonesing for access, authorize your own Imgur Client and fill in'
-            ' its details in settings.txt.')
-        return False
+#     if videoDownloader.shouldUseYoutubeDl(url):
+#         return videoDownloader.downloadVideo(url)
 
-    return True
+#     if not shouldTrustUrl:
+#         # Imgur Albums have special handling
+#         if imgurDownloader.isImgurAlbumUrl(url):
+#             if not imgur_auth:
+#                 LikedSavedDatabase.db.addUnsupportedSubmission(submission, "Imgur albums not supported")
+#                 numUnsupportedAlbums += 1
+#                 return (False, '[unsupported] Skipped "' + url + '" (imgur album)')
+#             else:
+#                 # We're going to save Imgur Albums at a separate stage
+#                 if subredditDir in imgurAlbumsToSave:
+#                     imgurAlbumsToSave[subredditDir].append((submission, submissionTitle, url))
+#                 else:
+#                     imgurAlbumsToSave[subredditDir] = [(submission, submissionTitle, url)]
+#                 # TODO!!!
+#                 return (False, 'Save imgur album later')
+#         elif only_download_albums:
+#             return (False, 'Not an imgur album, and only_download_albums is set')
 
-class ImgurAuth:
-    def __init__(self, clientId, clientSecret):
-        self.clientId = clientId
-        self.clientSecret = clientSecret
+#         # Massage special-case links so that they can be downloaded
+#         if isGfycatUrl(url):
+#             url = convertGfycatUrlToWebM(url)
+#         elif isGifVUrl(url):
+#             url = convertGifVUrlToWebM(url)
+#         elif imgurDownloader.isImgurIndirectUrl(url):
+#             url = imgurDownloader.convertImgurIndirectUrlToImg(url)
 
-def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs = True):
-    numSavedAlbumsTotal = 0
+#         if url:
+#             urlContentType = getUrlContentType(url)
+#         else:
+#             return (False, "Could not get underlying URL")
 
-    # Login to imgur
-    imgurClient = imgur.ImgurClient(imgurAuth.clientId, imgurAuth.clientSecret)
+#     if shouldTrustUrl or isUrlSupportedType(url) or isContentTypeSupported(urlContentType):
+#         fileType = getFileTypeFromUrl(url)
+#         if not fileType:
+#             fileType = convertContentTypeToFileType(urlContentType)
 
-    if not checkImgurAPICredits(imgurClient):
-        return 0
+#         if not shouldTrustUrl:
+#             # If the file path doesn't match the content type, it's possible it's incorrect 
+#             #  (e.g. a .png labeled as a .jpg)
+#             contentFileType = convertContentTypeToFileType(urlContentType)
+#             if contentFileType != fileType and (contentFileType != 'jpg' and fileType != 'jpeg'):
+#                 logger.log('WARNING: Content type "' + contentFileType 
+#                            + '" was going to be saved as "' + fileType + '"! Correcting.')
+#                 if contentFileType == 'html':
+#                     logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+#                                + ' [unsupported] ' + 'Skipped "' + url 
+#                                + '" (file is html, not image; this might mean Access was Denied)')
+#                     numUnsupportedImages += 1
+#                     return
 
-    if not soft_retrieve_imgs:
-        utilities.makeDirIfNonexistant(outputDir)
+#                 fileType = contentFileType
 
-    subredditIndex = -1
-    numSubreddits = len(subredditAlbums)
-    for subredditDir, albums in subredditAlbums.items():
-        subredditIndex += 1
-        logger.log('[' + percentageComplete(subredditIndex, numSubreddits) + '] ' 
-            + subredditDir)
+#             if shouldTrustTitle:
+#                 saveFilePath = (outputDir + u'/' + subredditDir + u'/' 
+#                     + safeFileName(submissionTitle) + u'.' + fileType)
+#             else:
+#                 # Example path:
+#                 # output/aww/My Cute Kitten_802984323.png
+#                 # output/subreddit/Submission Title_urlCRC.fileType
+#                 # The CRC is used so that if we are saving two images with the same
+#                 #  post title (e.g. 'me_irl') we get unique filenames because the URL is different
+#                 saveFilePath = (outputDir + u'/' + subredditDir + u'/' + safeFileName(submissionTitle) 
+#                                 + u'_' + str(signedCrc32(url.encode())) + u'.' + fileType)
 
-        if not soft_retrieve_imgs:
-            # Make directory for subreddit
-            utilities.makeDirIfNonexistant(outputDir + '/' + subredditDir)
+#                 # Maybe not do this? Ubuntu at least can do Unicode folders etc. just fine
+#                 #saveFilePath = safeFileName(saveFilePath, file_path = True)
 
-        numAlbums = len(albums)
-        for albumIndex, album in enumerate(albums):
-            albumSubmission = album[0]
-            albumTitle = album[1]
-            albumUrl = cleanImgurAlbumUrl(album[2])
-            logger.log('\t[' + percentageComplete(albumIndex, numAlbums) + '] ' 
-                + '\t' + albumTitle + ' (' + albumUrl + ')')
+#             # If we already saved the image, skip it
+#             # TODO: Try not to make make any HTTP requests on skips...
+#             if os.path.isfile(saveFilePath):
+#                 if not only_important_messages:
+#                     logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
+#                         + ' [already saved] ' + 'Skipping ' + saveFilePath)
+#                 numAlreadySavedImages += 1
+#                 return
 
-            # Example path:
-            # output/aww/Cute Kittens_802984323
-            # output/subreddit/Submission Title_urlCRC
-            # The CRC is used so that if we are saving two albums with the same
-            #  post title (e.g. 'me_irl') we get unique folder names because the URL is different
-            saveAlbumPath = (outputDir + u'/' + subredditDir + u'/' 
-                + safeFileName(albumTitle) + u'_' + str(signedCrc32(albumUrl.encode())))
+#             if not soft_retrieve_imgs:
+#                 # Make directory for subreddit
+#                 utilities.makeDirIfNonexistant(outputDir + '/' + subredditDir)
 
-            #saveAlbumPath = safeFileName(saveAlbumPath, file_path = True)
+#                 # Retrieve the image and save it
+#                 try:
+#                     urlretrieve(url, saveFilePath)
 
-            # If we already saved the album, skip it
-            # Note that this means updating albums will not be updated
-            if os.path.isdir(saveAlbumPath):
-                logger.log('\t\t[already saved] ' + 'Skipping album ' + albumTitle 
-                    + ' (note that this script will NOT update albums)')
-                continue
+#                     LikedSavedDatabase.db.associateFileToSubmission(
+#                             utilities.outputPathToDatabasePath(saveFilePath), submission)
+#                 except IOError as e:
+#                     errorMessage = '[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'.format(url, e.errno, e.strerror)
+#                     logger.log(errorMessage)
+#                     LikedSavedDatabase.db.addUnsupportedSubmission(submission, errorMessage)
+#                     numUnsupportedImages += 1
+#                     return
+#                 except KeyboardInterrupt:
+#                     exit()
+#                 except Exception as e:
+#                     errorMessage = '[ERROR] Exception: Url {0} raised exception:\n\t {1}'.format(url, e)
+#                     logger.log(errorMessage)
+#                     logger.log('[ERROR] Url ' + url + 
+#                         ' raised an exception I did not handle. Open an issue at '
+#                         '\n\thttps://github.com/makuto/redditLikedSavedImageDownloader/issues'
+#                         '\n and I will try to fix it')
+#                     LikedSavedDatabase.db.addUnsupportedSubmission(submission, errorMessage)
+#                     numUnsupportedImages += 1
+#                     return
 
-            if not soft_retrieve_imgs:
-                # Make directory for album
-                utilities.makeDirIfNonexistant(saveAlbumPath)            
+#             # Output our progress
+#             logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
+#                     + ' [save] ' + url + ' saved to "' + subredditDir + '"')
+#             numSavedImages += 1
 
-            albumImages = []
-            # Don't talk to the API for soft retrieval (we don't want to waste our credits)
-            if not soft_retrieve_imgs:
-                # Request the list of images from Imgur
-                albumStartId = albumUrl.find('/a/') + 3
-                albumEndId = albumUrl[albumStartId:].find('/')
-                if albumEndId != -1:
-                    albumId = albumUrl[albumStartId:albumStartId + albumEndId]
-                else:
-                    albumId = albumUrl[albumStartId:]
-
-                try:
-                    albumImages = imgurClient.get_album_images(albumId)
-                except:
-                    logger.log('Imgur album url ' + albumURL + ' could not be retrieved!')
-
-            if not albumImages:
-                continue
-
-            numImages = len(albumImages)
-            for imageIndex, image in enumerate(albumImages):
-                imageUrl = image.link
-                fileType = getFileTypeFromUrl(imageUrl)
-                saveFilePath = saveAlbumPath + u'/' + str(imageIndex) + '.' + fileType
-
-                if not soft_retrieve_imgs:
-                    # Retrieve the image and save it
-                    urlretrieve(imageUrl, saveFilePath)
-                    LikedSavedDatabase.db.associateFileToSubmission(
-                            utilities.outputPathToDatabasePath(saveFilePath), albumSubmission)
-
-                logger.log('\t\t[' + percentageComplete(imageIndex, numImages) + '] ' 
-                    + ' [save] ' + imageUrl + ' saved to "' + saveAlbumPath + '"')
-
-            numSavedAlbumsTotal += 1
-
-    return numSavedAlbumsTotal
-
+#         else:
+#             logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+#                 + ' [unsupported] ' + 'Skipped "' + url + '" (content type "' + urlContentType + '")')
+#             unsupportedSubmissions.append(submission)
+#             LikedSavedDatabase.db.addUnsupportedSubmission(submission,
+#                                                            "URL or content type {} not supported".format(urlContentType))
+#             numUnsupportedImages += 1    
 
 # Save the images in directories based on subreddits
 # Name the images based on their submission titles
 # Returns a list of submissions which didn't have supported image formats
 def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_albums = False,
                    skip_n_percent_submissions = 0, 
-                   soft_retrieve_imgs = True, only_important_messages = False,):
+                   soft_retrieve_imgs = True, only_important_messages = False):
     numSavedImages = 0
     numAlreadySavedImages = 0
     numUnsupportedImages = 0
@@ -418,9 +415,13 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
 
         urlContentType = ''
 
+        if videoDownloader.shouldUseYoutubeDl(url):
+            videoDownloader.downloadVideo(url)
+            continue
+
         if not shouldTrustUrl:
             # Imgur Albums have special handling
-            if isImgurAlbumUrl(url):
+            if imgurDownloader.isImgurAlbumUrl(url):
                 if not imgur_auth:
                     logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
                         + ' [unsupported] ' + 'Skipped "' + url + '" (imgur album)')
@@ -442,8 +443,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 url = convertGfycatUrlToWebM(url)
             elif isGifVUrl(url):
                 url = convertGifVUrlToWebM(url)
-            elif isImgurIndirectUrl(url):
-                url = convertImgurIndirectUrlToImg(url)
+            elif imgurDownloader.isImgurIndirectUrl(url):
+                url = imgurDownloader.convertImgurIndirectUrlToImg(url)
 
             if url:
                 urlContentType = getUrlContentType(url)
@@ -539,8 +540,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
 
     numSavedAlbums = 0
     if imgur_auth and imgurAlbumsToSave:
-        numSavedAlbums = saveAllImgurAlbums(outputDir, imgur_auth, imgurAlbumsToSave, 
-            soft_retrieve_imgs = soft_retrieve_imgs)
+        numSavedAlbums = imgurDownloader.saveAllImgurAlbums(outputDir, imgur_auth, imgurAlbumsToSave, 
+                                                            soft_retrieve_imgs = soft_retrieve_imgs)
 
     logger.log('Good:')
     logger.log('\t numSavedImages: ' + str(numSavedImages))
@@ -551,3 +552,50 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
     logger.log('\t numUnsupportedAlbums: ' + str(numUnsupportedAlbums))
 
     return unsupportedSubmissions
+
+def loadSubmissionsFromJson(filename):
+    file = open(filename, 'r')
+    # Ugh...
+    lines = file.readlines()
+    text = u''.join(lines)
+    # Fix the formatting so the json module understands it
+    text = "[{}]".format(text[1:-3])
+        
+    dictSubmissions = json.loads(text)
+    submissions = []
+    for dictSubmission in dictSubmissions:
+        submission = Submissions.Submission()
+        submission.initFromDict(dictSubmission)
+        submissions.append(submission)
+
+    return submissions
+
+if __name__ == '__main__':
+    print("Running image saver tests")
+
+    outputDirOverride = 'LOCAL_testOutput'
+    utilities.makeDirIfNonexistant(outputDirOverride)
+    
+    settings.getSettings()
+    LikedSavedDatabase.initializeFromSettings(settings.settings)
+    
+    testSubmissions = loadSubmissionsFromJson('LOCAL_imageSaver_test_submissions.json')
+    if testSubmissions:
+        imgurAuth = None
+        if (settings.settings['Should_download_albums'] 
+            and settings.hasImgurSettings()):
+            imgurAuth = imgurDownloader.ImgurAuth(settings.settings['Imgur_client_id'], 
+                                                  settings.settings['Imgur_client_secret'])
+        else:
+            logger.log('No Imgur Client ID and/or Imgur Client Secret was provided, or album download is not'
+                       ' enabled. This is required to download imgur albums. They will be ignored. Check'
+                       ' settings.txt for how to fill in these values.')
+        
+        unsupportedSubmissions = saveAllImages(outputDirOverride, testSubmissions, 
+                                               imgur_auth = imgurAuth,
+                                               only_download_albums = settings.settings['Only_download_albums'],
+                                               skip_n_percent_submissions = settings.settings['Skip_n_percent_submissions'],
+                                               soft_retrieve_imgs = settings.settings['Should_soft_retrieve'],
+                                               only_important_messages = settings.settings['Only_important_messages'])
+    else:
+        print("No submissions found")

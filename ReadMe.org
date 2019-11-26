@@ -11,7 +11,7 @@ Use this awesome Python 2 or 3 script to download
 - Reddit
 - Tumblr
 
-...to disk!
+...to disk! You can then browse the results.
 
 ** Directions
 
@@ -26,7 +26,7 @@ git clone https://github.com/makuto/redditLikedSavedImageDownloader
 The following dependencies are required:
 
 #+BEGIN_SRC sh
-pip install praw pytumblr ImgurPython jsonpickle tornado git+https://github.com/ankeshanand/py-gfycat@master
+pip install praw pytumblr ImgurPython jsonpickle tornado youtube-dl git+https://github.com/ankeshanand/py-gfycat@master
 #+END_SRC
 
 You'll want to use Python 3, which for your environment may require you to specify ~pip3~ instead of just ~pip~.
