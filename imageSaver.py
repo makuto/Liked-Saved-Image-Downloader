@@ -372,12 +372,15 @@ def safeFileName(filename, file_path = False):
 # Name the images based on their submission titles
 # Returns a list of submissions which didn't have supported image formats
 def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_albums = False,
-                   skip_n_percent_submissions = 0, 
-                   soft_retrieve_imgs = True, only_important_messages = False):
+                  skip_n_percent_submissions = 0, 
+                  soft_retrieve_imgs = False, only_important_messages = False):
     numSavedImages = 0
     numAlreadySavedImages = 0
+    numAlreadySavedVideos = 0
+    numSavedVideos = 0
     numUnsupportedImages = 0
     numUnsupportedAlbums = 0
+    numUnsupportedVideos = 0
 
     unsupportedSubmissions = []
 
@@ -416,7 +419,24 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
         urlContentType = ''
 
         if videoDownloader.shouldUseYoutubeDl(url):
-            videoDownloader.downloadVideo(url)
+            result = videoDownloader.downloadVideo(outputDir + u'/' + subredditDir, url)
+            if not result[0]:
+                if result[1] == videoDownloader.alreadyDownloadedSentinel:
+                    numAlreadySavedVideos += 1
+                else:
+                    logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+                               + ' [unsupported] ' + 'Failed to retrieve "' + url + '" (video). Reason: ' + result[1])
+                    LikedSavedDatabase.db.addUnsupportedSubmission(submission, result[1])
+                    numUnsupportedVideos += 1
+            else:
+                logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+                           + ' [save] ' + 'Saved "' + url + '" (video) to ' + result[1])
+                LikedSavedDatabase.db.associateFileToSubmission(
+                    utilities.outputPathToDatabasePath(result[1]), submission)
+                numSavedVideos += 1
+            continue
+        elif settings.settings['Only_download_videos']:
+            logger.log("Skipped {} due to 'Only download videos' setting".format(url))
             continue
 
         if not shouldTrustUrl:
@@ -544,12 +564,15 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                                                             soft_retrieve_imgs = soft_retrieve_imgs)
 
     logger.log('Good:')
-    logger.log('\t numSavedImages: ' + str(numSavedImages))
-    logger.log('\t numAlreadySavedImages: ' + str(numAlreadySavedImages))
-    logger.log('\t numSavedAlbums: ' + str(numSavedAlbums))
+    logger.log('\t Saved Images: {}'.format(numSavedImages))
+    logger.log('\t Already Saved Images: {}'.format(numAlreadySavedImages))
+    logger.log('\t Saved Albums: {}'.format(numSavedAlbums))
+    logger.log('\t Saved Videos: {}'.format(numSavedVideos))
+    logger.log('\t Already Saved Videos: {}'.format(numAlreadySavedVideos))
     logger.log('Bad:')
-    logger.log('\t numUnsupportedImages: ' + str(numUnsupportedImages))
-    logger.log('\t numUnsupportedAlbums: ' + str(numUnsupportedAlbums))
+    logger.log('\t Unsupported Images: {}'.format(numUnsupportedImages))
+    logger.log('\t Unsupported Albums: {}'.format(numUnsupportedAlbums))
+    logger.log('\t Unsupported Videos: {}'.format(numUnsupportedVideos))
 
     return unsupportedSubmissions
 
@@ -578,6 +601,9 @@ if __name__ == '__main__':
     
     settings.getSettings()
     LikedSavedDatabase.initializeFromSettings(settings.settings)
+    
+    # Temporary override
+    settings.settings['Output_dir'] = outputDirOverride
     
     testSubmissions = loadSubmissionsFromJson('LOCAL_imageSaver_test_submissions.json')
     if testSubmissions:

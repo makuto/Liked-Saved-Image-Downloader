@@ -211,9 +211,9 @@ def settingsToHtmlForm():
                 option = sectionOption
                 
             if type(settings.settings[option]) == bool:
-                settingsInputs.append('''<label for="{option}">{optionName}</label>
-                                     <input type="checkbox" id="{option}" name="{option}" value="{optionValue}" {checkedState} />{comment}
-                                     <br />'''
+                settingsInputs.append('''<input type="checkbox" id="{option}" name="{option}" value="{optionValue}" {checkedState} />
+                                      <label for="{option}">{optionName}</label>{comment}
+                                      <br />'''
                                       .format(option=option, optionName=option.replace('_', ' '),
                                               comment=optionComment,
                                               checkedState=('checked' if settings.settings[option] else ''),

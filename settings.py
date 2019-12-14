@@ -17,21 +17,18 @@ settings = {
     'Client_id' : '',
     'Client_secret' : '',
 
+    'Reddit_Save_Liked' : True,
+    'Reddit_Save_Saved' : True,
+    'Reddit_Save_Comments' : True,
+    'Reddit_Unlike_Liked': False,
+    'Reddit_Unsave_Saved': False,
+
+    # Total requests to reddit (actual results may vary)
+    'Reddit_Total_requests' : 500,
+
     # Imgur authentication information
     'Imgur_client_id' : '',
     'Imgur_client_secret' : '',
-
-    # Tumblr authentication information
-    'Tumblr_Client_id' : '',
-    'Tumblr_Client_secret' : '',
-    'Tumblr_Client_token' : '',
-    'Tumblr_Client_token_secret' : '',
-    
-    # Gfycat authentication information
-    # https://developers.gfycat.com/signup/#/apiform
-    # Requires https://github.com/ankeshanand/py-gfycat
-    'Gfycat_Client_id' : '',
-    'Gfycat_Client_secret' : '',
 
     # Disable downloading albums by default.
     'Should_download_albums' : False,
@@ -39,22 +36,25 @@ settings = {
     # If true, do not download single images, only submissions which are imgur albums
     'Only_download_albums' : False,
 
-    # If True, don't actually download the images - just pretend to
-    'Should_soft_retrieve' : True,
-
-    'Reddit_Save_Liked' : True,
-    'Reddit_Save_Saved' : True,
-    'Reddit_Save_Comments' : True,
-    'Reddit_Unlike_Liked': False,
-    'Reddit_Unsave_Saved': False,
-
-    'Only_important_messages' : False,
-
-    # Total requests to reddit (actual results may vary)
-    'Reddit_Total_requests' : 500,
+    # Tumblr authentication information
+    'Tumblr_Client_id' : '',
+    'Tumblr_Client_secret' : '',
+    'Tumblr_Client_token' : '',
+    'Tumblr_Client_token_secret' : '',
 
     # Total requests to Tumblr
     'Tumblr_Total_requests' : 500,
+    
+    # Gfycat authentication information
+    # https://developers.gfycat.com/signup/#/apiform
+    # Requires https://github.com/ankeshanand/py-gfycat
+    'Gfycat_Client_id' : '',
+    'Gfycat_Client_secret' : '',
+
+    # Youtube DL settings
+    'Should_download_videos' : True,
+    'Should_download_youtube_videos' : True,
+    'Only_download_videos' : False,
 
     # Don't get new stuff, just use the .xml files from last run
     'Use_cached_submissions' : False,
@@ -77,7 +77,13 @@ settings = {
     #  made previous submissions successfully download, so we always re-check submissions 
     'Skip_n_percent_submissions': 0,
 
+    # If True, don't actually download the images - just pretend to
+    'Should_soft_retrieve' : False,
+
+    'Only_important_messages' : False,
+
     'Output_dir' : 'output',
+    
     'Database' : 'LikedSaved.db',
     # These are gross: for existing output directories, store whether the user has updated their
     # database from the JSON files with the new features. These will automatically set themselves
@@ -95,16 +101,16 @@ redditClientSecretInstructions = '''You need OAuth tokens to run the script. To 
         <li>Scroll down to the bottom and click "create app" (something like that)</li>
         <li>Fill in the fields as such:</li>
             <ul>
-                <li><b>name:</b> Reddit Liked-Saved Image Downloader</li>
+                <li><b>name:</b> Content Collector</li>
                 <li>Choose <b>"script"</b> as the type</li>
-                <li><b>about url:</b> https://github.com/makuto/redditLikedSavedImageDownloader</li>
+                <li><b>about url:</b> https://github.com/makuto/Liked-Saved-Image-Downloader</li>
                 <li><b>redirect uri:</b> http://localhost:8080</li>
             </ul>
         <li>Click create app</li>
         <li>Copy the text which is right below "personal use script" for Client ID</li>
         <li>Copy the secret for Client Secret as well</li>
     </ol>
-    <p class="optionComment">Yes, this is painful, but it's for your own security</p>
+    <p class="optionComment">Yes, this is painful, but it's for your own security
 '''
 
 tumblrClientSecretInstructions = '''
@@ -176,7 +182,13 @@ settingsStructure = [
          'Should_download_albums',
          
          ('Only_download_albums',
-          'If true, do not download single images, only submissions which are imgur albums')
+          'If true, do not download single images, only submissions which are imgur albums'),
+
+         ('Should_download_videos', 'Use <a href="https://github.com/ytdl-org/youtube-dl/">Youtube-dl</a> '
+          'to attempt to download videos'),
+         ('Should_download_youtube_videos',
+          'If <b>Should download videos</b>, whether or not to download YouTube videos'),
+         ('Only_download_videos', 'Do not download any images, only supported videos')
      ]),
 
     ('Debugging and Development',
@@ -194,7 +206,7 @@ settingsStructure = [
 
         ('Launch_Browser_On_Startup', 'Open default browser to localhost:port once the server has started'),
 
-        ('Database', "Location of the database")
+        ('Database', "Location of the database"),
     ]),
 ]
 

@@ -10,7 +10,8 @@ db = None
 
 class LikedSavedDatabase:
     def __init__(self, databaseFilePath):
-        isNewDatabase = not os.path.exists(databaseFilePath)
+        print("Intializing database at {}".format(databaseFilePath))
+
         self.dbConnection = sqlite3.connect(databaseFilePath)
 
         # This gives us the ability to access results by column name
@@ -191,6 +192,7 @@ class LikedSavedDatabase:
 
         cursor.execute("insert or ignore into UnsupportedSubmissions values (?,?)",
                        (submissionInDb[0], reasonForFailure))
+        self.save()
 
     def getAllUnsupportedSubmissions(self):
         cursor = self.dbConnection.cursor()
