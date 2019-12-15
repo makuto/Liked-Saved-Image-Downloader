@@ -16,10 +16,7 @@ import LikedSavedDatabase
 
 scriptFinishedSentinel = '>>> runLikedSavedDownloader() Process Finished <<<'
 
-def runLikedSavedDownloader(pipeConnection):
-    if pipeConnection:
-        logger.setPipe(pipeConnection)
-        
+def initialize():
     settings.getSettings()
         
     if not settings.settings['Database']:
@@ -29,21 +26,18 @@ def runLikedSavedDownloader(pipeConnection):
     # Do this early so we can use it anywhere
     LikedSavedDatabase.initializeFromSettings(settings.settings)
 
+
+def runLikedSavedDownloader(pipeConnection):
+    if pipeConnection:
+        logger.setPipe(pipeConnection)
+        
+    initialize()
+
     if (not settings.settings['Use_cached_submissions'] 
         and not settings.hasTumblrSettings() and not settings.hasRedditSettings()):
         logger.log('Please provide Tumblr or Reddit account details in settings.txt'
                    ' or via the Settings page provided by  LikedSavedDownloader server')
         return
-
-    imgurAuth = None
-    if (settings.settings['Should_download_albums'] 
-        and settings.hasImgurSettings()):
-        imgurAuth = imgurDownloader.ImgurAuth(settings.settings['Imgur_client_id'], 
-                                              settings.settings['Imgur_client_secret'])
-    else:
-        logger.log('No Imgur Client ID and/or Imgur Client Secret was provided, or album download is not'
-                   ' enabled. This is required to download imgur albums. They will be ignored. Check'
-                   ' settings.txt for how to fill in these values.')
             
     if not settings.settings['Gfycat_Client_id']:
         logger.log('No Gfycat Client ID and/or Gfycat Client Secret was provided. '
@@ -56,7 +50,8 @@ def runLikedSavedDownloader(pipeConnection):
 
     logger.log('Saving images. This will take several minutes...')
     unsupportedSubmissions = imageSaver.saveAllImages(settings.settings['Output_dir'], submissions, 
-                                                      imgur_auth = imgurAuth, only_download_albums = settings.settings['Only_download_albums'],
+                                                      imgur_auth = imgurDownloader.getImgurAuth(),
+                                                      only_download_albums = settings.settings['Only_download_albums'],
                                                       skip_n_percent_submissions = settings.settings['Skip_n_percent_submissions'],
                                                       soft_retrieve_imgs = settings.settings['Should_soft_retrieve'],
                                                       only_important_messages = settings.settings['Only_important_messages'])
@@ -152,6 +147,39 @@ def getSubmissionsToSave():
                 
     return submissions
 
+def saveRequestedSubmissions(pipeConnection, submissionIds):
+    if pipeConnection:
+        logger.setPipe(pipeConnection)
+
+    initialize()
+
+    logger.log('Attempting to save {} requested submissions. This will take several minutes...'
+               .format(len(submissionIds)))
+
+    dbSubmissions = LikedSavedDatabase.db.getSubmissionsByIds(submissionIds)
+
+    submissions = []
+    # Convert from database submissions to Submission
+    for dbSubmission in dbSubmissions:
+        convertedSubmission = submission.Submission()
+        convertedSubmission.initFromDict(dbSubmission)
+        submissions.append(convertedSubmission)
+
+    if len(submissions) != len(submissionIds):
+        logger.log('Could not find {} submissions in database!'.format(len(submissionIds) - len(submissions)))
+
+    unsupportedSubmissions = imageSaver.saveAllImages(settings.settings['Output_dir'], submissions, 
+                                                      imgur_auth = imgurDownloader.getImgurAuth(),
+                                                      only_download_albums = settings.settings['Only_download_albums'],
+                                                      skip_n_percent_submissions = settings.settings['Skip_n_percent_submissions'],
+                                                      soft_retrieve_imgs = settings.settings['Should_soft_retrieve'],
+                                                      only_important_messages = settings.settings['Only_important_messages'])
+
+    logger.log('Download finished. Please refresh the page to see updated entries')
+    
+    if pipeConnection:
+        logger.log(scriptFinishedSentinel)
+        pipeConnection.close()
 
 if __name__ == '__main__':
     runLikedSavedDownloader(None)

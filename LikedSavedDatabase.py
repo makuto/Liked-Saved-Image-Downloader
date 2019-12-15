@@ -71,7 +71,22 @@ class LikedSavedDatabase:
         
         # Find submission
         cursor.execute("select * from Submissions where postUrl=?", (submission.postUrl,))
-        return cursor.fetchone()        
+        return cursor.fetchone()
+
+    def findOrAddSubmission(self, submission):
+        # Find submission
+        submissionInDb = self.findSubmissionInDb(submission)
+        # Submission not found
+        if not submissionInDb:
+            print("Submission not found; database out of sync? Adding it")
+            self.addSubmission(submission)
+
+        submissionInDb = self.findSubmissionInDb(submission)
+        if not submissionInDb:
+            print("Could not find submission after add. Something's wrong")
+            return None
+
+        return submissionInDb
 
     def addSubmission(self, submission):
         cursor = self.dbConnection.cursor()
@@ -135,23 +150,25 @@ class LikedSavedDatabase:
                            (filePath, collectionId))
         self.save()
 
-    def associateFileToSubmission(self, filePath, submissionId):
+    def associateFileToSubmissionById(self, filePath, submissionId):
         cursor = self.dbConnection.cursor()
         cursor.execute("insert or ignore into FilesToSubmissions values (?,?)",
                        (filePath, submissionId))
         self.save()
         
     def associateFileToSubmission(self, filePath, submission):
-        cursor = self.dbConnection.cursor()
-        cursor.execute("select * from Submissions where postUrl=?", (submission.postUrl,))
-        submissionInDb = cursor.fetchone()
+        submissionInDb = self.findSubmissionInDb(submission)
         if submissionInDb:
             submissionId = submissionInDb[0]
-            cursor.execute("insert or ignore into FilesToSubmissions values (?,?)",
-                           (filePath, submissionId))
-            self.save()
+            self.associateFileToSubmissionById(filePath, submissionId)
         else:
             print("DB error: couldn't find submission from post URL {}".format(submission.postUrl))
+
+    def onSuccessfulSubmissionDownload(self, submission, downloadedFilePath):
+        self.associateFileToSubmission(downloadedFilePath, submission)
+
+        # Submission should now be supported
+        self.removeFromUnsupportedSubmissions(submission)
 
     def getAllSubmissionsInCollection(self, collectionId):
         cursor = self.dbConnection.cursor()
@@ -179,19 +196,32 @@ class LikedSavedDatabase:
         cursor = self.dbConnection.cursor()
         
         # Find submission
-        submissionInDb = self.findSubmissionInDb(submission)
-        # Submission not found
+        submissionInDb = self.findOrAddSubmission(submission)
         if not submissionInDb:
-            print("Submission not found; database out of sync? Adding it")
-            self.addSubmission(submission)
-
-        submissionInDb = self.findSubmissionInDb(submission)
-        if not submissionInDb:
-            print("Could not find submission after add. Something's wrong")
             return
 
-        cursor.execute("insert or ignore into UnsupportedSubmissions values (?,?)",
+        # Replace the older one with the newer failure reason, in case the system has updated
+        cursor.execute("insert or replace into UnsupportedSubmissions values (?,?)",
                        (submissionInDb[0], reasonForFailure))
+        self.save()
+
+    def removeFromUnsupportedSubmissions(self, submission):
+        cursor = self.dbConnection.cursor()
+        
+        # Find submission
+        submissionInDb = self.findOrAddSubmission(submission)
+        if not submissionInDb:
+            return
+
+        cursor.execute("delete from UnsupportedSubmissions where submissionKey = ?",
+                       (submissionInDb[0],))
+        self.save()
+
+    def removeUnsupportedSubmissionsWithFileAssociations(self):
+        cursor = self.dbConnection.cursor()
+        
+        cursor.execute("delete from UnsupportedSubmissions "
+                       "where UnsupportedSubmissions.submissionKey in (select submissionKey from FilesToSubmissions)")
         self.save()
 
     def getAllUnsupportedSubmissions(self):
@@ -201,6 +231,22 @@ class LikedSavedDatabase:
                        "where Submissions.id = UnsupportedSubmissions.submissionKey")
 
         return cursor.fetchall()
+
+    def getSubmissionsByIds(self, submissionIds):
+        if not submissionIds:
+            return []
+        
+        cursor = self.dbConnection.cursor()
+        cursor.execute("drop table if exists RequestedSubmissions")
+        cursor.execute("create temporary table RequestedSubmissions (id integer, unique(id))")
+
+        submissionTuples = [(i,) for i in submissionIds]
+        cursor.executemany("insert or ignore into RequestedSubmissions values (?)", submissionTuples)
+        
+        cursor.execute("select * from Submissions, RequestedSubmissions "
+                       "where Submissions.id = RequestedSubmissions.id")
+        return cursor.fetchall()
+        
     
 def initializeFromSettings(userSettings):
     global db

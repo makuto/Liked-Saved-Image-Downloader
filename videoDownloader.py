@@ -1,3 +1,4 @@
+import logger
 import re
 import settings
 import ssl
@@ -39,6 +40,7 @@ class YoutubeDlLogger(object):
         outputString = "[YoutubeDL] {}".format(msg)
         self.outputList.append(outputString)
         print(outputString)
+        logger.log(outputString)
         
     def debug(self, msg):
         self.defaultOut(msg)

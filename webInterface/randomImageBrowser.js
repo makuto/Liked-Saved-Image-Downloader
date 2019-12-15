@@ -198,7 +198,7 @@ ws.onopen = function(event) {
 ws.onclose = function(event) {
     var serverStatus = document.getElementById("serverStatus");
     // Hide it if the socket is open, so it doesn't get in the way
-    serverStatus.innerHTML = "Connection to server lost";
+    serverStatus.innerHTML = "Connection to server lost. Reload the page to attempt to reconnect.";
 }
 
 document.addEventListener("DOMContentLoaded", function() {

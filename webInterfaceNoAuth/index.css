@@ -7,7 +7,7 @@ footer a {
 	margin-right: 10px;
 }
 
-navigation a {
+nav a {
 	font-size: x-large;
 }
 
@@ -187,4 +187,12 @@ button:disabled {
 	cursor:not-allowed;
 	background-color: #222222;
 	color: #aaaa9c;
+}
+
+.OutputScrollbox {
+	background-color: #22282d;
+	height: 200px;
+	overflow: auto;
+	padding: 10px;
+	margin-bottom: 10px;
 }

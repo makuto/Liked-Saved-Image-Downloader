@@ -286,6 +286,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
             result = videoDownloader.downloadVideo(outputDir + u'/' + subredditDir, url)
             if not result[0]:
                 if result[1] == videoDownloader.alreadyDownloadedSentinel:
+                    LikedSavedDatabase.db.removeFromUnsupportedSubmissions(submission)
                     numAlreadySavedVideos += 1
                 else:
                     logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
@@ -295,8 +296,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
             else:
                 logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
                            + ' [save] ' + 'Saved "' + url + '" (video) to ' + result[1])
-                LikedSavedDatabase.db.associateFileToSubmission(
-                    utilities.outputPathToDatabasePath(result[1]), submission)
+                LikedSavedDatabase.db.onSuccessfulSubmissionDownload(
+                    submission, utilities.outputPathToDatabasePath(result[1]))
                 numSavedVideos += 1
             continue
         elif settings.settings['Only_download_videos'] and not 'gfycat' in url:
@@ -328,7 +329,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
             elif isGifVUrl(url):
                 url = convertGifVUrlToWebM(url)
             elif imgurDownloader.isImgurIndirectUrl(url):
-                url = imgurDownloader.convertImgurIndirectUrlToImg(url)
+                url = imgurDownloader.convertImgurIndirectUrlToImg(imgur_auth, url)
 
             if url:
                 urlContentType = getUrlContentType(url)
@@ -377,6 +378,9 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 if not only_important_messages:
                     logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
                         + ' [already saved] ' + 'Skipping ' + saveFilePath)
+                # In case of legacy unsupported submissions, update with the new submission
+                LikedSavedDatabase.db.onSuccessfulSubmissionDownload(submission,
+                                                                     utilities.outputPathToDatabasePath(saveFilePath))
                 numAlreadySavedImages += 1
                 continue
 
@@ -388,8 +392,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 try:
                     urlretrieve(url, saveFilePath)
 
-                    LikedSavedDatabase.db.associateFileToSubmission(
-                            utilities.outputPathToDatabasePath(saveFilePath), submission)
+                    LikedSavedDatabase.db.onSuccessfulSubmissionDownload(
+                        submission, utilities.outputPathToDatabasePath(saveFilePath))
                 except IOError as e:
                     errorMessage = '[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'.format(url, e.errno, e.strerror)
                     logger.log(errorMessage)
@@ -470,19 +474,9 @@ if __name__ == '__main__':
     settings.settings['Output_dir'] = outputDirOverride
     
     testSubmissions = loadSubmissionsFromJson('LOCAL_imageSaver_test_submissions.json')
-    if testSubmissions:
-        imgurAuth = None
-        if (settings.settings['Should_download_albums'] 
-            and settings.hasImgurSettings()):
-            imgurAuth = imgurDownloader.ImgurAuth(settings.settings['Imgur_client_id'], 
-                                                  settings.settings['Imgur_client_secret'])
-        else:
-            logger.log('No Imgur Client ID and/or Imgur Client Secret was provided, or album download is not'
-                       ' enabled. This is required to download imgur albums. They will be ignored. Check'
-                       ' settings.txt for how to fill in these values.')
-        
+    if testSubmissions:        
         unsupportedSubmissions = saveAllImages(outputDirOverride, testSubmissions, 
-                                               imgur_auth = imgurAuth,
+                                               imgur_auth = imgurDownloader.getImgurAuth(),
                                                only_download_albums = settings.settings['Only_download_albums'],
                                                skip_n_percent_submissions = settings.settings['Skip_n_percent_submissions'],
                                                soft_retrieve_imgs = settings.settings['Should_soft_retrieve'],

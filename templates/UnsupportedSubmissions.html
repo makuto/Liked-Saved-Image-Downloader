@@ -16,10 +16,23 @@
 		
         <p>The following submissions could not be downloaded.
 			This could be a problem with your <a href="/settings">Settings</a>, or the website is not supported.
-			If you think it should be supported, please <a href="https://github.com/makuto/Liked-Saved-Image-Downloader/issues">open an issue</a> (please label it with "Downloader Integration").</p>
+			If you think it should be supported, please <a href="https://github.com/makuto/Liked-Saved-Image-Downloader/issues">open an issue</a> (label it with "Downloader Integration").</p>
 
-		<table>
+		<p id="serverStatus">Not connected to server.</p>
+
+		<h3>Output Log</h3>
+		<article class="OutputScrollbox"><p id="messages"></p></article>
+		
+
+		<h2>Failed to Download Content</h2>
+		<button id="RetrySelected" onclick="retrySelected()">Retry selected</button>
+		
+		<button id="ToggleAll" onclick="toggleRetryAll()">Toggle all</button>
+
+		<table id="unsupportedSubmissionsList">
 			{% raw unsupported_submissions_html %}
 		</table>
+
+		<script type="text/javascript" src="webInterface/UnsupportedSubmissions.js"></script>
     </body>
 </html>

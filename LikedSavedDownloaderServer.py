@@ -236,21 +236,35 @@ def settingsToHtmlForm():
 
     return ''.join(settingsInputs)
 
-unsupportedSubmissionShownColumns = ['source',
-                                     'title',
-                                     'postUrl',
+unsupportedSubmissionShownColumns = ['title',
+                                     'bodyUrl',
                                      'reasonForFailure']
+unsupportedSubmissionColumnLabels = ['Retry', 'Source', 'Title',
+                                     'Content URL',
+                                     'Reason for Failure']
 class UnsupportedSubmissionsHandler(AuthHandler):
     def unsupportedSubmissionToTableColumns(self, unsupportedSubmission):
         rowHtml = ''
+
+        rowHtml += '\t<td><input type="checkbox" name="shouldRetry" value="{}"/></td>\n'.format(unsupportedSubmission['id'])
+
+        # Special case source cell
+        rowHtml += '\t<td><a href="{}">{}</a></td>\n'.format(
+            'https://reddit.com{}'.format(unsupportedSubmission['postUrl']) if unsupportedSubmission['source'] == 'reddit'
+            else unsupportedSubmission['postUrl'],
+            unsupportedSubmission['source'])
+        
         for columnName in unsupportedSubmissionShownColumns:
-            rowHtml += '\t<td>{}</td>\n'.format(unsupportedSubmission[columnName])
+            if 'url' in columnName[-3:].lower():
+                rowHtml += '\t<td><a href="{}">Content</a></td>\n'.format(unsupportedSubmission['bodyUrl'])
+            else:
+                rowHtml += '\t<td>{}</td>\n'.format(unsupportedSubmission[columnName])
         return rowHtml
 
     def createTableHeader(self):
         tableHeaderHtml = '<thead>\n<tr class="header">\n'
 
-        for columnName in unsupportedSubmissionShownColumns:
+        for columnName in unsupportedSubmissionColumnLabels:
             tableHeaderHtml +='<th>{}</th>'.format(columnName)
 
         tableHeaderHtml += '</tr>\n</thead>\n<tbody>\n'
@@ -261,7 +275,7 @@ class UnsupportedSubmissionsHandler(AuthHandler):
         unsupportedSubmissionsListHtml = self.createTableHeader()
         unsupportedSubmissions = LikedSavedDatabase.db.getAllUnsupportedSubmissions()
         i = 0
-        for unsupportedSubmission in unsupportedSubmissions:
+        for unsupportedSubmission in reversed(unsupportedSubmissions):
             unsupportedSubmissionsListHtml += ('<tr class="{}">{}</tr>\n'
                                                .format('even' if i % 2 == 0 else 'odd',
                                                        self.unsupportedSubmissionToTableColumns(unsupportedSubmission)))
@@ -552,7 +566,7 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
 scriptPipeConnection = None
 scriptProcess = None
 
-def startScript():
+def startScript(functionToRun, args=None):
     global scriptPipeConnection, scriptProcess
     
     # Script already running
@@ -560,8 +574,12 @@ def startScript():
         return
     
     scriptPipeConnection, childConnection = multiprocessing.Pipe()
-    scriptProcess = multiprocessing.Process(target=redditUserImageScraper.runLikedSavedDownloader,
-                                            args=(childConnection,))
+    if not args:
+        scriptProcess = multiprocessing.Process(target=functionToRun,
+                                                args=(childConnection,))
+    else:
+        scriptProcess = multiprocessing.Process(target=functionToRun,
+                                                args=(childConnection, args,))
     scriptProcess.start()
 
 runScriptWebSocketConnections = set()
@@ -594,11 +612,39 @@ class RunScriptWebSocket(tornado.websocket.WebSocketHandler):
             else:
                 print('RunScriptWebSocket: Starting script')
 
-                startScript()
+                startScript(redditUserImageScraper.runLikedSavedDownloader)
                 
                 responseMessage = ('{{"message":"{}", "action":"{}"}}'
-                                   .format('Running script\\n', 'printMessage'))
+                                   .format('Running downloader.\\n', 'printMessage'))
                 self.write_message(responseMessage)
+        elif command == 'retrySubmissions':
+            if scriptProcess and scriptProcess.is_alive():
+                print('RunScriptWebSocket: A downloader script is already running')
+                responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                                   .format('A download process is already running. Note that you cannot have '
+                                           'Unsupported Submissions downloading at the same time that the normal'
+                                           'Download Content process is running.\\n', 'printMessage'))
+                self.write_message(responseMessage)
+                
+            else:
+                print('RunScriptWebSocket: Starting script')
+                if parsedMessage['submissionsToRetry']:
+                    submissionIds = []
+                    for submissionId in parsedMessage['submissionsToRetry']:
+                        submissionIds.append(int(submissionId))
+
+                    startScript(redditUserImageScraper.saveRequestedSubmissions,
+                                submissionIds)
+                
+                    responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                                       .format('Running downloader.\\n', 'printMessage'))
+                    self.write_message(responseMessage)
+                else:
+                    responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                                       .format('No content selected.\\n', 'printMessage'))
+                    self.write_message(responseMessage)
+        else:
+            print('RunScriptWebSocket: Error: Received command not understood')
 
     def on_close(self):
         global runScriptWebSocketConnections
@@ -617,26 +663,37 @@ def updateScriptStatus():
         scriptPipeConnection = None
         return
 
-    pipeOutput = scriptPipeConnection.recv()
-    if pipeOutput:
-        responseMessage = ('{{"message":"{}", "action":"{}"}}'
-                           .format(pipeOutput.replace('\n', '\\n').replace('\t', ''),
-                                   'printMessage'))
+    try:
+        pipeOutput = scriptPipeConnection.recv()
         
-        for client in runScriptWebSocketConnections:
-            client.write_message(responseMessage)
-
-        if redditUserImageScraper.scriptFinishedSentinel in pipeOutput:
-            # Script finished; refresh image cache
-            print('Refreshing cache due to script finishing')
-            generateSavedImagesCache(settings.settings['Output_dir'])
-            responseMessage = ('{{"action":"{}"}}'
-                               .format('scriptFinished'))
-            
+        if pipeOutput:
+            responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                               .format(pipeOutput.replace('\n', '\\n').replace('\t', ''),
+                                       'printMessage'))
+        
             for client in runScriptWebSocketConnections:
                 client.write_message(responseMessage)
 
-            scriptPipeConnection.close()
+            if redditUserImageScraper.scriptFinishedSentinel in pipeOutput:
+                # Script finished; refresh image cache
+                print('Refreshing cache due to script finishing')
+                generateSavedImagesCache(settings.settings['Output_dir'])
+                responseMessage = ('{{"action":"{}"}}'
+                                   .format('scriptFinished'))
+            
+                for client in runScriptWebSocketConnections:
+                    client.write_message(responseMessage)
+
+                scriptPipeConnection.close()
+    except EOFError:
+        scriptPipeConnection = None
+        print("Lost connection to subprocess!")
+        responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                           .format("Downloader encountered a problem. Check your server output.",
+                                   'printMessage'))
+            
+        for client in runScriptWebSocketConnections:
+            client.write_message(responseMessage)
 
 #
 # Startup
@@ -666,7 +723,6 @@ def make_app():
         (r'/randomImageBrowserWebSocket', RandomImageBrowserWebSocket),
 
         (r'/unsupportedSubmissions', UnsupportedSubmissionsHandler),
-
         #
         # Static files
         #
@@ -704,6 +760,8 @@ if __name__ == '__main__':
         print('Successfully imported "All" Submissions into database')
     if not settings.settings['Database_Has_Imported_Unsupported_Submissions']:
         LikedSavedDatabase.importUnsupportedSubmissionsFromAllJsonInDir(settings.settings['Output_dir'])
+        print('Removing Unsupported Submissions which have file associations')
+        LikedSavedDatabase.db.removeUnsupportedSubmissionsWithFileAssociations()
         settings.settings['Database_Has_Imported_Unsupported_Submissions'] = True
         settings.writeServerSettings()
         print('Successfully imported Unsupported Submissions into database')
