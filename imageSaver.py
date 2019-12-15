@@ -299,7 +299,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                     utilities.outputPathToDatabasePath(result[1]), submission)
                 numSavedVideos += 1
             continue
-        elif settings.settings['Only_download_videos']:
+        elif settings.settings['Only_download_videos'] and not 'gfycat' in url:
             logger.log("Skipped {} due to 'Only download videos' setting".format(url))
             continue
 

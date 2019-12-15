@@ -60,7 +60,6 @@ def shouldUseYoutubeDl(url):
 
             # Use the gfycat api for these, if available
             if settings.settings['Gfycat_Client_id'] and 'gfycat.com' in url:
-                print("Gfycat {} means {} url not downloading".format(settings.settings['Gfycat_Client_id'], url))
                 isBlacklisted = True
 
             if isBlacklisted:
