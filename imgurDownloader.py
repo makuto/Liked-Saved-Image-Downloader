@@ -27,7 +27,7 @@ def imgurIdFromUrl(url):
     idMatch = re.search(r"imgur.com.*/(.*)", url)
     if not idMatch:
         return None
-    return idMatch[1]
+    return idMatch.group(1)
 
 def convertImgurIndirectUrlToImg(imgurAuth, url):
     # Login to imgur
