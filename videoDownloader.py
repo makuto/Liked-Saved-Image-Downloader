@@ -106,13 +106,13 @@ def downloadVideo(outputPath, url):
     for line in youtubeDlLogger.outputList:
         destinationMatch = re.search(r'.* Destination: (.*)', line)
         if destinationMatch:
-            outputFilename = destinationMatch[1]
+            outputFilename = destinationMatch.group(1)
             # Keep looking, in case there is a merge formats
             # break
 
         mergingMatch = re.search(r'Merging formats into "(.*)"', line)
         if mergingMatch:
-            outputFilename = mergingMatch[1]
+            outputFilename = mergingMatch.group(1)
 
         # Bit of a weird case here
         alreadyDownloadedMatch = re.search(r'.* (.*) has already been downloaded', line)
