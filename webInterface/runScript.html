@@ -18,9 +18,27 @@
 
 	<a href="/">Back to Homepage</a><br /><br />
 	
-	<button id="runScriptButton" onclick="onRunScriptClicked()">Check for new content</button>
+	<p id="serverStatus">Not connected to server.</p>
 
-	<p id="messages"></p>
+	<h3>Output Log</h3>
+	<article class="OutputScrollbox"><p id="messages"></p></article>
+
+	<h2>Download from Content Directories</h2>
+	<p>Check your content directory providers (Reddit, Tumblr) for new content, and download it.
+		This downloads things you have Liked, Upvoted, Hearted, or Saved (depending on your settings).</p>
+    <button id="runScriptButton" onclick="onRunScriptClicked()">Download new content</button>
+
+	<h2>Download URLs</h2>
+	<p>Paste URLs to images or videos. The script will attempt to download the content at the URL.
+		This only works with direct links or on supported websites, e.g. YouTube.<br />
+		Paste one URL per line.</p>
+	<button id="explicitDownloadButton" onclick="onExplicitDownloadClicked()">Download URLs</button>
+	<button id="clearExplicitDownload" onclick="clearExplicitDownloadClicked()">Clear all</button>
+	
+    <br /><label for="explicitDownloadUrls">URLs to download</label>
+	<textarea rows="10" cols="100" id="explicitDownloadUrls"
+			  name="explicitDownloadUrls" onfocus="smartClearBox()">Enter URLs here</textarea>
+
   </body>
 
 </html>

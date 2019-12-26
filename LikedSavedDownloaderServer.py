@@ -284,7 +284,8 @@ class UnsupportedSubmissionsHandler(AuthHandler):
         unsupportedSubmissionsListHtml += '</tbody>\n'
 
         self.render("templates/UnsupportedSubmissions.html",
-                    unsupported_submissions_html=unsupportedSubmissionsListHtml)
+                    unsupported_submissions_html=unsupportedSubmissionsListHtml,
+                    length_unsupported_submissions=len(unsupportedSubmissions))
 
 class SettingsHandler(AuthHandler):
     def doSettings(self, afterSubmit):
@@ -601,48 +602,58 @@ class RunScriptWebSocket(tornado.websocket.WebSocketHandler):
         command = parsedMessage['command']
 
         print('RunScriptWebSocket: Command ', command)
+
+        if scriptProcess and scriptProcess.is_alive():
+            print('RunScriptWebSocket: Script already running')
+            responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                               .format('A download process is already running. Please wait until it completes.\\n',
+                                       'printMessage'))
+            self.write_message(responseMessage)
         
         if command == 'runScript':
-            if scriptProcess and scriptProcess.is_alive():
-                print('RunScriptWebSocket: Script already running')
-                responseMessage = ('{{"message":"{}", "action":"{}"}}'
-                                   .format('Script already running\\n', 'printMessage'))
-                self.write_message(responseMessage)
-                
-            else:
-                print('RunScriptWebSocket: Starting script')
+            print('RunScriptWebSocket: Starting script')
 
-                startScript(redditUserImageScraper.runLikedSavedDownloader)
+            startScript(redditUserImageScraper.runLikedSavedDownloader)
+                
+            responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                               .format('Running downloader.\\n', 'printMessage'))
+            self.write_message(responseMessage)
+        elif command == 'retrySubmissions':
+            print('RunScriptWebSocket: Starting script')
+            if parsedMessage['submissionsToRetry']:
+                submissionIds = []
+                for submissionId in parsedMessage['submissionsToRetry']:
+                    submissionIds.append(int(submissionId))
+
+                startScript(redditUserImageScraper.saveRequestedSubmissions,
+                            submissionIds)
                 
                 responseMessage = ('{{"message":"{}", "action":"{}"}}'
                                    .format('Running downloader.\\n', 'printMessage'))
                 self.write_message(responseMessage)
-        elif command == 'retrySubmissions':
-            if scriptProcess and scriptProcess.is_alive():
-                print('RunScriptWebSocket: A downloader script is already running')
-                responseMessage = ('{{"message":"{}", "action":"{}"}}'
-                                   .format('A download process is already running. Note that you cannot have '
-                                           'Unsupported Submissions downloading at the same time that the normal'
-                                           'Download Content process is running.\\n', 'printMessage'))
-                self.write_message(responseMessage)
-                
             else:
-                print('RunScriptWebSocket: Starting script')
-                if parsedMessage['submissionsToRetry']:
-                    submissionIds = []
-                    for submissionId in parsedMessage['submissionsToRetry']:
-                        submissionIds.append(int(submissionId))
+                responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                                   .format('No content selected.\\n', 'printMessage'))
+                self.write_message(responseMessage)
+        elif command == 'explicitDownloadUrls':
+            print('RunScriptWebSocket: Starting script')
+            if parsedMessage['urls']:
+                urls = []
+                urlLines = parsedMessage['urls'].split('\n')
+                for line in urlLines:
+                    # TODO: It would be a good idea to do some validation here, and maybe even regex extract URLs
+                    urls.append(line)
 
-                    startScript(redditUserImageScraper.saveRequestedSubmissions,
-                                submissionIds)
+                print(urls)
+                startScript(redditUserImageScraper.saveRequestedUrls, urls)
                 
-                    responseMessage = ('{{"message":"{}", "action":"{}"}}'
-                                       .format('Running downloader.\\n', 'printMessage'))
-                    self.write_message(responseMessage)
-                else:
-                    responseMessage = ('{{"message":"{}", "action":"{}"}}'
-                                       .format('No content selected.\\n', 'printMessage'))
-                    self.write_message(responseMessage)
+                responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                                   .format('Running downloader.\\n', 'printMessage'))
+                self.write_message(responseMessage)
+            else:
+                responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                                   .format('No URLs provided.\\n', 'printMessage'))
+                self.write_message(responseMessage)
         else:
             print('RunScriptWebSocket: Error: Received command not understood')
 

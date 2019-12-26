@@ -87,6 +87,8 @@ def downloadVideo(outputPath, url):
     youtubeDlLogger = YoutubeDlLogger()
         
     youtubeDL_options = {"outtmpl": "{}/{}".format(outputPath, youtubeDL_filenameFormat),
+                         # TODO: Support playlists?
+                         "noplaylist": True,
                          "writethumbnail": True,
                          "writeinfojson": True,
                          "logger": youtubeDlLogger}
