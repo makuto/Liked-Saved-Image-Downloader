@@ -174,13 +174,16 @@ def convertGfycatUrlToWebM(url):
         # Get the gfyname from the url
         matches = re.findall(r'gfycat\.com.*/([a-zA-Z]+)', url)
         if not matches:
-            logger.log("Gfycat URL {} doesn't seem to match expected URL format")
+            errorMessage = "Gfycat URL {} doesn't seem to match expected URL format".format(url)
+            logger.log(errorMessage)
+            LikedSavedDatabase.db.addUnsupportedSubmission(submission, errorMessage)
         else:
             try:
                 gfycatUrlInfo = gfycatClient.query_gfy(matches[0])
             except Exception as e:
-                logger.log('[ERROR] Exception: Url {0} raised exception:\n\t {1}'
-                           .format(url, e))
+                errorMessage = '[ERROR] Exception: Url {0} raised exception:\n\t {1}'.format(url, e)
+                logger.log(errorMessage)
+                LikedSavedDatabase.db.addUnsupportedSubmission(submission, errorMessage)
                 return None
             return gfycatUrlInfo['gfyItem']['mp4Url']
 

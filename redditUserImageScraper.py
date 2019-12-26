@@ -181,5 +181,44 @@ def saveRequestedSubmissions(pipeConnection, submissionIds):
         logger.log(scriptFinishedSentinel)
         pipeConnection.close()
 
+def saveRequestedUrls(pipeConnection, urls):
+    if pipeConnection:
+        logger.setPipe(pipeConnection)
+
+    initialize()
+
+    logger.log('Attempting to save {} requested urls. This may take several minutes...'
+               .format(len(urls)))
+
+    submissions = []
+    # Create Submission for each URL
+    for url in urls:
+        convertedSubmission = submission.Submission()
+        convertedSubmission.source = "UserRequested"
+        convertedSubmission.title = "UserRequested"
+        convertedSubmission.author = "(Requested by user)"
+        convertedSubmission.subreddit = "Requested_Downloads"
+        convertedSubmission.subredditTitle = "Requested Downloads"
+        convertedSubmission.body = "(Requested by user)"
+        convertedSubmission.bodyUrl= url
+        convertedSubmission.postUrl= url
+        submissions.append(convertedSubmission)
+
+    if len(submissions) != len(urls):
+        logger.log('Could not parse {} URLs!'.format(len(urls) - len(submissions)))
+
+    unsupportedSubmissions = imageSaver.saveAllImages(settings.settings['Output_dir'], submissions, 
+                                                      imgur_auth = imgurDownloader.getImgurAuth(),
+                                                      only_download_albums = settings.settings['Only_download_albums'],
+                                                      skip_n_percent_submissions = settings.settings['Skip_n_percent_submissions'],
+                                                      soft_retrieve_imgs = settings.settings['Should_soft_retrieve'],
+                                                      only_important_messages = settings.settings['Only_important_messages'])
+
+    logger.log('Download finished. Output to \'Requested Downloads\' directory')
+    
+    if pipeConnection:
+        logger.log(scriptFinishedSentinel)
+        pipeConnection.close()
+
 if __name__ == '__main__':
     runLikedSavedDownloader(None)
