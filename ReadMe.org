@@ -1,9 +1,10 @@
-* Liked-Saved Image Downloader
+* Content Collector
 
-Use this awesome Python 2 or 3 script to download
+Use this awesome tool to download
 - Images
 - Gifs
 - Imgur Albums
+- Videos
 - Comments
 
 ...which you've marked as Liked, Hearted, or Saved from
