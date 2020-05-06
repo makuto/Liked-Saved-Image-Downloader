@@ -45,6 +45,7 @@ def runLikedSavedDownloader(pipeConnection):
 
     logger.log('Output: ' + settings.settings['Output_dir'])
     utilities.makeDirIfNonexistant(settings.settings['Output_dir'])
+    utilities.makeDirIfNonexistant(settings.settings['Metadata_output_dir'])
         
     submissions = getSubmissionsToSave()
 
@@ -58,7 +59,7 @@ def runLikedSavedDownloader(pipeConnection):
 
     # Write out a .json file listing all of the submissions the script failed to download
     if unsupportedSubmissions:
-        submission.saveSubmissionsAsJson(unsupportedSubmissions, settings.settings['Output_dir'] + u'/' 
+        submission.saveSubmissionsAsJson(unsupportedSubmissions, settings.settings['Metadata_output_dir'] + u'/' 
                                          + 'UnsupportedSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json') 
 
     if settings.settings['Should_soft_retrieve']:
@@ -66,9 +67,9 @@ def runLikedSavedDownloader(pipeConnection):
                    'want to download images now, you should change SHOULD_SOFT_RETRIEVE\n'
                    'to False in settings.txt')
 
-        if pipeConnection:
-            logger.log(scriptFinishedSentinel)
-            pipeConnection.close()
+    if pipeConnection:
+        logger.log(scriptFinishedSentinel)
+        pipeConnection.close()
 
 def getSubmissionsToSave():
     # TODO: Only save one post for early out. Only save once all downloading is done
@@ -117,8 +118,9 @@ def getSubmissionsToSave():
 
             # For reddit only: write out comments to separate json file
             if settings.settings['Reddit_Save_Comments']:
-                submission.saveSubmissionsAsJson(redditComments, settings.settings['Output_dir'] + u'/' 
+                submission.saveSubmissionsAsJson(redditComments, settings.settings['Metadata_output_dir'] + u'/' 
                                                  + 'Reddit_SavedComment_Submissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json')
+                # Output to HTML so the user can look at them easily
                 submission.saveSubmissionsAsHtml(redditComments, settings.settings['Output_dir'] + u'/' 
                                                  + 'Reddit_SavedComment_Submissions_' + time.strftime("%Y%m%d-%H%M%S") + '.html')
                 logger.log('Saved ' + str(len(redditComments)) + ' reddit comments')
@@ -140,7 +142,7 @@ def getSubmissionsToSave():
             submissions += tumblrSubmissions
 
         # Write out a .json file with all of the submissions in case the user wants the data
-        submission.saveSubmissionsAsJson(submissions, settings.settings['Output_dir'] + u'/' 
+        submission.saveSubmissionsAsJson(submissions, settings.settings['Metadata_output_dir'] + u'/' 
                                          + 'AllSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json')
 
         LikedSavedDatabase.db.addSubmissions(submissions)

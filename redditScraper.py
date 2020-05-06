@@ -2,6 +2,7 @@
 
 import logger
 import praw
+import settings
 import submission
 from submission import Submission 
 
@@ -16,7 +17,8 @@ def percentageComplete(currentItem, numItems):
 
     return 'Invalid'
 
-def getSubmissionsFromRedditList(redditList, source, earlyOutPoint = None, unlikeUnsave = False):
+def getSubmissionsFromRedditList(redditList, source,
+                                 earlyOutPoint = None, unlikeUnsave = False, user_name = None):
     submissions = []
     comments = []
 
@@ -24,14 +26,20 @@ def getSubmissionsFromRedditList(redditList, source, earlyOutPoint = None, unlik
     for currentSubmissionIndex, singleSubmission in enumerate(redditList):
         if currentSubmissionIndex and currentSubmissionIndex % 100 == 0:
             logger.log('Got {} submissions...'.format(currentSubmissionIndex))
-            
+
+        # If they don't want to save their own post, skip it
+        submissionAuthor = singleSubmission.author.name if singleSubmission.author else u'no_author'
+        if not settings.settings['Reddit_Save_Your_User_Posts'] and submissionAuthor == user_name:
+            logger.log('Skipped a current user post due to Reddit_Save_Your_User_Posts == False')
+            continue
+
         if type(singleSubmission) is praw.models.Submission:
             newSubmission = Submission()
 
             newSubmission.source = u'reddit'
 
             newSubmission.title = singleSubmission.title
-            newSubmission.author = singleSubmission.author.name if singleSubmission.author else u'no_author'
+            newSubmission.author = submissionAuthor
 
             newSubmission.subreddit = singleSubmission.subreddit.url
             newSubmission.subredditTitle = singleSubmission.subreddit.title
@@ -115,13 +123,15 @@ def getRedditUserLikedSavedSubmissions(user_name, user_password, client_id, clie
     savedComments = []
     if saveSaved: 
         logger.log('\n\nRetrieving your saved submissions. This can take several minutes...\n') 
-        savedSubmissions, savedComments = getSubmissionsFromRedditList(savedLinks, 'saved', earlyOutPointSaved, unsaveSaved) 
+        savedSubmissions, savedComments = getSubmissionsFromRedditList(savedLinks, 'saved',
+                                                                       earlyOutPointSaved, unsaveSaved, user_name)
  
     likedSubmissions = []
     likedComments = []
     if saveLiked: 
         logger.log('\n\nRetrieving your liked submissions. This can take several minutes...\n') 
-        likedSubmissions, likedComments = getSubmissionsFromRedditList(likedLinks, 'liked', earlyOutPointLiked, unlikeLiked)     
+        likedSubmissions, likedComments = getSubmissionsFromRedditList(likedLinks, 'liked',
+                                                                       earlyOutPointLiked, unlikeLiked, user_name)
  
     submissions = savedSubmissions + likedSubmissions
     # I don't think you can ever have liked comments, but I'm including it anyways

@@ -765,12 +765,15 @@ if __name__ == '__main__':
     # Backwards compatibility: Read the old .json files into the database. This can be slow for old
     # repositories, so only do it once
     if not settings.settings['Database_Has_Imported_All_Submissions']:
+        # Also scan output_dir because Metadata_output_dir was a late addition
         LikedSavedDatabase.importFromAllJsonInDir(settings.settings['Output_dir'])
+        LikedSavedDatabase.importFromAllJsonInDir(settings.settings['Metadata_output_dir'])
         settings.settings['Database_Has_Imported_All_Submissions'] = True
         settings.writeServerSettings()
         print('Successfully imported "All" Submissions into database')
     if not settings.settings['Database_Has_Imported_Unsupported_Submissions']:
         LikedSavedDatabase.importUnsupportedSubmissionsFromAllJsonInDir(settings.settings['Output_dir'])
+        LikedSavedDatabase.importUnsupportedSubmissionsFromAllJsonInDir(settings.settings['Metadata_output_dir'])
         print('Removing Unsupported Submissions which have file associations')
         LikedSavedDatabase.db.removeUnsupportedSubmissionsWithFileAssociations()
         settings.settings['Database_Has_Imported_Unsupported_Submissions'] = True

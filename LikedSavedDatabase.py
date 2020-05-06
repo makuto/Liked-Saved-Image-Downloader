@@ -192,6 +192,17 @@ class LikedSavedDatabase:
 
         return cursor.fetchall()
 
+    # This doesn't allow a different reason for each submission
+    # TODO: Need to get IDs first
+    # def addUnsupportedSubmissions(self, submissions, reasonForFailure):
+    #     cursor = self.dbConnection.cursor()
+
+    #     # Ignore because we will assume this is legacy reimport, so it's likely bad reasons anyways
+    #     cursor.executemany("insert or ignore into UnsupportedSubmissions values (?,?)",
+    #                        (Submissions.getAsList_generator(submissions), reasonForFailure))
+    #     self.save()
+
+    # Very slow, use addUnsupportedSubmissions when possible
     def addUnsupportedSubmission(self, submission, reasonForFailure):
         cursor = self.dbConnection.cursor()
         
@@ -256,20 +267,8 @@ def initializeFromSettings(userSettings):
 Importing
 '''
 
-# This should only need to be executed if you ran the script before db support was added
-def importFromAllJsonInDir(dir):
-    global db
-    
-    jsonFilesToRead = []
-    for root, dirs, files in os.walk(dir):
-        for file in files:
-            match = re.search(r'AllSubmissions_(.*).json', file)
-            if match:
-                jsonFilesToRead.append(os.path.join(root, file))
-                
-    print("Importing {} AllSubmissions json files...".format(len(jsonFilesToRead)))
-
-    totalSubmissions = 0
+def submissionsFromJsonFiles(jsonFilesToRead):
+    submissions = []
     for filename in jsonFilesToRead:
         file = open(filename, 'r')
         # Ugh...
@@ -279,23 +278,37 @@ def importFromAllJsonInDir(dir):
         text = "[{}]".format(text[1:-3])
         
         dictSubmissions = json.loads(text)
-        submissions = []
         for dictSubmission in dictSubmissions:
             submission = Submissions.Submission()
             submission.initFromDict(dictSubmission)
             submissions.append(submission)
+        print("Read {} submissions from file {}".format(len(dictSubmissions), filename))
             
-        print("Read {} submissions from file {}".format(len(submissions), filename))
-        totalSubmissions += len(submissions)
+    totalSubmissions = len(submissions)
+    return (submissions, totalSubmissions)
 
-        # While we could do this all in one, I'd rather do it in batches in case a file trips it up
-        db.addSubmissions(submissions)
-        
-    print("Read {} submissions".format(totalSubmissions))
+# This should only need to be executed if you ran the script before db support was added
+def importFromAllJsonInDir(dir):
+    global db
+
+    jsonFilesToRead = []
+    for root, dirs, files in os.walk(dir):
+        for file in files:
+            match = re.search(r'AllSubmissions_(.*).json', file)
+            if match:
+                jsonFilesToRead.append(os.path.join(root, file))
+
+    print("Importing {} AllSubmissions json files in {}...".format(len(jsonFilesToRead), dir))
+
+    submissions, totalSubmissions = submissionsFromJsonFiles(jsonFilesToRead)
+
+    print("Adding {} submissions to database...".format(totalSubmissions))
+    db.addSubmissions(submissions)
+    print("Successfully added {} submissions".format(totalSubmissions))
 
 def importUnsupportedSubmissionsFromAllJsonInDir(dir):
     global db
-    
+
     jsonFilesToRead = []
     for root, dirs, files in os.walk(dir):
         for file in files:
@@ -305,30 +318,12 @@ def importUnsupportedSubmissionsFromAllJsonInDir(dir):
                 
     print("Importing {} UnsupportedSubmissions json files...".format(len(jsonFilesToRead)))
 
-    totalSubmissions = 0
-    for filename in jsonFilesToRead:
-        file = open(filename, 'r')
-        # Ugh...
-        lines = file.readlines()
-        text = u''.join(lines)
-        # Fix the formatting so the json module understands it
-        text = "[{}]".format(text[1:-3])
-        
-        dictSubmissions = json.loads(text)
-        submissions = []
-        for dictSubmission in dictSubmissions:
-            submission = Submissions.Submission()
-            submission.initFromDict(dictSubmission)
-            submissions.append(submission)
-            
-        print("Read {} submissions from file {}".format(len(submissions), filename))
-        totalSubmissions += len(submissions)
+    submissions, totalSubmissions = submissionsFromJsonFiles(jsonFilesToRead)
 
-        # While we could do this all in one, I'd rather do it in batches in case a file trips it up
-        for submission in submissions:
-            db.addUnsupportedSubmission(submission, "Reason unknown (legacy)")
-        
-    print("Read {} submissions".format(totalSubmissions))
+    print("Adding {} submissions to database...".format(totalSubmissions))
+    for submission in submissions:
+        db.addUnsupportedSubmission(submission, "Reason unknown (legacy)")
+    print("Successfully added {} submissions".format(totalSubmissions))
 
 
 '''
@@ -386,4 +381,4 @@ if __name__ == '__main__':
     settings.getSettings()
     # initializeFromSettings(settings.settings)
     db = LikedSavedDatabase("TestImport.db")
-    importFromAllJsonInDir(settings.settings["Output_dir"])
+    importFromAllJsonInDir(settings.settings["Metadata_output_dir"])

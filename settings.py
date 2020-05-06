@@ -22,6 +22,7 @@ settings = {
     'Reddit_Save_Comments' : True,
     'Reddit_Unlike_Liked': False,
     'Reddit_Unsave_Saved': False,
+    'Reddit_Save_Your_User_Posts': True,
 
     # Total requests to reddit (actual results may vary)
     'Reddit_Total_requests' : 500,
@@ -83,7 +84,8 @@ settings = {
     'Only_important_messages' : False,
 
     'Output_dir' : 'output',
-    
+    'Metadata_output_dir' : 'metadata',
+
     'Database' : 'LikedSaved.db',
     # These are gross: for existing output directories, store whether the user has updated their
     # database from the JSON files with the new features. These will automatically set themselves
@@ -128,9 +130,12 @@ requestsInstructions = 'Increase this value to get more submissions'
 # [('header', ['option_to_include', ('another_option', 'this one has a comment')])]
 settingsStructure = [
     ('Output',
-     [('Output_dir', 'All images, videos, and comments will be saved to this directory. You will have to restart the server whenever you change this value when using the Random Image Browser')]),
+     [('Output_dir', 'All images, videos, and comments will be saved to this directory.'
+       ' You will have to restart the server whenever you change this value when using the Random Image Browser'),
+      ('Metadata_output_dir',
+       'Save JSON files with content metadata (source, author, URL, etc.) in this directory')]),
     
-    ('Reddit Auth',
+    ('Reddit Authentication',
      ['Username',
       'Password',
       'Client_id',
@@ -144,26 +149,27 @@ settingsStructure = [
       ('Reddit_Unlike_Liked', 'Unlike/remove upvote after the submission has been recorded'),
       ('Reddit_Unsave_Saved', 'Unsave submission after it has been recorded'),
       ('Reddit_Try_Request_Only_New',
-       "Attempt to only request and download new submissions (those which haven't been downloaded) "
-       "This uses the Reddit cache files to know what's already been downloaded, so it will only"
+       "Attempt to only request and download new submissions (those which haven't been downloaded). "
+       "This uses the Reddit cache files to know what's already been downloaded, so it will only "
        "work if you've successfully run the script before"),
-      'Reddit_Try_Request_Only_New_Saved_Cache_File',
-      'Reddit_Try_Request_Only_New_Liked_Cache_File']),
+      ('Reddit_Save_Your_User_Posts',
+       'Save posts with the same author as the current user. Disabling this will cause posts with'
+       ' your username as author to be ignored.')]),
     
-    ('Imgur Auth',
+    ('Imgur Authentication',
      ['Imgur_client_id',
       ('Imgur_client_secret',"These need to be filled in so that the script can download Imgur "
        "albums. If not filled in, imgur albums will be ignored. Single images will still be "
        "downloaded. If you want to use Imgur, sign in to Imgur, then go "
        "<a href=\"https://api.imgur.com/oauth2/addclient\">here</a> and create your new client.")]),
 
-    ('Gfycat Auth',
+    ('Gfycat Authentication',
      ['Gfycat_Client_id',
       ('Gfycat_Client_secret', "These need to be filled in so that the script can download Gfycat"
        " media. If not filled in, many Gfycat links will fail to download."
        " Go <a href=\"https://developers.gfycat.com/signup/#/apiform\">here</a> to get your API keys.")]),
     
-    ('Tumblr Auth',
+    ('Tumblr Authentication',
      ['Tumblr_Client_id',
       'Tumblr_Client_secret',
       'Tumblr_Client_token',
@@ -174,8 +180,7 @@ settingsStructure = [
       ('Tumblr_Try_Request_Only_New',
        "Attempt to only request and download new submissions (those which haven't been downloaded) "
        "This uses the Reddit cache files to know what's already been downloaded, so it will only "
-       "work if you've successfully run the script before"),
-      'Tumblr_Try_Request_Only_New_Cache_File']),
+       "work if you've successfully run the script before")]),
     
     ('Download Settings',
      [
@@ -191,22 +196,42 @@ settingsStructure = [
          ('Only_download_videos', 'Do not download any images, only supported videos')
      ]),
 
-    ('Debugging and Development',
-    [
-        ('Only_important_messages', 'Output minimal information to the console'),
-        ('Use_cached_submissions', 'Do not get new stuff, just use the cache files from last run'),
-        'Reddit_cache_file',
-        'Tumblr_cache_file',
-        ('Skip_n_percent_submissions', "If the script failed at say 70%, you could use toggle Use_cached_submissions and set this value to 69. The script would then restart 69% of the way into the cached submissions nearer to where you left off. The reason why this isn't default is because there might have been changes to the script which made previous submissions successfully download, so we always re-check submissions"),
-        
-        ('Should_soft_retrieve', "If True, don't actually download the images - just pretend to"),
-        
+    ("Server Settings",
+     [
         ('Port', 'The port number the server will listen on. Note that ports 80 (HTTP default) and 443 (HTTPS'
          ' default) require the server to be run as root. <b>You must restart the server for this change to take effect.</b>'),
 
         ('Launch_Browser_On_Startup', 'Open default browser to localhost:port once the server has started'),
 
         ('Database', "Location of the database"),
+
+        ('Database_Has_Imported_Unsupported_Submissions',
+         'Setting this to false will cause a reimport of all <i>UnsupportedSubmissions</i> json files in both '
+         '<b>Output dir</b> and <b>Metadata output dir</b>. This value is automatically set to True after '
+         'a successful import.'),
+        ('Database_Has_Imported_All_Submissions',
+         'Setting this to false will cause a reimport of all <i>AllSubmissions</i> json files in both '
+         '<b>Output dir</b> and <b>Metadata output dir</b>. This value is automatically set to True after '
+         'a successful import.'),
+        ('Database_Has_Imported_Comments',
+         'Setting this to false will cause a reimport of all <i>Comments</i> json files in both '
+         '<b>Output dir</b> and <b>Metadata output dir</b> This value is automatically set to True after '
+         'a successful import.')
+     ]),
+
+    ('Debugging and Development',
+    [
+        ('Only_important_messages', 'Output minimal information to the console'),
+        ('Skip_n_percent_submissions', "If the script failed at say 70%, you could use toggle Use_cached_submissions and set this value to 69. The script would then restart 69% of the way into the cached submissions nearer to where you left off. The reason why this isn't default is because there might have been changes to the script which made previous submissions successfully download, so we always re-check submissions"),
+
+        ('Use_cached_submissions', 'Do not get new stuff, just use the cache files from last run'),
+        'Reddit_cache_file',
+        'Tumblr_cache_file',
+        'Reddit_Try_Request_Only_New_Saved_Cache_File',
+        'Reddit_Try_Request_Only_New_Liked_Cache_File',
+        'Tumblr_Try_Request_Only_New_Cache_File',
+        
+        ('Should_soft_retrieve', "If True, don't actually download the images - just pretend to"),
     ]),
 ]
 
