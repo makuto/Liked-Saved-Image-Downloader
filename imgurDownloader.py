@@ -29,7 +29,7 @@ def imgurIdFromUrl(url):
         return None
     return idMatch.group(1)
 
-def convertImgurIndirectUrlToImg(imgurAuth, url):
+def convertImgurIndirectUrlToImg(submission, imgurAuth, url):
     # Login to imgur
     # This is required since they made NSFW images require login
     imgurClient = imgur.ImgurClient(imgurAuth.clientId, imgurAuth.clientSecret)
@@ -44,7 +44,10 @@ def convertImgurIndirectUrlToImg(imgurAuth, url):
     try:
         return imgurClient.get_image(imageId).link
     except:
-        logger.log("Failed to convert {} to image link".format(url))
+        errorMessage = ('Failed to convert imgur to image link: '
+                        '[ERROR] Exception: Url {} raised exception:\n\t {}'.format(url, e))
+        logger.log(errorMessage)
+        LikedSavedDatabase.db.addUnsupportedSubmission(submission, errorMessage)
         return None
 
 def isImgurAlbumUrl(url):

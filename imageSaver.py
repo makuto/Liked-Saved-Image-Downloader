@@ -152,7 +152,7 @@ def isGfycatUrl(url):
 gfycatClient = None
 # Special handling for Gfycat links
 # Returns a URL to a webm which can be downloaded by urllib
-def convertGfycatUrlToWebM(url):
+def convertGfycatUrlToWebM(submission, url):
     global gfycatClient
     # Change this:
     #   https://gfycat.com/IndolentScalyIncatern
@@ -328,11 +328,11 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
 
             # Massage special-case links so that they can be downloaded
             if isGfycatUrl(url):
-                url = convertGfycatUrlToWebM(url)
+                url = convertGfycatUrlToWebM(submission, url)
             elif isGifVUrl(url):
                 url = convertGifVUrlToWebM(url)
             elif imgurDownloader.isImgurIndirectUrl(url):
-                url = imgurDownloader.convertImgurIndirectUrlToImg(imgur_auth, url)
+                url = imgurDownloader.convertImgurIndirectUrlToImg(submission, imgur_auth, url)
 
             if url:
                 urlContentType = getUrlContentType(url)
