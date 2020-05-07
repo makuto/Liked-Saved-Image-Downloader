@@ -70,7 +70,7 @@ If your web browser complains about the certificate, you may have to click ~Adva
 
 5. Enjoy! Use Random Image Browser to jump to random images you've downloaded, or browse your output directory
 
-**  Web Server Features
+** Web Server Features
 
 This repository includes a simple web server interface. Unlike the main script, the server is supported in Python 3 only.
 
@@ -127,6 +127,26 @@ If you want more images, set ~Reddit_Total_Requests~ and/or ~Tumblr_Total_Reques
 Not actually getting images downloaded, but seeing the console say it downloaded images? Make sure ~SHOULD_SOFT_RETRIEVE=False~ in ~settings.txt~
 
 ~settings.txt~ has several additional features. Read the comments to know how to use them.
+
+** OSX Python issues
+On OSX, running the downloader from the Content Collector server may cause this error:
+
+#+BEGIN_SRC sh
+Output: output
+objc[29889]: +[__NSPlaceholderDate initialize] may have been in progress in another thread when fork() was called.
+#+END_SRC
+
+This is a problem with Python and OSX's security model clashing. See [[https://github.com/ansible/ansible/issues/32499][this issue]] for an explanation.
+
+To work around it, you need to first run
+
+#+BEGIN_SRC sh
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+#+END_SRC
+
+...before running the Content Collector server in that same terminal.
+
+Or add the bash profile suggested in [[https://stackoverflow.com/questions/50168647/multiprocessing-causes-python-to-crash-and-gives-an-error-may-have-been-in-progr][this answer]].
 
 ** Issues
 
