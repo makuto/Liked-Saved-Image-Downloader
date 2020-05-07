@@ -12,3 +12,4 @@ passwords.txt
 certificates
 build*/
 dist*/
+webInterface/webSocketSettings.js

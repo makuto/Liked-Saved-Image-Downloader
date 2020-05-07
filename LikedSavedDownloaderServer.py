@@ -23,6 +23,8 @@ import LikedSavedDatabase
 #enable_authentication = False
 enable_authentication = True
 
+useSSL = True
+
 if enable_authentication:
     import PasswordManager
 
@@ -783,7 +785,12 @@ if __name__ == '__main__':
     # if not settings.settings['Database_Has_Imported_Comments']:
         # LikedSavedDatabase.importFromAllJsonInDir(settings.settings['Output_dir'])
         # settings.settings['Database_Has_Imported_Comments'] = True
-    
+
+    # This isn't pretty, but it'll get the job done
+    webSocketSettings = open('webInterface/webSocketSettings.js', 'w')
+    webSocketSettings.write('useSSL = {};'.format('true' if useSSL else 'false'))
+    webSocketSettings.close()
+
     port = settings.settings['Port'] if settings.settings['Port'] else 8888
     print('\nStarting Content Collector Server on port {}...'.format(port))
     app = make_app()
@@ -793,7 +800,6 @@ if __name__ == '__main__':
     # (from https://jupyter-notebook.readthedocs.io/en/latest/public_server.html)
     # I then had to tell Firefox to trust this certificate even though it is self-signing (because
     # I want a free certificate for this non-serious project)
-    useSSL = True
     if useSSL:
         if os.path.exists("certificates/liked_saved_server.crt.pem"):
             app.listen(port, ssl_options={"certfile":"certificates/liked_saved_server.crt.pem",

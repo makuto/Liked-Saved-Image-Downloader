@@ -1,4 +1,5 @@
-var ws = new WebSocket("wss://" + window.location.host + "/runScriptWebSocket");
+var ws = new WebSocket((useSSL ? "wss://" : "ws://") + window.location.host + "/runScriptWebSocket");
+
 var username = "likedSavedBrowserClient";
 
 // As soon as the websocket opens, request the initial image
