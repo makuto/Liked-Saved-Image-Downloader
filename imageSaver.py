@@ -313,7 +313,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 if not imgur_auth:
                     logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
                         + ' [unsupported] ' + 'Skipped "' + url + '" (imgur album)')
-                    LikedSavedDatabase.db.addUnsupportedSubmission(submission, "Imgur albums not supported")
+                    LikedSavedDatabase.db.addUnsupportedSubmission(submission,
+                                                                   "Imgur albums not supported without Imgur Authentication")
                     numUnsupportedAlbums += 1
                     continue
                 else:
@@ -332,6 +333,12 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
             elif isGifVUrl(url):
                 url = convertGifVUrlToWebM(url)
             elif imgurDownloader.isImgurIndirectUrl(url):
+                if not imgur_auth:
+                    logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+                        + ' [unsupported] ' + 'Skipped "' + url + '" (imgur indirect link)')
+                    LikedSavedDatabase.db.addUnsupportedSubmission(submission,
+                                                                   "Imgur indirect links not supported without Imgur Authentication")
+                    continue
                 url = imgurDownloader.convertImgurIndirectUrlToImg(submission, imgur_auth, url)
 
             if url:
