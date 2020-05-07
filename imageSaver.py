@@ -338,6 +338,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                         + ' [unsupported] ' + 'Skipped "' + url + '" (imgur indirect link)')
                     LikedSavedDatabase.db.addUnsupportedSubmission(submission,
                                                                    "Imgur indirect links not supported without Imgur Authentication")
+                    numUnsupportedImages += 1
                     continue
                 url = imgurDownloader.convertImgurIndirectUrlToImg(submission, imgur_auth, url)
 
