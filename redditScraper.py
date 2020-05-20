@@ -6,6 +6,8 @@ import settings
 import submission
 from submission import Submission 
 
+from tqdm import tqdm
+
 #import pprint
 
 user_agent = 'Python Script: v2.0: Reddit Liked Saved Image Downloader (by /u/makuto9)'
@@ -22,10 +24,8 @@ def getSubmissionsFromRedditList(redditList, source,
     submissions = []
     comments = []
 
-    numTotalSubmissions = len(redditList)
-    for currentSubmissionIndex, singleSubmission in enumerate(redditList):
-        if currentSubmissionIndex and currentSubmissionIndex % 100 == 0:
-            logger.log('Got {} submissions...'.format(currentSubmissionIndex))
+    pbar = tqdm(redditList)
+    for singleSubmission in pbar:
 
         # If they don't want to save their own post, skip it
         submissionAuthor = singleSubmission.author.name if singleSubmission.author else u'no_author'
@@ -51,8 +51,6 @@ def getSubmissionsFromRedditList(redditList, source,
 
             submissions.append(newSubmission)
 
-            logger.log(percentageComplete(currentSubmissionIndex, numTotalSubmissions))
-
             if unlikeUnsave:
                 if source == 'liked':
                     singleSubmission.clear_vote()
@@ -65,6 +63,8 @@ def getSubmissionsFromRedditList(redditList, source,
             if (earlyOutPoint 
                 and earlyOutPoint[0] 
                 and newSubmission.postUrl == earlyOutPoint[0].postUrl):
+                pbar.set_description("<early out point>")
+                pbar.close()
                 logger.log('Found early out point after ' + str(len(submissions)) + ' new submissions.'
                       ' If you e.g. changed your total requests value and want to go deeper, set'
                       ' Reddit_Try_Request_Only_New to False in your settings.txt')

@@ -17,6 +17,7 @@ from builtins import str
 from crcUtils import signedCrc32
 from gfycat.client import GfycatClient
 from operator import attrgetter
+from tqdm import tqdm
 
 import urllib
 if sys.version_info[0] >= 3:
@@ -269,9 +270,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
         logger.log('Starting at ' + str(skip_n_percent_submissions) + '%; skipped ' +
             str(newFirstSubmissionIndex) + ' submissions')
 
-    submissionsToSave = len(sortedSubmissions)
-
-    for currentSubmissionIndex, submission in enumerate(sortedSubmissions):
+    pbar = tqdm(sortedSubmissions)
+    for currentSubmissionIndex, submission in enumerate(pbar):
         url = submission.bodyUrl
         subredditDir = submission.subreddit[3:-1] if submission.source == u'reddit' else safeFileName(submission.subredditTitle)
         submissionTitle = submission.title
@@ -292,33 +292,30 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                     LikedSavedDatabase.db.removeFromUnsupportedSubmissions(submission)
                     numAlreadySavedVideos += 1
                 else:
-                    logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
-                               + ' [unsupported] ' + 'Failed to retrieve "' + url + '" (video). Reason: ' + result[1])
+                    pbar.write('[unsupported] ' + 'Failed to retrieve "' + url + '" (video). Reason: ' + result[1])
                     LikedSavedDatabase.db.addUnsupportedSubmission(submission, result[1])
                     numUnsupportedVideos += 1
             else:
-                logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
-                           + ' [save] ' + 'Saved "' + url + '" (video) to ' + result[1])
+                pbar.write('[save] ' + 'Saved "' + url + '" (video) to ' + result[1])
                 LikedSavedDatabase.db.onSuccessfulSubmissionDownload(
                     submission, utilities.outputPathToDatabasePath(result[1]))
                 numSavedVideos += 1
             continue
         elif settings.settings['Only_download_videos'] and not 'gfycat' in url:
-            logger.log("Skipped {} due to 'Only download videos' setting".format(url))
+            pbar.write("Skipped {} due to 'Only download videos' setting".format(url))
             continue
 
         if not shouldTrustUrl:
             # Imgur Albums have special handling
             if imgurDownloader.isImgurAlbumUrl(url):
                 if not imgur_auth:
-                    logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
-                        + ' [unsupported] ' + 'Skipped "' + url + '" (imgur album)')
+                    pbar.write('[unsupported] ' + 'Skipped "' + url + '" (imgur album)')
                     LikedSavedDatabase.db.addUnsupportedSubmission(submission,
                                                                    "Imgur albums not supported without Imgur Authentication")
                     numUnsupportedAlbums += 1
                     continue
                 elif not settings.settings['Should_download_albums']:
-                    logger.log("Skipped {} due to 'Should download albums' set to false".format(url))
+                    pbar.write("Skipped {} due to 'Should download albums' set to false".format(url))
                     continue
                 else:
                     # We're going to save Imgur Albums at a separate stage
@@ -337,8 +334,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 url = convertGifVUrlToWebM(url)
             elif imgurDownloader.isImgurIndirectUrl(url):
                 if not imgur_auth:
-                    logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
-                        + ' [unsupported] ' + 'Skipped "' + url + '" (imgur indirect link)')
+                    pbar.write('[unsupported] ' + 'Skipped "' + url + '" (imgur indirect link)')
                     LikedSavedDatabase.db.addUnsupportedSubmission(submission,
                                                                    "Imgur indirect links not supported without Imgur Authentication")
                     numUnsupportedImages += 1
@@ -360,11 +356,11 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 #  (e.g. a .png labeled as a .jpg)
                 contentFileType = convertContentTypeToFileType(urlContentType)
                 if contentFileType != fileType and (contentFileType != 'jpg' and fileType != 'jpeg'):
-                    logger.log('WARNING: Content type "' + contentFileType 
+                    pbar.write('WARNING: Content type "' + contentFileType 
                         + '" was going to be saved as "' + fileType + '"! Correcting.')
                     if contentFileType == 'html':
-                        logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
-                            + ' [unsupported] ' + 'Skipped "' + url 
+                        pbar.write(
+                            '[unsupported] ' + 'Skipped "' + url 
                             + '" (file is html, not image; this might mean Access was Denied)')
                         numUnsupportedImages += 1
                         continue
@@ -390,8 +386,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
             # TODO: Try not to make make any HTTP requests on skips...
             if os.path.isfile(saveFilePath):
                 if not only_important_messages:
-                    logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
-                        + ' [already saved] ' + 'Skipping ' + saveFilePath)
+                    pbar.write("[already saved] " + "Skipping " + saveFilePath)
                 # In case of legacy unsupported submissions, update with the new submission
                 LikedSavedDatabase.db.onSuccessfulSubmissionDownload(submission,
                                                                      utilities.outputPathToDatabasePath(saveFilePath))
@@ -410,7 +405,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                         submission, utilities.outputPathToDatabasePath(saveFilePath))
                 except IOError as e:
                     errorMessage = '[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'.format(url, e.errno, e.strerror)
-                    logger.log(errorMessage)
+                    pbar.write(errorMessage)
                     LikedSavedDatabase.db.addUnsupportedSubmission(submission, errorMessage)
                     numUnsupportedImages += 1
                     continue
@@ -418,8 +413,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                     exit()
                 except Exception as e:
                     errorMessage = '[ERROR] Exception: Url {0} raised exception:\n\t {1}'.format(url, e)
-                    logger.log(errorMessage)
-                    logger.log('[ERROR] Url ' + url + 
+                    pbar.write(errorMessage)
+                    pbar.write('[ERROR] Url ' + url + 
                         ' raised an exception I did not handle. Open an issue at '
                         '\n\thttps://github.com/makuto/redditLikedSavedImageDownloader/issues'
                         '\n and I will try to fix it')
@@ -428,13 +423,11 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                     continue
 
             # Output our progress
-            logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
-                    + ' [save] ' + url + ' saved to "' + subredditDir + '"')
+            pbar.write('[save] ' + url + ' saved to "' + subredditDir + '"')
             numSavedImages += 1
 
         else:
-            logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
-                + ' [unsupported] ' + 'Skipped "' + url + '" (content type "' + urlContentType + '")')
+            pbar.write('[unsupported] ' + 'Skipped "' + url + '" (content type "' + urlContentType + '")')
             unsupportedSubmissions.append(submission)
             LikedSavedDatabase.db.addUnsupportedSubmission(submission,
                                                            "URL or content type {} not supported".format(urlContentType))
