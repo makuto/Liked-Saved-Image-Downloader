@@ -91,8 +91,7 @@ class ImgurAuth:
 
 def getImgurAuth():
     imgurAuth = None
-    if (settings.settings['Should_download_albums'] 
-        and settings.hasImgurSettings()):
+    if settings.hasImgurSettings():
         return ImgurAuth(settings.settings['Imgur_client_id'], 
                                          settings.settings['Imgur_client_secret'])
     else:

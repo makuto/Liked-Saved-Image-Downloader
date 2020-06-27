@@ -381,6 +381,9 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                                                                    "Imgur albums not supported without Imgur Authentication")
                     numUnsupportedAlbums += 1
                     continue
+                elif not settings.settings['Should_download_albums']:
+                    logger.log("Skipped {} due to 'Should download albums' set to false".format(url))
+                    continue
                 else:
                     # We're going to save Imgur Albums at a separate stage
                     if subredditDir in imgurAlbumsToSave:
