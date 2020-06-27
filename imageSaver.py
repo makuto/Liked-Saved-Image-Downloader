@@ -50,7 +50,7 @@ def getUrlContentType(url):
         try:
             openedUrl = urlopen(url)
         except IOError as e:
-            logger.log('[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'
+            logger.log('[ERROR] getUrlContentType(): IOError: Url {0} raised exception:\n\t{1} {2}'
                 .format(url, e.errno, e.strerror))
         except Exception as e:
             logger.log('[ERROR] Exception: Url {0} raised exception:\n\t {1}'
@@ -78,6 +78,27 @@ def convertContentTypeToFileType(contentType):
 
     return contentType
 
+def getUrlLines(url):
+    # Open the page to search for a saveable .gif or .webm
+    try:
+        pageSource = urlopen(url)
+    except urllib.error.HTTPError as e:
+        logger.log("URL {} had HTTP error:\n{}".format(url, str(e.reason)))
+        return None, None
+
+    # This code doesn't quite work yet; if things are breaking near here you're not reading a .html
+    # Leaving this here for future work
+    pageEncoding = None
+    if sys.version_info[0] >= 3:
+        pageEncoding = pageSource.headers.get_content_charset()
+        #logger.log(pageSource.headers.get_content_subtype())
+        #logger.log(url)
+
+    pageSourceLines = pageSource.readlines()
+    pageSource.close()
+
+    return pageSourceLines, pageEncoding
+
 # Find the source of an image by reading the url's HTML, looking for sourceKey
 # An example key would be '<img src='. Note that the '"' will automatically be 
 #  recognized as part of the key, so do not specify it
@@ -87,23 +108,10 @@ def convertContentTypeToFileType(contentType):
 def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
     SANE_NUM_LINES = 30
 
-    # Open the page to search for a saveable .gif or .webm
-    try:
-        pageSource = urlopen(url)
-    except urllib.error.HTTPError as e:
-        print("URL {} had HTTP error:\n{}".format(url, str(e.reason)))
-        return None
+    pageSourceLines, pageEncoding = getUrlLines(url)
 
-    # This code doesn't quite work yet; if things are breaking near here you're not reading a .html
-    # Leaving this here for future work
-    pageEncoding = None
-    if sys.version_info[0] >= 3:
-        pageEncoding = pageSource.headers.get_content_charset()
-        #logger.log(pageSource.headers.get_content_subtype())
-        #logger.log(url)
-        
-    pageSourceLines = pageSource.readlines()
-    pageSource.close()
+    if not pageSourceLines:
+        return None
 
     # If a page has fewer than this number of lines, there is something wrong.
     # This is a somewhat arbitrary heuristic
@@ -113,7 +121,7 @@ def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
     for line in pageSourceLines:
         lineStr = line
         if sys.version_info[0] >= 3 and pageEncoding:
-            # If things are breaking near here you're not reading a .html    
+            # If things are breaking near here you're not reading a .html
             lineStr = line.decode(pageEncoding)
 
         try:
@@ -122,7 +130,7 @@ def findSourceFromHTML(url, sourceKey, sourceKeyAttribute=''):
         except TypeError:
             logger.log('Unable to guess type for Url "' + url)
             return ''
-        
+
         if foundSourcePosition > -1:
             urlStartPosition = -1
             if sourceKeyAttribute:
@@ -148,6 +156,10 @@ def isGfycatUrl(url):
             and '.webm' not in url.lower()
             and '.gif' not in url.lower()[-4:])
 
+def gfycatToRedGifsWorkaround(gfyUrl):
+    logger.log("Using Gfycat->RedGifs workaround")
+    return findSourceFromHTML(gfyUrl, '<source id="mp4source" src=')
+
 # Lazy initialize in case it's not needed
 gfycatClient = None
 # Special handling for Gfycat links
@@ -164,10 +176,14 @@ def convertGfycatUrlToWebM(submission, url):
 
     # Lazy initialize client
     if not gfycatClient and settings.settings['Gfycat_Client_id']:
-        gfycatClient = GfycatClient(settings.settings['Gfycat_Client_id'],settings.settings['Gfycat_Client_secret'])
+        gfycatClient = GfycatClient(settings.settings['Gfycat_Client_id'], settings.settings['Gfycat_Client_secret'])
 
     # Still don't have a client?
     if not gfycatClient:
+        logger.log("Warning: no Gfycat client; gifs will likely fail to download")
+        newUrl = gfycatToRedGifsWorkaround(url)
+        if newUrl:
+            return newUrl
         # Hacky solution while Gfycat API isn't set up. This breaks if case is wrong
         return "https://giant.gfycat.com/{}.webm".format(url[url.rfind("/") + 1:])
     else:
@@ -183,6 +199,13 @@ def convertGfycatUrlToWebM(submission, url):
             except Exception as e:
                 errorMessage = '[ERROR] Exception: Url {0} raised exception:\n\t {1}'.format(url, e)
                 logger.log(errorMessage)
+                logger.log("Gfycat client was used to make this query")
+                # Gfycat sucks. They created RedGifs, but broke Gfycat API by making it not actually
+                # support that transition, and you can't get a RedGifs API token unless you email
+                # them for one. Great engineering, folks
+                newUrl = gfycatToRedGifsWorkaround(url)
+                if newUrl:
+                    return newUrl
                 LikedSavedDatabase.db.addUnsupportedSubmission(submission, errorMessage)
                 return None
             return gfycatUrlInfo['gfyItem']['mp4Url']
@@ -210,6 +233,42 @@ def convertGifVUrlToWebM(url):
         gifvSource = 'http:' + gifvSource
 
     return gifvSource
+
+def findSourceForRedGif(url):
+    pageSourceLines, pageEncoding = getUrlLines(url)
+    videoElement = "<video id=\"video-{}".format(url[url.rfind("/") + 1:])
+    logger.log("RedGifs: looking for {}".format(videoElement))
+
+    foundSourcePosition = None
+    for line in pageSourceLines:
+        lineStr = line
+        if sys.version_info[0] >= 3 and pageEncoding:
+            # If things are breaking near here you're not reading a .html
+            lineStr = line.decode(pageEncoding)
+
+        # State machine; only look for source once we've hit the video we care about
+        if foundSourcePosition:
+            try:
+                sourcePosition = lineStr.lower().find('<source src="'.lower())
+                if sourcePosition:
+                    # Ignore low quality mobile and webm formats
+                    if 'mobile'.lower() not in lineStr.lower() and '.mp4' in lineStr:
+                        matches = re.findall(r'src="([^"]*)"', url)
+                        return matches[0]
+                # Probably not reading a text file; we won't be able to determine the type
+            except TypeError:
+                logger.log('Unable to guess type for Url "' + url)
+                return None
+        else:
+            try:
+                foundSourcePosition = lineStr.lower().find(videoElement.lower())
+                # Probably not reading a text file; we won't be able to determine the type
+            except TypeError:
+                logger.log('Unable to guess type for Url "' + url)
+                return None
+
+
+    return None
 
 # Make sure the filename is alphanumeric or has supported symbols, and is shorter than 45 characters
 def safeFileName(filename, file_path = False):
@@ -286,6 +345,11 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
         urlContentType = ''
 
         if videoDownloader.shouldUseYoutubeDl(url):
+            if "gfycat" in url:
+                possibleRedGifUrl = gfycatToRedGifsWorkaround(url)
+                if possibleRedGifUrl and 'redgifs' in possibleRedGifUrl:
+                    logger.log("Using RedGifs redirect for YoutubeDL")
+                    url = url.replace("gfycat.com/", "redgifs.com/watch/")
             result = videoDownloader.downloadVideo(outputDir + u'/' + subredditDir, url)
             if not result[0]:
                 if result[1] == videoDownloader.alreadyDownloadedSentinel:
@@ -332,6 +396,13 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 url = convertGfycatUrlToWebM(submission, url)
             elif isGifVUrl(url):
                 url = convertGifVUrlToWebM(url)
+            elif 'redgifs.com' in url:
+                url = findSourceForRedGif(url)
+                if not url:
+                    LikedSavedDatabase.db.addUnsupportedSubmission(submission,
+                                                                   "Failed to find source from RedGifs HTML")
+                    numUnsupportedImages += 1
+                    continue
             elif imgurDownloader.isImgurIndirectUrl(url):
                 if not imgur_auth:
                     logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
@@ -343,8 +414,20 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 url = imgurDownloader.convertImgurIndirectUrlToImg(submission, imgur_auth, url)
 
             if url:
-                urlContentType = getUrlContentType(url)
+                # Trust these because they are always parsed successfully
+                if 'redgifs' in url:
+                    logger.log("WARNING: RedGifs will likely block this request. Please enable YoutubeDL"
+                               " to work around this")
+                    urlContentType = getFileTypeFromUrl(url)
+                    shouldTrustUrl = True
+                else:
+                    urlContentType = getUrlContentType(url)
             else:
+                logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+                        + ' [unsupported] ' + 'Failed to resolve trusted URL')
+                LikedSavedDatabase.db.addUnsupportedSubmission(submission,
+                                                               "No trusted URL found")
+                numUnsupportedImages += 1
                 continue
 
         if shouldTrustUrl or isUrlSupportedType(url) or isContentTypeSupported(urlContentType):
@@ -406,7 +489,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                     LikedSavedDatabase.db.onSuccessfulSubmissionDownload(
                         submission, utilities.outputPathToDatabasePath(saveFilePath))
                 except IOError as e:
-                    errorMessage = '[ERROR] IOError: Url {0} raised exception:\n\t{1} {2}'.format(url, e.errno, e.strerror)
+                    errorMessage = '[ERROR] retrieval: IOError: Url {0} raised exception:\n\t{1} {2}'.format(url, e.errno, e.strerror)
                     logger.log(errorMessage)
                     LikedSavedDatabase.db.addUnsupportedSubmission(submission, errorMessage)
                     numUnsupportedImages += 1

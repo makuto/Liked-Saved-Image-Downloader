@@ -66,7 +66,7 @@ def generateSavedImagesCache(outputDir):
     # Clear cache in case already created
     savedImagesCache = []
 
-    print('Creating content cache...')
+    print('Creating content cache...', flush=True)
     
     for root, dirs, files in os.walk(outputDir):
         for file in files:
@@ -756,7 +756,7 @@ if __name__ == '__main__':
     print('Content output directory: ' + settings.settings['Output_dir'])
     if not settings.settings['Output_dir']:
         print('WARNING: No output directory specified! This will probably break things')
-    
+
     if not savedImagesCache:
         generateSavedImagesCache(settings.settings['Output_dir'])
 

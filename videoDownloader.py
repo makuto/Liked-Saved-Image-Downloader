@@ -12,17 +12,18 @@ youtubeDlSitesSupported = [
     "gfycat.com",
     "instagram.com", # Should get a proper integration of this eventually...
     "pornhub.com",
+    'redgifs.com',
     "redtube.com",
     "spankbang.com",
     "streamable.com",
     "v.redd.it",
     "vid.me",
     "vimeo.com",
+    "xhamster.com",
     "xnxx.com",
     "xvideos.com",
-    "xhamster.com",
-    "youtube.com",
     "youtu.be",
+    "youtube.com",
 ]
 
 youtubeDlBlacklistSites = [
@@ -61,8 +62,9 @@ def shouldUseYoutubeDl(url):
                     break
 
             # Use the gfycat api for these, if available
-            if settings.settings['Gfycat_Client_id'] and 'gfycat.com' in url:
-                isBlacklisted = True
+            # Ever since the creation of RedGifs, use YoutubeDL for all gfycat links...
+            # if settings.settings['Gfycat_Client_id'] and 'gfycat.com' in url:
+                # isBlacklisted = True
 
             if isBlacklisted:
                 # We probably have another downloader
