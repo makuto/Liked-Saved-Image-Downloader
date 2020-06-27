@@ -43,7 +43,7 @@ def convertImgurIndirectUrlToImg(submission, imgurAuth, url):
         
     try:
         return imgurClient.get_image(imageId).link
-    except:
+    except Exception as e:
         errorMessage = ('Failed to convert imgur to image link: '
                         '[ERROR] Exception: Url {} raised exception:\n\t {}'.format(url, e))
         logger.log(errorMessage)
