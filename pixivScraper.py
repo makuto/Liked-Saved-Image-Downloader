@@ -1,6 +1,6 @@
 from pixivpy3 import *
 from submission import Submission
-import json
+import logger
 
 # Note that this does NOT set the download URL, and won't set title to be unique for albums
 def fillPixivSubmission(illustration, submissionToFill):
@@ -20,9 +20,9 @@ def fillPixivSubmission(illustration, submissionToFill):
 def pixivSubmissionsFromJson(bookmarks):
     submissions = []
     for illustration in bookmarks.illusts:
-        if illustration.type != 'illust':
+        if illustration.type not in ['illust', 'manga']:
             # TODO: Add more format support
-            print("Skipping " + illustration.type)
+            logger.log("Skipping " + illustration.type)
             continue
 
         # Album
@@ -48,19 +48,37 @@ def pixivSubmissionsFromJson(bookmarks):
 
             submissions.append(newSubmission)
 
+    logger.log("Got {} Pixiv bookmarks".format(len(submissions)))
     return submissions
 
 def getPixivUserBookmarkedSubmissions(username, password):
+    logger.log("Communicating with Pixiv...")
     pixivApi = AppPixivAPI()
     # TODO: Use refresh token? Right now, login will have to happen once per hour, so I'll just
     # login every time instead and toss the complexity
     pixivLoginJson = pixivApi.login(username, password)
     pixivUserId = int(pixivLoginJson.response.user.id)
 
-    # TODO: Need offset parameter to get "all" of them
+    submissions = []
+    pageNum = 1
     bookmarks = pixivApi.user_bookmarks_illust(pixivUserId)
+    while bookmarks:
+        logger.log("Page {}".format(pageNum))
+        pageNum += 1
 
-    return pixivSubmissionsFromJson(bookmarks)
+        submissions.extend(pixivSubmissionsFromJson(bookmarks))
+
+        if 'next_url' not in bookmarks:
+            break
+        nextUrlParsed = pixivApi.parse_qs(bookmarks.next_url)
+        if not nextUrlParsed:
+            break
+        nextPageBookmarks = nextUrlParsed['max_bookmark_id']
+        bookmarks = pixivApi.user_bookmarks_illust(pixivUserId,
+                                                   max_bookmark_id=nextPageBookmarks)
+
+    logger.log("Pixiv returned {} submissions".format(len(submissions)))
+    return submissions
 
 if __name__ == '__main__':
     submissions = getPixivUserBookmarkedSubmissions('your username', 'your password')
