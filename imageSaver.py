@@ -10,8 +10,12 @@ import re
 import settings
 import submission as Submissions
 import sys
+import time
 import utilities
 import videoDownloader
+
+# Must use API to access images
+from pixivpy3 import *
 
 from builtins import str
 from crcUtils import signedCrc32
@@ -328,6 +332,9 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
         logger.log('Starting at ' + str(skip_n_percent_submissions) + '%; skipped ' +
             str(newFirstSubmissionIndex) + ' submissions')
 
+    # Lazy-initialized
+    pixivApi = None
+
     submissionsToSave = len(sortedSubmissions)
 
     for currentSubmissionIndex, submission in enumerate(sortedSubmissions):
@@ -340,6 +347,43 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
         shouldTrustTitle = (submission.source == u'Tumblr')
 
         if not url:
+            continue
+
+        if submission.source == u'Pixiv':
+            # Always re-login because it'll timeout otherwise
+            if not pixivApi:
+                pixivApi = AppPixivAPI()
+                pixivLoginJson = pixivApi.login(settings.settings['Pixiv_username'],
+                                                settings.settings['Pixiv_password'])
+
+            submissionOutputDir = outputDir + u'/' + subredditDir
+            utilities.makeDirIfNonexistant(submissionOutputDir)
+            # Weird webp format...
+            pixivFilename = "{}.riff".format(safeFileName(submissionTitle))
+            saveFilePath = "{}/{}".format(submissionOutputDir, pixivFilename)
+            if os.path.isfile(saveFilePath):
+                if not only_important_messages:
+                    logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
+                               + ' [already saved] ' + 'Skipping ' + saveFilePath)
+                numAlreadySavedImages += 1
+                continue
+
+            # Go easy on the Pixiv server
+            # I should do this for the other sites too, but oh well
+            time.sleep(random.random() * 2.0)
+            downloaded = pixivApi.download(url,
+                                           path=submissionOutputDir,
+                                           name=pixivFilename)
+            if downloaded:
+                logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
+                           + ' [save] ' + 'Saved "' + url + '" to ' + saveFilePath)
+                LikedSavedDatabase.db.onSuccessfulSubmissionDownload(submission,
+                                                                     utilities.outputPathToDatabasePath(saveFilePath))
+                numSavedImages += 1
+            else:
+                LikedSavedDatabase.db.addUnsupportedSubmission(submission,
+                                                               "Failed to download from Pixiv")
+                numUnsupportedImages += 1
             continue
 
         urlContentType = ''
@@ -463,7 +507,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 # output/subreddit/Submission Title_urlCRC.fileType
                 # The CRC is used so that if we are saving two images with the same
                 #  post title (e.g. 'me_irl') we get unique filenames because the URL is different
-                saveFilePath = (outputDir + u'/' + subredditDir + u'/' + safeFileName(submissionTitle) 
+                saveFilePath = (outputDir + u'/' + subredditDir + u'/' + safeFileName(submissionTitle)
                                 + u'_' + str(signedCrc32(url.encode())) + u'.' + fileType)
 
                 # Maybe not do this? Ubuntu at least can do Unicode folders etc. just fine

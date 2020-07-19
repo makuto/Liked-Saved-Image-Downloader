@@ -45,12 +45,16 @@ settings = {
 
     # Total requests to Tumblr
     'Tumblr_Total_requests' : 500,
-    
+
     # Gfycat authentication information
     # https://developers.gfycat.com/signup/#/apiform
     # Requires https://github.com/ankeshanand/py-gfycat
     'Gfycat_Client_id' : '',
     'Gfycat_Client_secret' : '',
+
+    # Pixiv
+    'Pixiv_username': '',
+    'Pixiv_password': '',
 
     # Youtube DL settings
     'Should_download_videos' : True,
@@ -175,13 +179,17 @@ settingsStructure = [
       'Tumblr_Client_token',
       ('Tumblr_Client_token_secret', tumblrClientSecretInstructions)]),
 
+    ('Pixiv Authentication',
+     ['Pixiv_username',
+      'Pixiv_password']),
+
     ('Tumblr Settings',
      [('Tumblr_Total_requests', requestsInstructions),
       ('Tumblr_Try_Request_Only_New',
        "Attempt to only request and download new submissions (those which haven't been downloaded) "
        "This uses the Reddit cache files to know what's already been downloaded, so it will only "
        "work if you've successfully run the script before")]),
-    
+
     ('Download Settings',
      [
          'Should_download_albums',
@@ -294,6 +302,9 @@ def hasTumblrSettings():
 
 def hasImgurSettings():
     return (settings['Imgur_client_id'] and settings['Imgur_client_secret'])
+
+def hasPixivSettings():
+    return (settings['Pixiv_username'] and settings['Pixiv_password'])
 
 # To make sure I don't accidentally commit my settings.txt, it's marked LOCAL_, 
 # which is in .gitignore

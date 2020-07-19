@@ -27,7 +27,7 @@ git clone https://github.com/makuto/redditLikedSavedImageDownloader
 The following dependencies are required:
 
 #+BEGIN_SRC sh
-pip install praw pytumblr ImgurPython jsonpickle tornado youtube-dl git+https://github.com/ankeshanand/py-gfycat@master
+pip install praw pytumblr ImgurPython jsonpickle tornado youtube-dl git+https://github.com/ankeshanand/py-gfycat@master git+https://github.com/upbit/pixivpy
 #+END_SRC
 
 You'll want to use Python 3, which for your environment may require you to specify ~pip3~ instead of just ~pip~.

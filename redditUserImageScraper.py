@@ -8,6 +8,7 @@ import logger
 import imageSaver
 import redditScraper
 import tumblrScraper
+import pixivScraper
 import imgurDownloader
 import settings
 import submission
@@ -131,22 +132,27 @@ def getSubmissionsToSave():
                 settings.settings['Tumblr_Client_token'], settings.settings['Tumblr_Client_token_secret'],
                 likeRequestLimit = settings.settings['Tumblr_Total_requests'],
                 requestOnlyNewCache = tumblrRequestOnlyNewCache)
-                
+
             # Cache them in case it's needed later
             submission.writeCacheSubmissions(tumblrSubmissions, settings.settings['Tumblr_cache_file'])
-                
+
             # Set new early out point
             submission.writeCacheSubmissions([earlyOutPoint], 
                                              settings.settings['Tumblr_Try_Request_Only_New_Cache_File'])
 
             submissions += tumblrSubmissions
 
+        if settings.hasPixivSettings():
+            pixivSubmissions = pixivScraper.getPixivUserBookmarkedSubmissions(settings.settings['Pixiv_username'],
+                                                                              settings.settings['Pixiv_password'])
+            submissions += pixivSubmissions
+
         # Write out a .json file with all of the submissions in case the user wants the data
         submission.saveSubmissionsAsJson(submissions, settings.settings['Metadata_output_dir'] + u'/' 
                                          + 'AllSubmissions_' + time.strftime("%Y%m%d-%H%M%S") + '.json')
 
         LikedSavedDatabase.db.addSubmissions(submissions)
-                
+
     return submissions
 
 def saveRequestedSubmissions(pipeConnection, submissionIds):

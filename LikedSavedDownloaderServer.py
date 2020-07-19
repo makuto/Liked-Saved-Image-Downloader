@@ -60,7 +60,7 @@ class SessionData:
 userSessionData = {}
 
 videoExtensions = ('.mp4', '.webm')
-supportedExtensions = ('.gif', '.jpg', '.jpeg', '.png', '.mp4', '.webm')
+supportedExtensions = ('.gif', '.jpg', '.jpeg', '.png', '.mp4', '.webm', '.riff')
 
 savedImagesCache = []
 def generateSavedImagesCache(outputDir):
