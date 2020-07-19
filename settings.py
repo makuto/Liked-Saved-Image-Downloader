@@ -65,15 +65,18 @@ settings = {
     'Use_cached_submissions' : False,
     'Reddit_cache_file' : 'Reddit_SubmissionCache.bin',
     'Tumblr_cache_file' : 'Tumblr_SubmissionCache.bin',
+    'Pixiv_cache_file' : 'Pixiv_SubmissionCache.bin',
 
     # Attempt to only request and download new submissions (those which haven't been downloaded)
     # This uses the Reddit and Tumblr cache files to know what's already been downloaded,
     #  so it will only work if you've successfully run the script before
     'Reddit_Try_Request_Only_New' : True,
     'Tumblr_Try_Request_Only_New' : True,
+    'Pixiv_Try_Request_Only_New' : True,
     'Reddit_Try_Request_Only_New_Saved_Cache_File' : 'Reddit_RequestOnlyNewSaved.bin',
     'Reddit_Try_Request_Only_New_Liked_Cache_File' : 'Reddit_RequestOnlyNewLiked.bin',
     'Tumblr_Try_Request_Only_New_Cache_File' : 'Tumblr_RequestOnlyNew.bin',
+    'Pixiv_Try_Request_Only_New_Cache_File' : 'Pixiv_RequestOnlyNew.bin',
 
     # If the script failed at say 70%, you could use toggle Use_cached_submissions and set this value to
     #  69. The script would then restart 69% of the way into the cached submissions nearer to where you
@@ -179,15 +182,21 @@ settingsStructure = [
       'Tumblr_Client_token',
       ('Tumblr_Client_token_secret', tumblrClientSecretInstructions)]),
 
-    ('Pixiv Authentication',
-     ['Pixiv_username',
-      'Pixiv_password']),
-
     ('Tumblr Settings',
      [('Tumblr_Total_requests', requestsInstructions),
       ('Tumblr_Try_Request_Only_New',
        "Attempt to only request and download new submissions (those which haven't been downloaded) "
-       "This uses the Reddit cache files to know what's already been downloaded, so it will only "
+       "This uses the Tumblr cache files to know what's already been downloaded, so it will only "
+       "work if you've successfully run the script before")]),
+
+    ('Pixiv Authentication',
+     ['Pixiv_username',
+      'Pixiv_password']),
+
+    ('Pixiv Settings',
+     [('Pixiv_Try_Request_Only_New',
+       "Attempt to only request and download new submissions (those which haven't been downloaded) "
+       "This uses the Pixiv cache files to know what's already been downloaded, so it will only "
        "work if you've successfully run the script before")]),
 
     ('Download Settings',
@@ -235,9 +244,11 @@ settingsStructure = [
         ('Use_cached_submissions', 'Do not get new stuff, just use the cache files from last run'),
         'Reddit_cache_file',
         'Tumblr_cache_file',
+        'Pixiv_cache_file',
         'Reddit_Try_Request_Only_New_Saved_Cache_File',
         'Reddit_Try_Request_Only_New_Liked_Cache_File',
         'Tumblr_Try_Request_Only_New_Cache_File',
+        'Pixiv_Try_Request_Only_New_Cache_File',
         
         ('Should_soft_retrieve', "If True, don't actually download the images - just pretend to"),
     ]),

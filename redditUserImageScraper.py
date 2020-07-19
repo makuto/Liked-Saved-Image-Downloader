@@ -87,12 +87,18 @@ def getSubmissionsToSave():
         tumblrRequestOnlyNewCache = submission.readCacheSubmissions(
             settings.settings['Tumblr_Try_Request_Only_New_Cache_File'])
 
+    pixivRequestOnlyNewCache = None
+    if settings.settings['Pixiv_Try_Request_Only_New']:
+        pixivRequestOnlyNewCache = submission.readCacheSubmissions(
+            settings.settings['Pixiv_Try_Request_Only_New_Cache_File'])
+
     submissions = []
 
     if settings.settings['Use_cached_submissions']:
         logger.log('Using cached submissions')
         submissions += submission.readCacheSubmissions(settings.settings['Reddit_cache_file'])
         submissions += submission.readCacheSubmissions(settings.settings['Tumblr_cache_file'])
+        submissions += submission.readCacheSubmissions(settings.settings['Pixiv_cache_file'])
     else:
         if settings.hasRedditSettings():
             redditSubmissions, redditComments, earlyOutPoints = redditScraper.getRedditUserLikedSavedSubmissions(
@@ -144,7 +150,15 @@ def getSubmissionsToSave():
 
         if settings.hasPixivSettings():
             pixivSubmissions = pixivScraper.getPixivUserBookmarkedSubmissions(settings.settings['Pixiv_username'],
-                                                                              settings.settings['Pixiv_password'])
+                                                                              settings.settings['Pixiv_password'],
+                                                                              requestOnlyNewCache = pixivRequestOnlyNewCache)
+            # Cache them in case it's needed later
+            submission.writeCacheSubmissions(pixivSubmissions, settings.settings['Pixiv_cache_file'])
+
+            # Set new early out point
+            if pixivSubmissions:
+                submission.writeCacheSubmissions([pixivSubmissions[0]],
+                                                 settings.settings['Pixiv_Try_Request_Only_New_Cache_File'])
             submissions += pixivSubmissions
 
         # Write out a .json file with all of the submissions in case the user wants the data
