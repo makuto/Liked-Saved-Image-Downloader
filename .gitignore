@@ -13,3 +13,5 @@ certificates
 build*/
 dist*/
 webInterface/webSocketSettings.js
+*.spec
+metadata/
