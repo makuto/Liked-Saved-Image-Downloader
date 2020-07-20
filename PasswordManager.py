@@ -7,11 +7,12 @@ from passlib.context import CryptContext
 
 # It's not strictly necessary to import these, but I do it here for PyInstaller
 # (see https://github.com/pyinstaller/pyinstaller/issues/649)
-import argon2
 import cffi
 import configparser
 import passlib.handlers
-import passlib.handlers.argon2
+# Argon2 not supported on Raspberry Pi
+# import argon2
+# import passlib.handlers.argon2
 import passlib.handlers.sha2_crypt
 import passlib.handlers.bcrypt
 
@@ -25,7 +26,7 @@ password_context = CryptContext(
     # Replace this list with the hash(es) you wish to support.
     # this example sets pbkdf2_sha256 as the default,
     # with additional support for reading legacy des_crypt hashes.
-    schemes=["argon2", "sha512_crypt", "bcrypt"],
+    schemes=["sha512_crypt", "bcrypt"], # Argon2 not supported on raspberry pi
 
     # Automatically mark all but first hasher in list as deprecated.
     # (this will be the default in Passlib 2.0)
