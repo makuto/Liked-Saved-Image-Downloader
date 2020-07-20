@@ -77,6 +77,7 @@ settings = {
     'Reddit_Try_Request_Only_New_Liked_Cache_File' : 'Reddit_RequestOnlyNewLiked.bin',
     'Tumblr_Try_Request_Only_New_Cache_File' : 'Tumblr_RequestOnlyNew.bin',
     'Pixiv_Try_Request_Only_New_Cache_File' : 'Pixiv_RequestOnlyNew.bin',
+    'Pixiv_Try_Request_Only_New_Private_Cache_File' : 'Pixiv_RequestOnlyNewPrivate.bin',
 
     # If the script failed at say 70%, you could use toggle Use_cached_submissions and set this value to
     #  69. The script would then restart 69% of the way into the cached submissions nearer to where you
@@ -249,6 +250,7 @@ settingsStructure = [
         'Reddit_Try_Request_Only_New_Liked_Cache_File',
         'Tumblr_Try_Request_Only_New_Cache_File',
         'Pixiv_Try_Request_Only_New_Cache_File',
+        'Pixiv_Try_Request_Only_New_Private_Cache_File',
         
         ('Should_soft_retrieve', "If True, don't actually download the images - just pretend to"),
     ]),

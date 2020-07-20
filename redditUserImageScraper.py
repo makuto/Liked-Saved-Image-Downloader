@@ -88,9 +88,12 @@ def getSubmissionsToSave():
             settings.settings['Tumblr_Try_Request_Only_New_Cache_File'])
 
     pixivRequestOnlyNewCache = None
+    pixivRequestOnlyNewPrivateCache = None
     if settings.settings['Pixiv_Try_Request_Only_New']:
         pixivRequestOnlyNewCache = submission.readCacheSubmissions(
             settings.settings['Pixiv_Try_Request_Only_New_Cache_File'])
+        pixivRequestOnlyNewPrivateCache = submission.readCacheSubmissions(
+            settings.settings['Pixiv_Try_Request_Only_New_Private_Cache_File'])
 
     submissions = []
 
@@ -149,16 +152,20 @@ def getSubmissionsToSave():
             submissions += tumblrSubmissions
 
         if settings.hasPixivSettings():
-            pixivSubmissions = pixivScraper.getPixivUserBookmarkedSubmissions(settings.settings['Pixiv_username'],
-                                                                              settings.settings['Pixiv_password'],
-                                                                              requestOnlyNewCache = pixivRequestOnlyNewCache)
+            pixivSubmissions, nextEarlyOutPair = pixivScraper.getPixivUserBookmarkedSubmissions(settings.settings['Pixiv_username'],
+                                                                                                settings.settings['Pixiv_password'],
+                                                                                                requestOnlyNewCache = pixivRequestOnlyNewCache,
+                                                                                                requestOnlyNewPrivateCache = pixivRequestOnlyNewPrivateCache)
             # Cache them in case it's needed later
             submission.writeCacheSubmissions(pixivSubmissions, settings.settings['Pixiv_cache_file'])
 
             # Set new early out point
-            if pixivSubmissions:
-                submission.writeCacheSubmissions([pixivSubmissions[0]],
+            if nextEarlyOutPair[0]:
+                submission.writeCacheSubmissions([nextEarlyOutPair[0]],
                                                  settings.settings['Pixiv_Try_Request_Only_New_Cache_File'])
+            if nextEarlyOutPair[1]:
+                submission.writeCacheSubmissions([nextEarlyOutPair[1]],
+                                                 settings.settings['Pixiv_Try_Request_Only_New_Private_Cache_File'])
             submissions += pixivSubmissions
 
         # Write out a .json file with all of the submissions in case the user wants the data

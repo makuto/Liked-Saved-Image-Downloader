@@ -51,7 +51,9 @@ def pixivSubmissionsFromJson(bookmarks):
     logger.log("Got {} Pixiv bookmarks".format(len(submissions)))
     return submissions
 
-def getPixivUserBookmarkedSubmissions(username, password, requestOnlyNewCache = None):
+def getPixivUserBookmarkedSubmissions(username, password,
+                                      requestOnlyNewCache = None,
+                                      requestOnlyNewPrivateCache = None):
     logger.log("Communicating with Pixiv...")
     pixivApi = AppPixivAPI()
     # TODO: Use refresh token? Right now, login will have to happen once per hour, so I'll just
@@ -59,36 +61,49 @@ def getPixivUserBookmarkedSubmissions(username, password, requestOnlyNewCache = 
     pixivLoginJson = pixivApi.login(username, password)
     pixivUserId = int(pixivLoginJson.response.user.id)
 
+    firstPublicBookmark = None
+    firstPrivateBookmark = None
+
     submissions = []
-    pageNum = 1
-    bookmarks = pixivApi.user_bookmarks_illust(pixivUserId)
-    while bookmarks:
-        logger.log("Page {}".format(pageNum))
-        pageNum += 1
+    for visibilityCachePair in [('public', requestOnlyNewCache), ('private', requestOnlyNewPrivateCache)]:
+        pageNum = 1
+        bookmarks = pixivApi.user_bookmarks_illust(pixivUserId, restrict=visibilityCachePair[0])
+        while bookmarks:
+            logger.log("Page {}".format(pageNum))
+            pageNum += 1
 
-        thisPageSubmissions = pixivSubmissionsFromJson(bookmarks)
-        earlyOut = False
-        for thisPageSubmission in thisPageSubmissions:
-            if requestOnlyNewCache and thisPageSubmission.postUrl == requestOnlyNewCache[0].postUrl:
-                logger.log("Found early out point after {} submissions".format(len(submissions)))
-                earlyOut = True
+            thisPageSubmissions = pixivSubmissionsFromJson(bookmarks)
+            earlyOut = False
+            for thisPageSubmission in thisPageSubmissions:
+                # Set early out points for next run
+                if not firstPublicBookmark and visibilityCachePair[0] == 'public':
+                    firstPublicBookmark = thisPageSubmission
+                elif not firstPrivateBookmark and visibilityCachePair[0] == 'private':
+                    firstPrivateBookmark = thisPageSubmission
+
+                if (visibilityCachePair[1]
+                    and thisPageSubmission.postUrl == visibilityCachePair[1][0].postUrl):
+                    logger.log("Found early out point for {} bookmarks after {} submissions"
+                               .format(visibilityCachePair[0], len(submissions)))
+                    earlyOut = True
+                    break
+
+                submissions.append(thisPageSubmission)
+
+            if earlyOut:
                 break
-
-            submissions.append(thisPageSubmission)
-
-        if earlyOut:
-            break
-        if 'next_url' not in bookmarks:
-            break
-        nextUrlParsed = pixivApi.parse_qs(bookmarks.next_url)
-        if not nextUrlParsed:
-            break
-        nextPageBookmarks = nextUrlParsed['max_bookmark_id']
-        bookmarks = pixivApi.user_bookmarks_illust(pixivUserId,
-                                                   max_bookmark_id=nextPageBookmarks)
+            if 'next_url' not in bookmarks:
+                break
+            nextUrlParsed = pixivApi.parse_qs(bookmarks.next_url)
+            if not nextUrlParsed:
+                break
+            nextPageBookmarks = nextUrlParsed['max_bookmark_id']
+            bookmarks = pixivApi.user_bookmarks_illust(pixivUserId,
+                                                       restrict=visibilityCachePair[0],
+                                                       max_bookmark_id=nextPageBookmarks)
 
     logger.log("Pixiv returned {} submissions".format(len(submissions)))
-    return submissions
+    return (submissions, (firstPublicBookmark, firstPrivateBookmark))
 
 if __name__ == '__main__':
     submissions = getPixivUserBookmarkedSubmissions('your username', 'your password')
