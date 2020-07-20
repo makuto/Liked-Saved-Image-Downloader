@@ -3,7 +3,7 @@
 Use this awesome tool to download
 - Images
 - Gifs
-- Imgur Albums
+- Image Albums
 - Videos
 - Comments
 
@@ -11,6 +11,7 @@ Use this awesome tool to download
 
 - Reddit
 - Tumblr
+- Pixiv
 
 ...to disk! You can then browse the results.
 
