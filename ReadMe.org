@@ -21,7 +21,7 @@ Check the [[https://github.com/makuto/Liked-Saved-Image-Downloader/releases][Rel
 *** 1. Clone this repository
 
 #+BEGIN_SRC sh
-git clone https://github.com/makuto/redditLikedSavedImageDownloader
+git clone https://github.com/makuto/Liked-Saved-Image-Downloader
 #+END_SRC
 
 *** 2. Install python dependencies
@@ -45,7 +45,7 @@ pip install passlib bcrypt argon2_cffi
 *** 3. Generate SSL keys
 
 #+BEGIN_SRC sh
-cd redditLikedSavedImageDownloader/
+cd Liked-Saved-Image-Downloader/
 ./Generate_Certificates.sh
 #+END_SRC
 
@@ -94,7 +94,6 @@ Go to the Download Content page and click "Download new content":
 
 Wait until the downloader finishes (it will say "Finished" at the bottom of the page). While the downloader is running, the "Download new content" button will disappear.
 
-
 *** Browse content
 Enjoy! Use Browse Content to jump to random content you've downloaded, or browse your output directory:
 
@@ -102,46 +101,31 @@ Enjoy! Use Browse Content to jump to random content you've downloaded, or browse
 
 The browser should scale nicely to work on both mobile and desktop.
 
-** Web Server Features
+** Login management
 
-This repository includes a web server interface. Unlike the main script, the server is supported in Python 3 only.
+The script requires login before running the script, changing settings, or browsing downloaded content.
 
-The interface can be seen by visiting ~https://localhost:8888~ in any web browser.
+If you host Content Collector on the internet, you should rely on a more robust authentication scheme (e.g. use a reverse proxy which won't proxy requests to Content Collector until you have authenticated with the proxy server). Content Collector was designed for LAN use.
 
-*The web server is not secure in any way and should NOT be run on an insecure network!*
+Note that all login cookies will be invalidated each time you restart the server. If you don't restart the server, your browser should remember login indefinitely.
 
-*** Login-Authenticated Server
+*** Managing passwords(s)
 
-The script includes an option to require login before running the script, changing settings, or browsing downloaded content.
+The web interface will automatically prompt for a new password when first starting up.
 
-*I'm no expert, so use and trust at your own risk!* This security is essentially a cheap padlock which keeps honest people honest and undetermined intruders out.
-
-It requires some additional setup:
-
-**** 1. Enable it in ~LikedSavedDownloaderServer.py~
-
-Open ~LikedSavedDownloaderServer.py~ and find ~enable_authentication~. Set it equal to ~True~.
-
-**** 2. Create your account(s)
-
-Rather than have a web-based registration process, you'll create each account manually. This is because this service is only designed for private use.
-
-You'll use ~PasswordManager.py~ to generate a file ~passwords.txt~ with your hashed (and salted) passwords:
+You can also use ~PasswordManager.py~ to generate a file ~passwords.txt~ with your hashed (and salted) passwords:
 
 #+BEGIN_SRC sh
 python3 PasswordManager.py "Your Password Here"
 #+END_SRC
 
-You can create multiple valid passwords, if desired.
+You can create multiple valid passwords, if desired. There are no separate accounts, however.
 
 If you want to reset all passwords, simply delete ~passwords.txt~.
 
-**** 3. Restart your server
+*** Disabling Login
 
-You should now see a Login page before being able to access any content.
-
-Note that all login cookies will be invalidated each time you restart the server.
-
+Open ~LikedSavedDownloaderServer.py~ and find ~enable_authentication~. Set it equal to ~False~. You must restart the server for this to take effect.
 ** Running the script only
 
 *This is deprecated.* You should use the web server to configure and run the script instead.
