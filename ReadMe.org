@@ -16,7 +16,8 @@ Use this awesome tool to download
 ...to disk! You can then browse the results.
 
 ** Directions
-
+*** 0. Check Releases
+Check the [[https://github.com/makuto/Liked-Saved-Image-Downloader/releases][Releases]] page for a ready-to-use version of Content Collector. If you find a release for your system that works, you can skip straight to the *Usage* section.
 *** 1. Clone this repository
 
 #+BEGIN_SRC sh
