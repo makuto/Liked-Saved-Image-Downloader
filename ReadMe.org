@@ -56,30 +56,58 @@ This step is only required if you want to use SSL, which ensures you have an enc
 python3 LikedSavedDownloaderServer.py
 #+END_SRC
 
-*** 5.  Enter your account details and download the images
+** Usage
+*** Access the server
+Open [[https://localhost:8888][localhost:8888]] in any web browser.
 
-1. Open [[https://localhost:8888][localhost:8888]] in any web browser
+If your web browser complains about the certificate, you may have to click ~Advanced~ and add the certificate as trustworthy, because you've signed the certificate and trust yourself :). 
 
-If your web browser complains about the certificate, you may have to click ~Advanced~ and add the certificate as trustworthy, because you've signed the certificate and trust yourself :). If you want to get rid of this, you'll need to get a signing authority like ~LetsEncrypt~ to generate your certificate.
+/(Explanation: this certificate isn't trusted by your browser because you created it. It will still protect your traffic from people snooping on your LAN)./
 
-2. Use the Web Server Interface to configure the script:
+If you want to get rid of this, you'll need to get a signing authority like ~LetsEncrypt~ to generate your certificate, and host the server under a proper domain.
+*** Set password
+When first running the server, you will be prompted to set a password.
+
+/If you forget your password, simply delete passwords.txt/.
+
+*** Home page
+
+The home page provides access to all server features:
+
+[[file:images/Homepage.png]]
+
+*** Set up accounts
+
+Use Settings to configure the script:
+
 [[file:images/LikedSavedSettings.png]]
 
-3. Go to the Run Script page and click "Run Script"
+*Make sure to click "Save Settings" before closing the page.*
 
-4. Wait until the script finishes (it will say "Finished" at the bottom of the page)
+You don't have to fill in every field, only the accounts you want.
 
-5. Enjoy! Use Random Image Browser to jump to random images you've downloaded, or browse your output directory
+*** Download content
+Go to the Download Content page and click "Download new content":
+
+[[file:images/DownloadContent.png]]
+
+Wait until the downloader finishes (it will say "Finished" at the bottom of the page). While the downloader is running, the "Download new content" button will disappear.
+
+
+*** Browse content
+Enjoy! Use Browse Content to jump to random content you've downloaded, or browse your output directory:
+
+[[file:images/LikedSavedBrowser.png]]
+
+The browser should scale nicely to work on both mobile and desktop.
 
 ** Web Server Features
 
-This repository includes a simple web server interface. Unlike the main script, the server is supported in Python 3 only.
+This repository includes a web server interface. Unlike the main script, the server is supported in Python 3 only.
 
 The interface can be seen by visiting ~https://localhost:8888~ in any web browser.
 
 *The web server is not secure in any way and should NOT be run on an insecure network!*
-
-[[file:images/LikedSavedBrowser.png]]
 
 *** Login-Authenticated Server
 
@@ -114,6 +142,8 @@ You should now see a Login page before being able to access any content.
 Note that all login cookies will be invalidated each time you restart the server.
 
 ** Running the script only
+
+*This is deprecated.* You should use the web server to configure and run the script instead.
 
 1. Copy ~settings_template.txt~ into a new file called ~settings.txt~
 2. Open ~settings.txt~
