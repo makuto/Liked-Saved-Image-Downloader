@@ -31,15 +31,17 @@ def initialize():
 def runLikedSavedDownloader(pipeConnection):
     if pipeConnection:
         logger.setPipe(pipeConnection)
-        
+
     initialize()
 
     if (not settings.settings['Use_cached_submissions'] 
-        and not settings.hasTumblrSettings() and not settings.hasRedditSettings()):
-        logger.log('Please provide Tumblr or Reddit account details in settings.txt'
-                   ' or via the Settings page provided by  LikedSavedDownloader server')
+        and not settings.hasTumblrSettings()
+        and not settings.hasRedditSettings()
+        and not settings.hasPixivSettings()):
+        logger.log('Please provide Tumblr, Pixiv, or Reddit account details '
+                   ' via the Settings page provided by Content Collector server')
         return
-            
+
     if not settings.settings['Gfycat_Client_id']:
         logger.log('No Gfycat Client ID and/or Gfycat Client Secret was provided. '
                    'This is required to download Gfycat media reliably.')
@@ -47,7 +49,7 @@ def runLikedSavedDownloader(pipeConnection):
     logger.log('Output: ' + settings.settings['Output_dir'])
     utilities.makeDirIfNonexistant(settings.settings['Output_dir'])
     utilities.makeDirIfNonexistant(settings.settings['Metadata_output_dir'])
-        
+
     submissions = getSubmissionsToSave()
 
     logger.log('Saving images. This will take several minutes...')
