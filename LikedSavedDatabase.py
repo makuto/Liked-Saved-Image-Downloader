@@ -257,8 +257,14 @@ class LikedSavedDatabase:
         cursor.execute("select * from Submissions, RequestedSubmissions "
                        "where Submissions.id = RequestedSubmissions.id")
         return cursor.fetchall()
-        
-    
+
+    def getMissingPixivSubmissionIds(self):
+        cursor = self.dbConnection.cursor()
+        cursor.execute('select Submissions.id from Submissions where Submissions.source = "Pixiv"'
+                       'and Submissions.id not in (select submissionKey from FilesToSubmissions)')
+        return cursor.fetchall()
+
+
 def initializeFromSettings(userSettings):
     global db
     if not db:

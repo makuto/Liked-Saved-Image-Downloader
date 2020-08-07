@@ -58,3 +58,13 @@ function retrySelected()
     // Make the request to the WebSocket.
     ws.send(JSON.stringify(payload));
 }
+
+function fixupPixiv()
+{
+	var payload = {
+        "command": "fixupPixivSubmissions"
+    };
+
+	// Make the request to the WebSocket.
+    ws.send(JSON.stringify(payload));
+}

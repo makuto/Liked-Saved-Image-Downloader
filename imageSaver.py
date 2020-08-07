@@ -359,7 +359,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
             submissionOutputDir = outputDir + u'/' + subredditDir
             utilities.makeDirIfNonexistant(submissionOutputDir)
             # Weird webp format...
-            pixivFilename = "{}.riff".format(safeFileName(submissionTitle))
+            pixivFilename = "{}_{}.riff".format(str(signedCrc32(submission.postUrl.encode())),
+                                                safeFileName(submissionTitle))
             saveFilePath = "{}/{}".format(submissionOutputDir, pixivFilename)
             if os.path.isfile(saveFilePath):
                 if not only_important_messages:

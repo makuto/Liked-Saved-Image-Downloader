@@ -271,7 +271,20 @@ class UnsupportedSubmissionsHandler(AuthHandler):
 
         tableHeaderHtml += '</tr>\n</thead>\n<tbody>\n'
         return tableHeaderHtml
-    
+
+    def getPendingFixups(self):
+        fixupHtml = ''
+
+        missingPixivSubmissions = LikedSavedDatabase.db.getMissingPixivSubmissionIds()
+        if len(missingPixivSubmissions):
+            if not fixupHtml:
+                fixupHtml += "<h2>Download missing content</h2>"
+            fixupHtml += '<p>There was an error which caused {} Pixiv submissions to not be downloaded.</p>'.format(len(missingPixivSubmissions))
+            fixupHtml += '<button id="FixupPixiv" onclick="fixupPixiv()">Download missing Pixiv submissions</button>'
+            fixupHtml += '<p>You should only need to do this once. The code error has been fixed.</p>'
+
+        return fixupHtml
+
     @tornado.web.authenticated
     def get(self):
         unsupportedSubmissionsListHtml = self.createTableHeader()
@@ -287,7 +300,8 @@ class UnsupportedSubmissionsHandler(AuthHandler):
 
         self.render("templates/UnsupportedSubmissions.html",
                     unsupported_submissions_html=unsupportedSubmissionsListHtml,
-                    length_unsupported_submissions=len(unsupportedSubmissions))
+                    length_unsupported_submissions=len(unsupportedSubmissions),
+                    fixup_html=self.getPendingFixups())
 
 class SettingsHandler(AuthHandler):
     def doSettings(self, afterSubmit):
@@ -637,6 +651,21 @@ class RunScriptWebSocket(tornado.websocket.WebSocketHandler):
                 responseMessage = ('{{"message":"{}", "action":"{}"}}'
                                    .format('No content selected.\\n', 'printMessage'))
                 self.write_message(responseMessage)
+        # Fix the non-unique filenames error
+        elif command == 'fixupPixivSubmissions':
+            print('RunScriptWebSocket: Starting pixiv fixup')
+            missingPixivSubmissions = LikedSavedDatabase.db.getMissingPixivSubmissionIds()
+            missingPixivSubmissionIds = []
+            for missingPixivSubmission in missingPixivSubmissions:
+                missingPixivSubmissionIds.append(int(missingPixivSubmission['id']))
+
+            # print(missingPixivSubmissionIds)
+            startScript(redditUserImageScraper.saveRequestedSubmissions, missingPixivSubmissionIds)
+
+            responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                               .format('Running downloader to download {} missing pixiv submissions.\\n'
+                                       .format(len(missingPixivSubmissions)),
+                                       'printMessage'))
         elif command == 'explicitDownloadUrls':
             print('RunScriptWebSocket: Starting script')
             if parsedMessage['urls']:
