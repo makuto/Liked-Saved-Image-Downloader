@@ -5,6 +5,7 @@
 *.spec
 
 # files this project generates
+poetry.lock
 output
 passwords.txt
 certificates
