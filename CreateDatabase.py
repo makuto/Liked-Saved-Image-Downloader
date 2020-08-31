@@ -1,6 +1,6 @@
 import os
 
-import logger
+from utils import logger
 import redditScraper
 import tumblrScraper
 import submission

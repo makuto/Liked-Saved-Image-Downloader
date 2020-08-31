@@ -16,7 +16,7 @@ import tornado.httpclient
 import tornado.gen
 
 # local imports
-import utilities
+from utils import utilities
 import settings
 import redditUserImageScraper
 import LikedSavedDatabase

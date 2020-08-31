@@ -4,9 +4,9 @@ from builtins import str
 import pytumblr
 
 # local imports
-import logger
+from utils import logger
 from submission import Submission
-from crcUtils import signedCrc32
+from utils.crcUtils import signedCrc32
 
 def getTumblrUserLikedSubmissions(clientId, clientSecret, tokenId, tokenSecret,
 	likeRequestLimit = 100, requestOnlyNewCache = None):

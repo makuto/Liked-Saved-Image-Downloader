@@ -6,7 +6,6 @@ import random
 import re
 import sys
 import time
-import utilities
 
 from builtins import str
 from operator import attrgetter
@@ -26,11 +25,12 @@ from gfycat.client import GfycatClient
 # local imports
 import LikedSavedDatabase
 import imgurDownloader
-import logger
+from utils import logger
+from utils import utilities
 import settings
 import submission as Submissions
 import videoDownloader
-from crcUtils import signedCrc32
+from utils.crcUtils import signedCrc32
 
 SupportedTypes = ['jpg', 'jpeg', 'gif', 'png', 'webm', 'mp4']
 

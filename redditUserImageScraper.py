@@ -5,7 +5,7 @@ import os
 
 # local imports
 import LikedSavedDatabase
-import logger
+from utils import logger
 import imageSaver
 import redditScraper
 import tumblrScraper
@@ -13,7 +13,7 @@ import pixivScraper
 import imgurDownloader
 import settings
 import submission
-import utilities
+from utils import utilities
 
 scriptFinishedSentinel = '>>> runLikedSavedDownloader() Process Finished <<<'
 

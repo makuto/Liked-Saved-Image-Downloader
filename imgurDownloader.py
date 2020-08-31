@@ -11,13 +11,13 @@ else:
 	from urllib import urlretrieve, urlopen
 
 # local imports
-from crcUtils import signedCrc32
+from utils.crcUtils import signedCrc32
 import LikedSavedDatabase
 import imageSaver
 import imgurpython as imgur
-import logger
+from utils import logger
 import settings
-import utilities
+from utils import utilities
 
 def isImgurIndirectUrl(url):
     # If it is imgur domain, has no file type, and isn't an imgur album

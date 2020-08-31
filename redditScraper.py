@@ -4,7 +4,7 @@
 import praw
 
 # local imports
-import logger
+from utils import logger
 import settings
 import submission
 from submission import Submission

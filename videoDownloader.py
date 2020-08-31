@@ -5,7 +5,7 @@ import ssl
 import youtube_dl
 
 # local imports
-import logger
+from utils import logger
 import settings
 
 alreadyDownloadedSentinel = "Already Downloaded"
