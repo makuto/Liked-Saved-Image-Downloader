@@ -1,6 +1,7 @@
 # dev files
 *.pyc
 *.sublime-workspace
+*.sublime-project
 *.spec
 
 # files this project generates
