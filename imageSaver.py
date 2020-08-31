@@ -1,25 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import LikedSavedDatabase
-import imgurDownloader
 import json
-import logger
 import os
 import random
 import re
-import settings
-import submission as Submissions
 import sys
 import time
 import utilities
-import videoDownloader
-
-# Must use API to access images
-from pixivpy3 import *
 
 from builtins import str
-from crcUtils import signedCrc32
-from gfycat.client import GfycatClient
 from operator import attrgetter
 
 import urllib
@@ -28,6 +17,20 @@ if sys.version_info[0] >= 3:
         #from urllib.request import urlopen
 else:
 	from urllib import urlretrieve, urlopen
+
+# third-party imports
+# Must use API to access images
+from pixivpy3 import *
+from gfycat.client import GfycatClient
+
+# local imports
+import LikedSavedDatabase
+import imgurDownloader
+import logger
+import settings
+import submission as Submissions
+import videoDownloader
+from crcUtils import signedCrc32
 
 SupportedTypes = ['jpg', 'jpeg', 'gif', 'png', 'webm', 'mp4']
 

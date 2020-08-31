@@ -3,6 +3,7 @@
 import time
 import os
 
+# local imports
 import LikedSavedDatabase
 import logger
 import imageSaver
@@ -13,7 +14,6 @@ import imgurDownloader
 import settings
 import submission
 import utilities
-import LikedSavedDatabase
 
 scriptFinishedSentinel = '>>> runLikedSavedDownloader() Process Finished <<<'
 

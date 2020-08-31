@@ -1,4 +1,7 @@
+# third-party imports
 from pixivpy3 import *
+
+# local imports
 from submission import Submission
 import logger
 

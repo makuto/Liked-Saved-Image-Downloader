@@ -1,11 +1,5 @@
 #!/usr/bin/env python
 
-import tornado.ioloop
-import tornado.web
-import tornado.websocket
-import tornado.httpclient
-import tornado.gen
-
 import json
 import multiprocessing
 import os
@@ -14,6 +8,14 @@ import shutil
 import threading
 import webbrowser
 
+# third-party imports
+import tornado.ioloop
+import tornado.web
+import tornado.websocket
+import tornado.httpclient
+import tornado.gen
+
+# local imports
 import utilities
 import settings
 import redditUserImageScraper

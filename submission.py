@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import pickle
-import jsonpickle
 import os
+
+# third-party imports
+import jsonpickle
 
 class Submission:
     def __init__(self):
