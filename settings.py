@@ -56,6 +56,11 @@ settings = {
     'Pixiv_username': '',
     'Pixiv_password': '',
 
+    # Pinterest
+    'Pinterest_email': '',
+    'Pinterest_username': '',
+    'Pinterest_password': '',
+
     # Youtube DL settings
     'Should_download_videos' : True,
     'Should_download_youtube_videos' : True,
@@ -200,6 +205,11 @@ settingsStructure = [
        "This uses the Pixiv cache files to know what's already been downloaded, so it will only "
        "work if you've successfully run the script before")]),
 
+    ('Pinterest Authentication',
+     ['Pinterest_email',
+      ('Pinterest_username', 'Look in the pinterest url while visiting your profile'),
+      'Pinterest_password']),
+
     ('Download Settings',
      [
          'Should_download_albums',
@@ -318,6 +328,10 @@ def hasImgurSettings():
 
 def hasPixivSettings():
     return (settings['Pixiv_username'] and settings['Pixiv_password'])
+
+def hasPinterestSettings():
+    return (settings['Pinterest_username'] and settings['Pinterest_password']
+            and settings['Pinterest_email'])
 
 # To make sure I don't accidentally commit my settings.txt, it's marked LOCAL_, 
 # which is in .gitignore

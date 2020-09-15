@@ -349,6 +349,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
         if not url:
             continue
 
+        # All pixiv downloads need to go through the pixiv API
         if submission.source == u'Pixiv':
             # Always re-login because it'll timeout otherwise
             if not pixivApi:
@@ -364,7 +365,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
             saveFilePath = "{}/{}".format(submissionOutputDir, pixivFilename)
             if os.path.isfile(saveFilePath):
                 if not only_important_messages:
-                    logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
+                    logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
                                + ' [already saved] ' + 'Skipping ' + saveFilePath)
                 numAlreadySavedImages += 1
                 continue

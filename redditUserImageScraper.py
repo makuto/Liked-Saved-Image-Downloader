@@ -8,6 +8,7 @@ import logger
 import imageSaver
 import redditScraper
 import tumblrScraper
+import pinterestScraper
 import pixivScraper
 import imgurDownloader
 import settings
@@ -37,7 +38,8 @@ def runLikedSavedDownloader(pipeConnection):
     if (not settings.settings['Use_cached_submissions'] 
         and not settings.hasTumblrSettings()
         and not settings.hasRedditSettings()
-        and not settings.hasPixivSettings()):
+        and not settings.hasPixivSettings()
+        and not settings.hasPinterestSettings()):
         logger.log('Please provide Tumblr, Pixiv, or Reddit account details '
                    ' via the Settings page provided by Content Collector server')
         return
@@ -169,6 +171,12 @@ def getSubmissionsToSave():
                 submission.writeCacheSubmissions([nextEarlyOutPair[1]],
                                                  settings.settings['Pixiv_Try_Request_Only_New_Private_Cache_File'])
             submissions += pixivSubmissions
+
+        if settings.hasPinterestSettings():
+            pinterestSubmissions = pinterestScraper.getPinterestUserPinnedSubmissions(settings.settings['Pinterest_email'],
+                                                                                      settings.settings['Pinterest_username'],
+                                                                                      settings.settings['Pinterest_password'])
+            submissions += pinterestSubmissions
 
         # Write out a .json file with all of the submissions in case the user wants the data
         submission.saveSubmissionsAsJson(submissions, settings.settings['Metadata_output_dir'] + u'/' 
