@@ -173,9 +173,12 @@ def getSubmissionsToSave():
             submissions += pixivSubmissions
 
         if settings.hasPinterestSettings():
+            pinterestCacheFile = (settings.settings['Pinterest_Try_Request_Only_New_Cache_File']
+                                  if settings.settings['Pinterest_Try_Request_Only_New'] else None)
             pinterestSubmissions = pinterestScraper.getPinterestUserPinnedSubmissions(settings.settings['Pinterest_email'],
                                                                                       settings.settings['Pinterest_username'],
-                                                                                      settings.settings['Pinterest_password'])
+                                                                                      settings.settings['Pinterest_password'],
+                                                                                      pinterestCacheFile)
             submissions += pinterestSubmissions
 
         # Write out a .json file with all of the submissions in case the user wants the data

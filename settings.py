@@ -60,6 +60,7 @@ settings = {
     'Pinterest_email': '',
     'Pinterest_username': '',
     'Pinterest_password': '',
+    'Pinterest_Try_Request_Only_New': True,
 
     # Youtube DL settings
     'Should_download_videos' : True,
@@ -83,6 +84,7 @@ settings = {
     'Tumblr_Try_Request_Only_New_Cache_File' : 'Tumblr_RequestOnlyNew.bin',
     'Pixiv_Try_Request_Only_New_Cache_File' : 'Pixiv_RequestOnlyNew.bin',
     'Pixiv_Try_Request_Only_New_Private_Cache_File' : 'Pixiv_RequestOnlyNewPrivate.bin',
+    'Pinterest_Try_Request_Only_New_Cache_File' : 'Pinterest_RequestOnlyNew.bin',
 
     # If the script failed at say 70%, you could use toggle Use_cached_submissions and set this value to
     #  69. The script would then restart 69% of the way into the cached submissions nearer to where you
@@ -181,7 +183,7 @@ settingsStructure = [
       ('Gfycat_Client_secret', "These need to be filled in so that the script can download Gfycat"
        " media. If not filled in, many Gfycat links will fail to download."
        " Go <a href=\"https://developers.gfycat.com/signup/#/apiform\">here</a> to get your API keys.")]),
-    
+
     ('Tumblr Authentication',
      ['Tumblr_Client_id',
       'Tumblr_Client_secret',
@@ -210,10 +212,16 @@ settingsStructure = [
       ('Pinterest_username', 'Look in the pinterest url while visiting your profile'),
       'Pinterest_password']),
 
+    ('Pinterest Settings',
+     [('Pinterest_Try_Request_Only_New',
+       "Attempt to only request and download new submissions (those which haven't been downloaded) "
+       "This uses the Pinterest cache files to know what's already been downloaded, so it will only "
+       "work if you've successfully run the script before")]),
+
     ('Download Settings',
      [
          'Should_download_albums',
-         
+
          ('Only_download_albums',
           'If true, do not download single images, only submissions which are imgur albums'),
 
@@ -261,7 +269,8 @@ settingsStructure = [
         'Tumblr_Try_Request_Only_New_Cache_File',
         'Pixiv_Try_Request_Only_New_Cache_File',
         'Pixiv_Try_Request_Only_New_Private_Cache_File',
-        
+        'Pinterest_Try_Request_Only_New_Cache_File',
+
         ('Should_soft_retrieve', "If True, don't actually download the images - just pretend to"),
     ]),
 ]
