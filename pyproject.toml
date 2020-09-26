@@ -19,6 +19,9 @@ bcrypt = {version = "^3.2.0", optional = true}
 argon2_cffi = {version = "^20.1.0", optional = true}
 imgurpython = "^1.1.7"
 
+[tool.poetry.extras]
+security = ["passlib", "bcrypt", "argon2_cffi"]
+
 [tool.poetry.dev-dependencies]
 
 [build-system]
