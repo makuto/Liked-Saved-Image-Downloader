@@ -4,16 +4,15 @@ import time
 import os
 
 # local imports
-import LikedSavedDatabase
-from utils import logger
-import imageSaver
-import redditScraper
-import tumblrScraper
-import pixivScraper
-import imgurDownloader
 import settings
 import submission
-from utils import utilities
+import LikedSavedDatabase
+from utils import logger, utilities
+from downloaders import imageSaver
+from downloaders import redditScraper
+from downloaders import tumblrScraper
+from downloaders import pixivScraper
+from downloaders import imgurDownloader
 
 scriptFinishedSentinel = '>>> runLikedSavedDownloader() Process Finished <<<'
 

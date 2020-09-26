@@ -15,10 +15,10 @@ import tornado.httpclient
 import tornado.gen
 
 # local imports
-from utils import utilities
 import settings
-import redditUserImageScraper
 import LikedSavedDatabase
+from downloaders import redditUserImageScraper
+from utils import utilities
 
 # Require a username and password in order to use the web interface. See ReadMe.org for details.
 #enable_authentication = False
