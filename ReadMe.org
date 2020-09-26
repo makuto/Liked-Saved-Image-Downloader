@@ -33,6 +33,8 @@ git clone https://github.com/makuto/Liked-Saved-Image-Downloader
 pip install poetry
 poetry install -E security
 #+END_SRC
+
+Note: ~poetry install -E security~ is only necessary if you want to use authentication and SSL encryption (which is recommended). ~poetry install~ is sufficient if you do not want those features.
 **** The old way
 This is the manual way to install the dependencies. Dependencies will be installed to your system, and virtual environments will not be used.
 
