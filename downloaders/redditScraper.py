@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import logger
+# third-party imports
 import praw
+
+# local imports
+from utils import logger
 import settings
 import submission
-from submission import Submission 
-
-#import pprint
+from submission import Submission
 
 user_agent = 'Python Script: v2.0: Reddit Liked Saved Image Downloader (by /u/makuto9)'
 

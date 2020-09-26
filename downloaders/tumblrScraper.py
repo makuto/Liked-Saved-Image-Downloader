@@ -1,8 +1,12 @@
-import pytumblr
-import logger
-from submission import Submission
-from crcUtils import signedCrc32
 from builtins import str
+
+# third-party imports
+import pytumblr
+
+# local imports
+from utils import logger
+from submission import Submission
+from utils.crcUtils import signedCrc32
 
 def getTumblrUserLikedSubmissions(clientId, clientSecret, tokenId, tokenSecret,
 	likeRequestLimit = 100, requestOnlyNewCache = None):

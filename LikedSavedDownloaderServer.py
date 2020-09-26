@@ -1,23 +1,24 @@
 #!/usr/bin/env python
 
+import json
+import multiprocessing
+import os
+import random
+import threading
+import webbrowser
+
+# third-party imports
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
 import tornado.httpclient
 import tornado.gen
 
-import json
-import multiprocessing
-import os
-import random
-import shutil
-import threading
-import webbrowser
-
-import utilities
+# local imports
 import settings
-import redditUserImageScraper
 import LikedSavedDatabase
+from downloaders import redditUserImageScraper
+from utils import utilities
 
 # Require a username and password in order to use the web interface. See ReadMe.org for details.
 #enable_authentication = False

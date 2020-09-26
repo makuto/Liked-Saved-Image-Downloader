@@ -1,17 +1,21 @@
+# dev files
 *.pyc
-*URLs.txt
-*.geany
-output
-SubmissionCache.bin
-*.bin
-LOCAL_*
 *.sublime-workspace
-*.db
-*.db-journal
+*.sublime-project
+*.spec
+
+# files this project generates
+poetry.lock
+output
 passwords.txt
 certificates
+webInterface/webSocketSettings.js
+metadata/
+LOCAL_*
 build*/
 dist*/
-webInterface/webSocketSettings.js
-*.spec
-metadata/
+*URLs.txt
+*.geany
+*.bin
+*.db
+*.db-journal

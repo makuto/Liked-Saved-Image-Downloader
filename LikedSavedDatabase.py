@@ -1,8 +1,10 @@
 import json
 import os
 import re
-import settings
 import sqlite3
+
+# local imports
+import settings
 import submission as Submissions
 
 # Global database

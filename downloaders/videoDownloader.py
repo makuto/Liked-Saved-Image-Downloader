@@ -1,8 +1,12 @@
-import logger
 import re
-import settings
 import ssl
+
+# third-party imports
 import youtube_dl
+
+# local imports
+from utils import logger
+import settings
 
 alreadyDownloadedSentinel = "Already Downloaded"
 

@@ -1,14 +1,7 @@
 # -*- coding: utf-8 -*-
-from crcUtils import signedCrc32
-import LikedSavedDatabase
-import imageSaver
-import imgurpython as imgur
-import logger
 import os
 import re
-import settings
 import sys
-import utilities
 
 import urllib
 if sys.version_info[0] >= 3:
@@ -16,6 +9,17 @@ if sys.version_info[0] >= 3:
         #from urllib.request import urlopen
 else:
 	from urllib import urlretrieve, urlopen
+
+# third-party modules
+import imgurpython as imgur
+
+# local imports
+import settings
+import LikedSavedDatabase
+from downloaders import imageSaver
+from utils import logger, utilities
+from utils.crcUtils import signedCrc32
+
 
 def isImgurIndirectUrl(url):
     # If it is imgur domain, has no file type, and isn't an imgur album

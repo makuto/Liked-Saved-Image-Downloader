@@ -1,8 +1,12 @@
-from py3pin.Pinterest import Pinterest
-from submission import Submission
-import logger
 import os
 import pickle
+
+# third-party imports
+from py3pin.Pinterest import Pinterest
+
+# local imports
+from submission import Submission
+from utils import logger
 
 def getPinterestUserPinnedSubmissions(email, username, password, cacheFileName):
 

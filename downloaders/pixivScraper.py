@@ -1,6 +1,9 @@
+# third-party imports
 from pixivpy3 import *
+
+# local imports
 from submission import Submission
-import logger
+from utils import logger
 
 # Note that this does NOT set the download URL, and won't set title to be unique for albums
 def fillPixivSubmission(illustration, submissionToFill):
