@@ -114,11 +114,10 @@ function handleSetImage(messageDict) {
 		// imageElement.className = "infiniteScrollImage";
 		// infiniteScrollContainer.appendChild(imageElement);
 	} else {
-		// Clear any video
-		var videoContainer = document.getElementById("videoContainer");
-		videoContainer.innerHTML = null;
-
-		document.body.style.backgroundImage = "url('/" + messageDict.serverImagePath + "')";
+		// Clear previous media
+		var mediaContainer = document.getElementById("mediaContainer");
+        //Insert image
+		mediaContainer.innerHTML = '<img class="finiteImage" src="/' + messageDict.serverImagePath + '" alt="' + messageDict.serverImagePath + '">';
 	}
 }
 
@@ -127,23 +126,21 @@ function handleSetVideo(messageDict) {
 
 	if (infiniteScroll) {
 		var infiniteScrollContainer = document.getElementById("infiniteScrollContainer");
-		var videoElement = document.createElement("a");
-		videoElement.href = '/' + messageDict.serverImagePath;
-		videoElement.className = "infiniteScrollVideoLink";
-		var linkText = document.createTextNode("View Video " + messageDict.serverImagePath);
-		videoElement.appendChild(linkText);
+		var videoElement = document.createElement("video");
+        videoElement.className = "infiniteScrollVideo";
+        videoElement.controls = true;
+
+        var sourceElement = document.createElement("source");
+		sourceElement.src = '/' + messageDict.serverImagePath;
+		
+		videoElement.appendChild(sourceElement);
 		infiniteScrollContainer.appendChild(videoElement);
 	} else {
-		// Clear the image
-		document.body.style.backgroundImage = null;
-
-		// This would work except for the fact that the web server doesn't handle streaming video yet
-		/*videoContainer.innerHTML = '<video class="video" width="500" height="500" autoplay loop="loop" controls><source src="'
-		  + messageDict.serverImagePath
-		  + '" type="video/mp4">Your browser does not support the video tag</video>';*/
-		var videoContainer = document.getElementById("videoContainer");
-		videoContainer.innerHTML = '<a class="bigCenterLink" target="_blank" href="/' + messageDict.serverImagePath +
-			'">View Video ' + messageDict.serverImagePath + '</a>';
+        // Clear previous media
+		var mediaContainer = document.getElementById("mediaContainer");
+        //Insert video
+        //You could enable controls for the video, but they would be inacessible behind the buttons
+        mediaContainer.innerHTML = '<video class="finiteVideo" autoplay loop><source src="/' + messageDict.serverImagePath + '"></video>'
 	}
 }
 
@@ -234,11 +231,9 @@ function toggleInfiniteScroll() {
 	infiniteScroll = !infiniteScroll;
 	
 	if (infiniteScroll) {
-		// Clear the image
-        document.body.style.backgroundImage = null;
-		var videoContainer = document.getElementById("videoContainer");
-		// Clear any video
-        videoContainer.innerHTML = null;
+		// Clear current media
+		var mediaContainer = document.getElementById("mediaContainer");
+        mediaContainer.innerHTML = null;
 		// Hide controls
 		let singleImageControls = document.getElementsByClassName("singleImageControls");
 		for (var i = 0; i < singleImageControls.length; i++) {
