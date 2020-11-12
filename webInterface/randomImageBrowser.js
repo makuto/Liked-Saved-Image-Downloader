@@ -66,7 +66,7 @@ function directoryOrFileOnClick(path, serverPath, type) {
         }
 
         if (type == "video") {
-            window.open("https://" + window.location.host + "/" + serverPath);
+            window.open("/" + serverPath);
         }
 
         if (type == "image") {
@@ -74,7 +74,7 @@ function directoryOrFileOnClick(path, serverPath, type) {
         }
 
         if (type == "file") {
-            window.open("https://" + window.location.host + "/" + serverPath);
+            window.open("/" + serverPath);
         }
     }
 }
@@ -103,7 +103,7 @@ function handleSetImage(messageDict) {
 	if (infiniteScroll) {
 		var infiniteScrollContainer = document.getElementById("infiniteScrollContainer");
 		var imageElement = document.createElement("img");
-		imageElement.src = 'https://' + window.location.host + '/' + messageDict.serverImagePath;
+		imageElement.src = '/' + messageDict.serverImagePath;
 		imageElement.className = "infiniteScrollImage";
 		infiniteScrollContainer.appendChild(imageElement);
 		// var infiniteScrollContainer = document.getElementById("infiniteScrollContainer");
