@@ -30,7 +30,11 @@ git clone https://github.com/makuto/Liked-Saved-Image-Downloader
 [[https://python-poetry.org/][Poetry]] can be used to automatically request the proper dependencies:
 
 #+BEGIN_SRC sh
-pip install poetry
+sudo pip3 install poetry
+
+# If you are going to do -E security, you may have to:
+sudo apt install libffi-dev
+
 poetry install -E security
 #+END_SRC
 
