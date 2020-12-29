@@ -102,9 +102,12 @@ def getSubmissionsToSave():
 
     if settings.settings['Use_cached_submissions']:
         logger.log('Using cached submissions')
-        submissions += submission.readCacheSubmissions(settings.settings['Reddit_cache_file'])
-        submissions += submission.readCacheSubmissions(settings.settings['Tumblr_cache_file'])
-        submissions += submission.readCacheSubmissions(settings.settings['Pixiv_cache_file'])
+        if settings.settings['Reddit_Enabled']:
+            submissions += submission.readCacheSubmissions(settings.settings['Reddit_cache_file'])
+        if settings.settings['Tumblr_Enabled']:
+            submissions += submission.readCacheSubmissions(settings.settings['Tumblr_cache_file'])
+        if settings.settings['Pixiv_Enabled']:
+            submissions += submission.readCacheSubmissions(settings.settings['Pixiv_cache_file'])
     else:
         if settings.hasRedditSettings():
             redditSubmissions, redditComments, earlyOutPoints = redditScraper.getRedditUserLikedSavedSubmissions(
