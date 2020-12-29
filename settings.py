@@ -17,6 +17,7 @@ settings = {
     'Client_id' : '',
     'Client_secret' : '',
 
+    'Reddit_Enabled' : True,
     'Reddit_Save_Liked' : True,
     'Reddit_Save_Saved' : True,
     'Reddit_Save_Comments' : True,
@@ -28,6 +29,7 @@ settings = {
     'Reddit_Total_requests' : 500,
 
     # Imgur authentication information
+    'Imgur_Enabled' : True,
     'Imgur_client_id' : '',
     'Imgur_client_secret' : '',
 
@@ -38,6 +40,7 @@ settings = {
     'Only_download_albums' : False,
 
     # Tumblr authentication information
+    'Tumblr_Enabled' : True,
     'Tumblr_Client_id' : '',
     'Tumblr_Client_secret' : '',
     'Tumblr_Client_token' : '',
@@ -53,10 +56,12 @@ settings = {
     'Gfycat_Client_secret' : '',
 
     # Pixiv
+    'Pixiv_Enabled' : True,
     'Pixiv_username': '',
     'Pixiv_password': '',
 
     # Pinterest
+    'Pinterest_Enabled' : True,
     'Pinterest_email': '',
     'Pinterest_username': '',
     'Pinterest_password': '',
@@ -149,13 +154,14 @@ settingsStructure = [
        ' You will have to restart the server whenever you change this value when using the Random Image Browser'),
       ('Metadata_output_dir',
        'Save JSON files with content metadata (source, author, URL, etc.) in this directory')]),
-    
+
     ('Reddit Authentication',
-     ['Username',
+     ['Reddit_Enabled',
+      'Username',
       'Password',
       'Client_id',
       ('Client_secret', redditClientSecretInstructions)]),
-    
+
     ('Reddit Settings',
      [('Reddit_Total_requests', requestsInstructions),
       'Reddit_Save_Liked',
@@ -170,9 +176,10 @@ settingsStructure = [
       ('Reddit_Save_Your_User_Posts',
        'Save posts with the same author as the current user. Disabling this will cause posts with'
        ' your username as author to be ignored.')]),
-    
+
     ('Imgur Authentication',
-     ['Imgur_client_id',
+     ['Imgur_Enabled',
+      'Imgur_client_id',
       ('Imgur_client_secret',"These need to be filled in so that the script can download Imgur "
        "albums. If not filled in, imgur albums will be ignored. Single images will still be "
        "downloaded. If you want to use Imgur, sign in to Imgur, then go "
@@ -185,7 +192,8 @@ settingsStructure = [
        " Go <a href=\"https://developers.gfycat.com/signup/#/apiform\">here</a> to get your API keys.")]),
 
     ('Tumblr Authentication',
-     ['Tumblr_Client_id',
+     ['Tumblr_Enabled',
+      'Tumblr_Client_id',
       'Tumblr_Client_secret',
       'Tumblr_Client_token',
       ('Tumblr_Client_token_secret', tumblrClientSecretInstructions)]),
@@ -198,7 +206,8 @@ settingsStructure = [
        "work if you've successfully run the script before")]),
 
     ('Pixiv Authentication',
-     ['Pixiv_username',
+     ['Pixiv_Enabled',
+      'Pixiv_username',
       'Pixiv_password']),
 
     ('Pixiv Settings',
@@ -208,7 +217,8 @@ settingsStructure = [
        "work if you've successfully run the script before")]),
 
     ('Pinterest Authentication',
-     ['Pinterest_email',
+     ['Pinterest_Enabled',
+      'Pinterest_email',
       ('Pinterest_username', 'Look in the pinterest url while visiting your profile'),
       'Pinterest_password']),
 
@@ -258,7 +268,11 @@ settingsStructure = [
     ('Debugging and Development',
     [
         ('Only_important_messages', 'Output minimal information to the console'),
-        ('Skip_n_percent_submissions', "If the script failed at say 70%, you could use toggle Use_cached_submissions and set this value to 69. The script would then restart 69% of the way into the cached submissions nearer to where you left off. The reason why this isn't default is because there might have been changes to the script which made previous submissions successfully download, so we always re-check submissions"),
+        ('Skip_n_percent_submissions', "If the script failed at say 70%, you could use toggle "
+         "Use_cached_submissions and set this value to 69. The script would then restart 69% of"
+         " the way into the cached submissions nearer to where you left off. The reason why this"
+         " isn't default is because there might have been changes to the script which made"
+         " previous submissions successfully download, so we always re-check submissions"),
 
         ('Use_cached_submissions', 'Do not get new stuff, just use the cache files from last run'),
         'Reddit_cache_file',
@@ -279,7 +293,7 @@ def valueAfterTag(line, optionTag):
     return line[len(optionTag) + 1:].strip(' \t\n')
 
 def lineHasOption(line, optionTag):
-    return (optionTag.lower() in line.lower() 
+    return (optionTag.lower() in line.lower()
             and line[:len(optionTag) + 1].lower() == optionTag.lower() + '=')
 
 def getBooleanOption(line, optionTag):
@@ -315,31 +329,31 @@ def readSettings(settingsFileName):
                 if type(settings[option]) == bool:
                     settings[option] = getBooleanOption(line, option)
                     break
-                
+
                 elif type(settings[option]) == int:
                     settings[option] = getIntegerOption(line, option)
                     break
-                
+
                 elif type(settings[option]) == str:
                     settings[option] = getStringOption(line, option)
                     break
 
 def hasRedditSettings():
-    return (settings['Username'] and settings['Password'] and 
+    return (settings["Reddit_Enabled"] and settings['Username'] and settings['Password'] and 
             settings['Client_id'] and settings['Client_secret'])
 
 def hasTumblrSettings():
-    return (settings['Tumblr_Client_id'] and settings['Tumblr_Client_secret'] and 
+    return (settings["Tumblr_Enabled"] and settings['Tumblr_Client_id'] and settings['Tumblr_Client_secret'] and 
             settings['Tumblr_Client_token'] and settings['Tumblr_Client_token_secret'])
 
 def hasImgurSettings():
-    return (settings['Imgur_client_id'] and settings['Imgur_client_secret'])
+    return (settings["Imgur_Enabled"] and settings['Imgur_client_id'] and settings['Imgur_client_secret'])
 
 def hasPixivSettings():
-    return (settings['Pixiv_username'] and settings['Pixiv_password'])
+    return (settings["Pixiv_Enabled"] and settings['Pixiv_username'] and settings['Pixiv_password'])
 
 def hasPinterestSettings():
-    return (settings['Pinterest_username'] and settings['Pinterest_password']
+    return (settings["Pinterest_Enabled"] and settings['Pinterest_username'] and settings['Pinterest_password']
             and settings['Pinterest_email'])
 
 # To make sure I don't accidentally commit my settings.txt, it's marked LOCAL_, 

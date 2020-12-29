@@ -117,7 +117,7 @@ def getSubmissionsToSave():
                 earlyOutPointLiked = redditRequestOnlyNewLikedCache,
                 unlikeLiked = settings.settings['Reddit_Unlike_Liked'],
                 unsaveSaved = settings.settings['Reddit_Unsave_Saved'])
-            
+
             # Cache them in case it's needed later
             submission.writeCacheSubmissions(redditSubmissions, settings.settings['Reddit_cache_file'])
 
