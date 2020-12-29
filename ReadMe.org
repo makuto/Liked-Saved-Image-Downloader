@@ -11,10 +11,12 @@ Use this awesome tool to download
 
 - Reddit
 - Tumblr
-- Pixiv
-- Pinterest
+- Pixiv*
+- Pinterest*
 
 ...to disk! You can then browse the results.
+
+/* = These sites do not have official APIs, so breakage can happen much easier./
 
 ** Directions
 *** 0. Check Releases
