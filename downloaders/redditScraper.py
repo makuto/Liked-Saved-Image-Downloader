@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import pathlib
+import time
+
 # third-party imports
 import praw
+import requests
 
 # local imports
 from utils import logger
@@ -17,6 +21,67 @@ def percentageComplete(currentItem, numItems):
         return str(int(((float(currentItem + 1) / float(numItems)) * 100))) + '%'
 
     return 'Invalid'
+
+def client():
+    return praw.Reddit(
+        client_id=settings.settings['Client_id'],
+        client_secret=settings.settings['Client_secret'],
+        username=settings.settings['Username'],
+        password=settings.settings['Password'],
+        user_agent=user_agent,
+    )
+
+def isRedditGallery(url):
+    """ Reddit Galleries are contentType 'html', but can be downloaded """
+    try:
+        post = praw.models.reddit.submission.Submission(reddit=client(), url=url)
+
+        if post.url.startswith("https://www.reddit.com/gallery/"):
+            return True
+
+    except:
+        pass
+
+    return False
+
+def redditGalleryName(url):
+    post = praw.models.reddit.submission.Submission(reddit=client(), url=url)
+    return post.title
+
+def downloadRedditGallery(url, outputDir, galleryName):
+    """
+    Download a reddit gallery to outputDir / subredditname / post.id - post.title /
+    Images 0-indexed.
+    """
+    post = praw.models.reddit.submission.Submission(reddit=client(), url=url)
+
+    subRedditDir = post.permalink.split("/")[2]
+    pth = pathlib.Path(outputDir, subRedditDir, f"{post.id} - {galleryName}")
+    if not pth.exists():
+        pth.mkdir(parents=True)
+
+    # assert pth.is_dir()
+
+    downloaded = []
+    if post.media_metadata:
+        for idx, media in enumerate(post.media_metadata.values()):
+            media_url = media["p"][0]["u"].split("?")[0].replace("preview", "i")
+
+            media_name = pathlib.Path(media_url.split("/")[-1])
+
+            saveFilePath = pth / pathlib.Path(f"{idx}{media_name.suffix}")
+
+            if not saveFilePath.exists():
+                req = requests.get(media_url, headers={"user-agent": user_agent})
+                with open(saveFilePath, "wb") as f:
+                    f.write(req.content)
+                    time.sleep(0.5)
+
+                downloaded.append(str(saveFilePath))
+    else:
+        logger.log(f"[ERROR] {url} has no media_metadata")
+
+    return downloaded
 
 def getSubmissionsFromRedditList(redditList, source,
                                  earlyOutPoint = None, unlikeUnsave = False, user_name = None):

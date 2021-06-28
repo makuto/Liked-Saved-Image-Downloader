@@ -27,6 +27,7 @@ import settings
 import LikedSavedDatabase
 import submission as Submissions
 from downloaders import imgurDownloader, videoDownloader
+from downloaders.redditScraper import isRedditGallery, downloadRedditGallery, redditGalleryName
 from utils import logger, utilities
 from utils.crcUtils import signedCrc32
 
@@ -307,6 +308,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                   soft_retrieve_imgs = False, only_important_messages = False):
     numSavedImages = 0
     numAlreadySavedImages = 0
+    numSavedAlbums = 0
     numAlreadySavedVideos = 0
     numSavedVideos = 0
     numUnsupportedImages = 0
@@ -562,6 +564,21 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                     + ' [save] ' + url + ' saved to "' + subredditDir + '"')
             numSavedImages += 1
 
+        elif isRedditGallery(url):
+            if not soft_retrieve_imgs:
+                galleryName = safeFileName(redditGalleryName(url))
+                downloadedMedia = downloadRedditGallery(url, outputDir, galleryName)
+
+                for saveFilePath in downloadedMedia:
+                    LikedSavedDatabase.db.onSuccessfulSubmissionDownload(
+                        submission, utilities.outputPathToDatabasePath(saveFilePath))
+
+                # Output our progress
+                logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
+                        + ' [save] ' + url + ' saved to "' + subredditDir + '"')
+                if downloadedMedia:
+                    numSavedAlbums += 1
+
         else:
             logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
                 + ' [unsupported] ' + 'Skipped "' + url + '" (content type "' + urlContentType + '")')
@@ -570,7 +587,6 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                                                            "URL or content type {} not supported".format(urlContentType))
             numUnsupportedImages += 1
 
-    numSavedAlbums = 0
     if imgur_auth and imgurAlbumsToSave:
         numSavedAlbums = imgurDownloader.saveAllImgurAlbums(outputDir, imgur_auth, imgurAlbumsToSave, 
                                                             soft_retrieve_imgs = soft_retrieve_imgs)
