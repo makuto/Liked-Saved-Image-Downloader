@@ -64,8 +64,10 @@ def downloadRedditGallery(url, outputDir, galleryName):
 
     downloaded = []
     if post.media_metadata:
-        for idx, media in enumerate(post.media_metadata.values()):
-            media_url = media["p"][0]["u"].split("?")[0].replace("preview", "i")
+        for idx, item in enumerate(sorted(post.gallery_data['items'], key=lambda e: e["id"])):
+            media_id = item["media_id"]
+
+            media_url = post.media_metadata[media_id]["p"][0]["u"].split("?")[0].replace("preview", "i")
 
             media_name = pathlib.Path(media_url.split("/")[-1])
 
