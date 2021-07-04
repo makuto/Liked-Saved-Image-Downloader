@@ -60,12 +60,19 @@ class SessionData:
 # user id : session data
 userSessionData = {}
 
+# For sending messages off the main thread
+serverMessageBuffer = []
+
 videoExtensions = ('.mp4', '.webm')
 supportedExtensions = ('.gif', '.jpg', '.jpeg', '.png', '.mp4', '.webm', '.riff')
 
 savedImagesCache = []
-def generateSavedImagesCache(outputDir):
+def generateSavedImagesCache():
+    outputDir = settings.settings['Output_dir']
     global savedImagesCache
+
+    numFilesBeforeScan = len(savedImagesCache)
+
     # Clear cache in case already created
     savedImagesCache = []
 
@@ -76,11 +83,22 @@ def generateSavedImagesCache(outputDir):
             if file.endswith(supportedExtensions):
                 savedImagesCache.append(os.path.join(root, file))
 
-    print('Finished creating content cache ({} images/videos)'.format(len(savedImagesCache)))
+    numRecognizedFiles = len(savedImagesCache)
+
+    print('Finished creating content cache ({} images/videos)'.format(numRecognizedFiles))
+
+    numNewFiles = numRecognizedFiles - numFilesBeforeScan
+    if numNewFiles < 0:
+        numNewFiles = 0
+
+    # TODO: This is hacky to put this here
+    global serverMessageBuffer
+    serverMessageBuffer.append("Found {} new files. {} total files recognized\n"
+                               .format(numNewFiles, numRecognizedFiles))
 
 def getRandomImage(filteredImagesCache=None, randomImageFilter=''):
     if not savedImagesCache:
-        generateSavedImagesCache(settings.settings['Output_dir'])
+        generateSavedImagesCache()
 
     if filteredImagesCache:
         randomImage = random.choice(filteredImagesCache)
@@ -353,7 +371,7 @@ class SettingsHandler(AuthHandler):
 
         # Refresh the cache in case the output directory changed
         if currentOutputDir != settings.settings['Output_dir']:
-            generateSavedImagesCache(settings.settings['Output_dir'])
+            generateSavedImagesCache()
 
 
 class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
@@ -686,6 +704,13 @@ class RunScriptWebSocket(tornado.websocket.WebSocketHandler):
                 responseMessage = ('{{"message":"{}", "action":"{}"}}'
                                    .format('No URLs provided.\\n', 'printMessage'))
                 self.write_message(responseMessage)
+        elif command == 'refreshCache':
+            print('RunScriptWebSocket: Refreshing file cache')
+            cacheThread = threading.Thread(target=generateSavedImagesCache)
+            cacheThread.start()
+            responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                                   .format('Refreshing file cache...\\n', 'printMessage'))
+            self.write_message(responseMessage)
         else:
             print('RunScriptWebSocket: Error: Received command not understood')
 
@@ -694,6 +719,18 @@ class RunScriptWebSocket(tornado.websocket.WebSocketHandler):
         runScriptWebSocketConnections.remove(self)
 
 def updateScriptStatus():
+    # Note that because of Python's GIL, this is safe to just read and dump it
+    global serverMessageBuffer
+    if serverMessageBuffer:
+        for message in serverMessageBuffer:
+            responseMessage = ('{{"message":"{}", "action":"{}"}}'
+                               .format(message.replace('\n', '\\n').replace('\t', ''),
+                                       'printMessage'))
+
+            for client in runScriptWebSocketConnections:
+                client.write_message(responseMessage)
+        serverMessageBuffer = []
+
     global scriptPipeConnection
     # If no pipe or no data to receive from pipe, we're done
     # Poll() is non-blocking whereas recv is blocking
@@ -720,7 +757,7 @@ def updateScriptStatus():
             if redditUserImageScraper.scriptFinishedSentinel in pipeOutput:
                 # Script finished; refresh image cache
                 print('Refreshing cache due to script finishing')
-                generateSavedImagesCache(settings.settings['Output_dir'])
+                generateSavedImagesCache()
                 responseMessage = ('{{"action":"{}"}}'
                                    .format('scriptFinished'))
 
@@ -790,7 +827,7 @@ if __name__ == '__main__':
         print('WARNING: No output directory specified! This will probably break things')
 
     if not savedImagesCache:
-        generateSavedImagesCache(settings.settings['Output_dir'])
+        generateSavedImagesCache()
 
     LikedSavedDatabase.initializeFromSettings(settings.settings)
 

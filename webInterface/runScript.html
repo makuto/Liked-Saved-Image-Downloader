@@ -1,45 +1,52 @@
 <!DOCTYPE html>
 <html>
 
-  <head>
-	<title>Download Content</title>
+	<head>
+		<title>Download Content</title>
 
-	<meta charset="utf-8">
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<!-- For mobile: set scale to native -->
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	
-	<link rel="stylesheet" type="text/css" href="/webInterfaceNoAuth/index.css">
-	<script type="text/javascript" src="webSocketSettings.js"></script>
-	<script type="text/javascript" src="runScript.js"></script>
-  </head>
+		<meta charset="utf-8">
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<!-- For mobile: set scale to native -->
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <body>
-	<h1>Download Content</h1>
+		<link rel="stylesheet" type="text/css" href="/webInterfaceNoAuth/index.css">
+		<script type="text/javascript" src="webSocketSettings.js"></script>
+		<script type="text/javascript" src="runScript.js"></script>
+	</head>
 
-	<a href="/">Back to Homepage</a><br /><br />
-	
-	<p id="serverStatus">Not connected to server.</p>
+	<body>
+		<h1>Download Content</h1>
 
-	<h3>Output Log</h3>
-	<article class="OutputScrollbox"><p id="messages"></p></article>
+		<a href="/">Back to Homepage</a><br /><br />
 
-	<h2>Download from Content Directories</h2>
-	<p>Check your content directory providers (Reddit, Tumblr, and Pixiv) for new content, and download it.
-		This downloads things you have Liked, Upvoted, Hearted, or Saved (depending on your settings).</p>
-    <button id="runScriptButton" onclick="onRunScriptClicked()">Download new content</button>
+		<p id="serverStatus">Not connected to server.</p>
 
-	<h2>Download URLs</h2>
-	<p>Paste URLs to images or videos. The script will attempt to download the content at the URL.
-		This only works with direct links or on supported websites, e.g. YouTube.<br />
-		Paste one URL per line.</p>
-	<button id="explicitDownloadButton" onclick="onExplicitDownloadClicked()">Download URLs</button>
-	<button id="clearExplicitDownload" onclick="clearExplicitDownloadClicked()">Clear all</button>
-	
-    <br /><label for="explicitDownloadUrls">URLs to download</label>
-	<textarea rows="10" cols="100" id="explicitDownloadUrls"
-			  name="explicitDownloadUrls" onfocus="smartClearBox()">Enter URLs here</textarea>
+		<h3>Output Log</h3>
+		<article class="OutputScrollbox"><p id="messages"></p></article>
 
-  </body>
+		<h2>Download from Content Directories</h2>
+		<p>Check your content directory providers (Reddit, Tumblr, and Pixiv) for new content, and download it.
+			This downloads things you have Liked, Upvoted, Hearted, or Saved (depending on your settings).</p>
+		<button id="runScriptButton" onclick="onRunScriptClicked()">Download new content</button>
+
+		<h2>Download URLs</h2>
+		<p>Paste URLs to images or videos. The script will attempt to download the content at the URL.
+			This only works with direct links or on supported websites, e.g. YouTube.<br />
+			Paste one URL per line.</p>
+		<button id="explicitDownloadButton" onclick="onExplicitDownloadClicked()">Download URLs</button>
+		<button id="clearExplicitDownload" onclick="clearExplicitDownloadClicked()">Clear all</button>
+
+		<br /><label for="explicitDownloadUrls">URLs to download</label>
+		<textarea rows="10" cols="100" id="explicitDownloadUrls"
+				  name="explicitDownloadUrls" onfocus="smartClearBox()">Enter URLs here</textarea>
+
+		<h2>Scan file system</h2>
+		<p>If you want to browse content from any other source using Content Collector, you can copy the files to
+			Content Collector's output directory.</p>
+		<p>Files with the following extensions are supported: .mp4, .webm, .gif, .jpg, .jpeg, .png, .mp4, .webm,
+			and .riff.</p>
+		<button id="refreshCacheButton" onclick="onRefreshCacheClicked()">Scan for files</button>
+
+	</body>
 
 </html>

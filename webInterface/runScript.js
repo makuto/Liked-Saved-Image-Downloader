@@ -61,6 +61,11 @@ function clearExplicitDownloadClicked() {
     urls.value = '';
 }
 
+function onRefreshCacheClicked() {
+	document.getElementById("messages").innerText = "";
+    sendMessage("refreshCache");
+}
+
 function smartClearBox() {
     urls = document.getElementById("explicitDownloadUrls")
     if (urls.value =="Enter URLs here")
