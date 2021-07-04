@@ -39,7 +39,7 @@ class SessionData:
     def __init__(self):
         # Just in case, because tornado is multithreaded
         self.lock = threading.Lock()
-        
+
         self.randomHistory = []
         self.randomHistoryIndex = -1
         self.favorites = []
@@ -47,7 +47,7 @@ class SessionData:
         self.currentImage = None
         self.randomImageFilter = ''
         self.filteredImagesCache = []
-        
+
         self.currentDirectoryPath = ''
         self.currentDirectoryCache = []
         self.directoryFilter = ''
@@ -70,7 +70,7 @@ def generateSavedImagesCache(outputDir):
     savedImagesCache = []
 
     print('Creating content cache...', flush=True)
-    
+
     for root, dirs, files in os.walk(outputDir):
         for file in files:
             if file.endswith(supportedExtensions):
@@ -114,7 +114,7 @@ def login_get_current_user(handler):
 class AuthHandler(tornado.web.RequestHandler):
     def get_current_user(self):
         return login_get_current_user(self)
-    
+
 class LoginHandler(AuthHandler):
     def get(self):
         if not enable_authentication:
@@ -141,23 +141,23 @@ class LoginHandler(AuthHandler):
             authenticated_user = self.get_argument("name") + "_" + cookieSecret
             authenticated_user = authenticated_user.encode()
             authenticated_users.append(authenticated_user)
-            
+
             # Set the cookie on the user's side
             self.set_secure_cookie("user", authenticated_user)
-            
+
             print("Authenticated user {}".format(self.get_argument("name")))
-            
+
             # Let them in
             self.redirect(self.get_argument("next", landingPage))
         else:
             print("Refused user {} (password doesn't match any in database)".format(self.get_argument("name")))
             self.redirect("/login")
-            
+
 class LogoutHandler(AuthHandler):
     @tornado.web.authenticated
     def get(self):
         global authenticated_users
-        
+
         if enable_authentication:
             print("User {} logging out".format(self.current_user))
             if self.current_user in authenticated_users:
@@ -188,7 +188,7 @@ class SetPasswordHandler(AuthHandler):
 class AuthedStaticHandler(tornado.web.StaticFileHandler):
     def get_current_user(self):
         return login_get_current_user(self)
-    
+
     @tornado.web.authenticated
     def prepare(self):
         pass
@@ -256,7 +256,7 @@ class UnsupportedSubmissionsHandler(AuthHandler):
             'https://reddit.com{}'.format(unsupportedSubmission['postUrl']) if unsupportedSubmission['source'] == 'reddit'
             else unsupportedSubmission['postUrl'],
             unsupportedSubmission['source'])
-        
+
         for columnName in unsupportedSubmissionShownColumns:
             if 'url' in columnName[-3:].lower():
                 rowHtml += '\t<td><a href="{}">Content</a></td>\n'.format(unsupportedSubmission['bodyUrl'])
@@ -322,9 +322,9 @@ class SettingsHandler(AuthHandler):
     @tornado.web.authenticated
     def post(self):
         currentOutputDir = settings.settings['Output_dir']
-        
+
         print('Received new settings')
-        
+
         for option in settings.settings:
             newValue = self.get_argument(option, None)
             if not newValue:
@@ -341,20 +341,20 @@ class SettingsHandler(AuthHandler):
                     newValue = True
                 elif type(settings.settings[option]) == int:
                     newValue = int(newValue)
-                
+
                 settings.settings[option] = newValue
                 # print('\tSet {} = {}'.format(option, newValue))
 
         # Write out the new settings
         settings.writeServerSettings()
-        
+
         # Respond with a settings page saying we've updated the settings
         self.doSettings(True)
 
         # Refresh the cache in case the output directory changed
         if currentOutputDir != settings.settings['Output_dir']:
             generateSavedImagesCache(settings.settings['Output_dir'])
-            
+
 
 class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
     connections = set()
@@ -367,7 +367,7 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
             return
 
         randomImageFilterLower = self.sessionData.randomImageFilter.lower()
-    
+
         for imagePath in savedImagesCache:
             if randomImageFilterLower in imagePath.lower():
                 self.sessionData.filteredImagesCache.append(imagePath)
@@ -379,7 +379,7 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
     def changeCurrentDirectory(self, newDirectory):
         self.sessionData.currentDirectoryPath = newDirectory
         dirList = os.listdir(self.sessionData.currentDirectoryPath)
-        
+
         filteredDirList = []
         for fileOrDir in dirList:
             # The script spits out a lot of .json files the user probably doesn't want to see
@@ -387,7 +387,7 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
                 and (not self.sessionData.directoryFilter
                      or self.sessionData.directoryFilter.lower() in fileOrDir.lower())):
                 filteredDirList.append(fileOrDir)
-                
+
         self.sessionData.currentDirectoryCache = sorted(filteredDirList)
 
     def open(self):
@@ -396,9 +396,9 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
         if not currentUser:
             # Failed authorization
             return None
-        
+
         self.connections.add(self)
-        
+
         if currentUser not in userSessionData:
             newSessionData = SessionData()
             userSessionData[currentUser] = newSessionData
@@ -409,13 +409,13 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
         # Set up the directory cache with the top-level output
         self.changeCurrentDirectory(settings.settings['Output_dir'])
         self.sessionData.release()
-            
+
     def on_message(self, message):
         currentUser = login_get_current_user(self)
         if not currentUser:
             # Failed authorization
             return None
-        
+
         print('RandomImageBrowserWebSocket: Received message ', message)
         parsedMessage = json.loads(message)
         command = parsedMessage['command']
@@ -423,17 +423,17 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
         action = ''
 
         self.sessionData.acquire()
-        
+
         """
          Random Image Browser
         """
-        
+
         if command == 'imageAddToFavorites':
             if self.sessionData.currentImage:
                 self.sessionData.favorites.append(self.sessionData.currentImage)
                 self.sessionData.favoritesIndex = len(self.sessionData.favorites) - 1
                 LikedSavedDatabase.db.addFileToCollection(self.sessionData.currentImage[1], "Favorites")
-                 
+
         if command == 'nextFavorite':
             self.sessionData.favoritesIndex += 1
             if self.sessionData.favoritesIndex >= 0 and self.sessionData.favoritesIndex < len(self.sessionData.favorites):
@@ -450,7 +450,7 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
 
             if self.sessionData.favoritesIndex > 0:
                 self.sessionData.favoritesIndex -= 1
-                
+
             fullImagePath, serverImagePath = self.sessionData.favorites[self.sessionData.favoritesIndex]
 
         if command == 'nextImage':
@@ -469,12 +469,12 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
 
             if self.sessionData.randomHistoryIndex > 0:
                 self.sessionData.randomHistoryIndex -= 1
-                
+
             fullImagePath, serverImagePath = self.sessionData.randomHistory[self.sessionData.randomHistoryIndex]
 
         if command in ['nextImageInFolder', 'previousImageInFolder'] and len(self.sessionData.randomHistory):
             fullImagePath, serverImagePath = self.sessionData.currentImage
-                
+
             folder = fullImagePath[:fullImagePath.rfind('/')]
             imagesInFolder = []
             for root, dirs, files in os.walk(folder):
@@ -485,13 +485,13 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
             currentImageIndex = imagesInFolder.index(fullImagePath)
             if currentImageIndex >= 0:
                 action = 'setImage'
-                
+
                 nextImageIndex = currentImageIndex + (1 if command == 'nextImageInFolder' else -1)
                 if nextImageIndex == len(imagesInFolder):
                     nextImageIndex = 0
                 if nextImageIndex < 0:
                     nextImageIndex = len(imagesInFolder) - 1
-                    
+
                 fullImagePath = imagesInFolder[nextImageIndex]
                 serverImagePath = utilities.outputPathToServerPath(fullImagePath)
 
@@ -532,7 +532,7 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
                 self.sessionData.directoryFilter = ''
                 self.changeCurrentDirectory(upDirectory)
                 action = 'sendDirectory'
-            
+
         if command == 'directoryRoot':
             # Reset the filter (chances are the user only wanted to filter at one level
             self.sessionData.directoryFilter = ''
@@ -548,7 +548,7 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
             # Stupid hack
             if serverImagePath.endswith(videoExtensions):
                 action = 'setVideo'
-                
+
             self.sessionData.currentImage = (fullImagePath, serverImagePath)
             responseMessage = ('{{"responseToCommand":"{}", "action":"{}", "fullImagePath":"{}", "serverImagePath":"{}"}}'
                                .format(command, action, fullImagePath, serverImagePath))
@@ -576,7 +576,7 @@ class RandomImageBrowserWebSocket(tornado.websocket.WebSocketHandler):
             self.write_message(responseMessage)
 
         self.sessionData.release()
-    
+
 
     def on_close(self):
         self.connections.remove(self)
@@ -586,11 +586,11 @@ scriptProcess = None
 
 def startScript(functionToRun, args=None):
     global scriptPipeConnection, scriptProcess
-    
+
     # Script already running
     if scriptProcess and scriptProcess.is_alive():
         return
-    
+
     scriptPipeConnection, childConnection = multiprocessing.Pipe()
     if not args:
         scriptProcess = multiprocessing.Process(target=functionToRun,
@@ -605,14 +605,14 @@ class RunScriptWebSocket(tornado.websocket.WebSocketHandler):
     def open(self):
         if not login_get_current_user(self):
             return None
-        
+
         global runScriptWebSocketConnections
         runScriptWebSocketConnections.add(self)
 
     def on_message(self, message):
         if not login_get_current_user(self):
             return None
-        
+
         print('RunScriptWebSocket: Received message ', message)
 
         parsedMessage = json.loads(message)
@@ -626,12 +626,12 @@ class RunScriptWebSocket(tornado.websocket.WebSocketHandler):
                                .format('A download process is already running. Please wait until it completes.\\n',
                                        'printMessage'))
             self.write_message(responseMessage)
-        
+
         if command == 'runScript':
             print('RunScriptWebSocket: Starting script')
 
             startScript(redditUserImageScraper.runLikedSavedDownloader)
-                
+
             responseMessage = ('{{"message":"{}", "action":"{}"}}'
                                .format('Running downloader.\\n', 'printMessage'))
             self.write_message(responseMessage)
@@ -644,7 +644,7 @@ class RunScriptWebSocket(tornado.websocket.WebSocketHandler):
 
                 startScript(redditUserImageScraper.saveRequestedSubmissions,
                             submissionIds)
-                
+
                 responseMessage = ('{{"message":"{}", "action":"{}"}}'
                                    .format('Running downloader.\\n', 'printMessage'))
                 self.write_message(responseMessage)
@@ -678,7 +678,7 @@ class RunScriptWebSocket(tornado.websocket.WebSocketHandler):
 
                 print(urls)
                 startScript(redditUserImageScraper.saveRequestedUrls, urls)
-                
+
                 responseMessage = ('{{"message":"{}", "action":"{}"}}'
                                    .format('Running downloader.\\n', 'printMessage'))
                 self.write_message(responseMessage)
@@ -708,12 +708,12 @@ def updateScriptStatus():
 
     try:
         pipeOutput = scriptPipeConnection.recv()
-        
+
         if pipeOutput:
             responseMessage = ('{{"message":"{}", "action":"{}"}}'
                                .format(pipeOutput.replace('\n', '\\n').replace('\t', ''),
                                        'printMessage'))
-        
+
             for client in runScriptWebSocketConnections:
                 client.write_message(responseMessage)
 
@@ -723,7 +723,7 @@ def updateScriptStatus():
                 generateSavedImagesCache(settings.settings['Output_dir'])
                 responseMessage = ('{{"action":"{}"}}'
                                    .format('scriptFinished'))
-            
+
                 for client in runScriptWebSocketConnections:
                     client.write_message(responseMessage)
 
@@ -734,7 +734,7 @@ def updateScriptStatus():
         responseMessage = ('{{"message":"{}", "action":"{}"}}'
                            .format("Downloader encountered a problem. Check your server output.",
                                    'printMessage'))
-            
+
         for client in runScriptWebSocketConnections:
             client.write_message(responseMessage)
 
@@ -746,16 +746,16 @@ def make_app():
     # Each time the server starts up, invalidate all cookies
     randomGenerator = random.SystemRandom()
     cookieSecret = str(randomGenerator.getrandbits(128))
-    
+
     return tornado.web.Application([
         # Home page
         (r'/', HomeHandler),
-        
+
         # Login
         (r'/login', LoginHandler),
         (r'/logout', LogoutHandler),
         (r'/setPassword', SetPasswordHandler),
-        
+
         # Configure the script
         (r'/settings', SettingsHandler),
 
