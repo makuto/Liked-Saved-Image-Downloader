@@ -1,0 +1,24 @@
+# Systemd service for running Content Collector
+# Setup:
+# sudo cp content-collector.service /etc/systemd/system/content-collector.service
+# sudo systemctl enable content-collector
+# sudo systemctl start content-collector
+
+[Unit]
+Description=Content Collector
+After=syslog.target
+After=network.target
+
+[Service]
+RestartSec=10s
+Type=simple
+# Need root for port 443
+User=root
+Group=root
+WorkingDirectory=/home/pi/ContentCollector
+ExecStart=poetry run python3 LikedSavedDownloaderServer.py
+Restart=always
+Environment=USER=root HOME=/home/pi
+
+[Install]
+WantedBy=multi-user.target
