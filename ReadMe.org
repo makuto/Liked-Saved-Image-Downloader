@@ -11,12 +11,12 @@ Use this awesome tool to download
 
 - Reddit
 - Tumblr
-- Pixiv*
-- Pinterest*
+- +Pixiv+
+- +Pinterest+
 
 ...to disk! You can then browse the results.
 
-/* = These sites do not have official APIs, so breakage can happen much easier./
+/Crossed out = These sites do not have official APIs, so breakage can happen much easier. As of 2021-07-04, they are both non-functioning./
 
 ** Directions
 *** 0. Check Releases
@@ -73,7 +73,32 @@ This step is only required if you want to use SSL, which ensures you have an enc
 #+BEGIN_SRC sh
 poetry run python3 LikedSavedDownloaderServer.py
 #+END_SRC
+**** Starting the server on boot
+If you want to use Systemd, do the following:
+#+BEGIN_SRC sh
+  sudo cp content-collector.service /etc/systemd/system/content-collector.service
+  sudo systemctl enable content-collector
+  sudo systemctl start content-collector
+#+END_SRC
 
+When updating the server, you can use the following command to restart it:
+#+BEGIN_SRC sh
+  sudo systemctl restart content-collector
+#+END_SRC
+
+***** Using ~cron~ instead
+You can also use cron, but it's more of a hassle to stop/restart the server:
+#+BEGIN_SRC sh
+  # Must be root account for access to port 443 (or 80 for unsecured servers)
+  sudo crontab -e
+#+END_SRC
+
+Add this to the file that opens for editing (customize path to your liking), then save that file:
+#+BEGIN_SRC sh
+@reboot cd /home/pi/ContentCollector && sudo poetry run python3 LikedSavedDownloaderServer.py 2>&1 | tee LikedSavedServer.log
+#+END_SRC
+
+Reboot your system to start the server.
 **** If you did not use poetry
 #+BEGIN_SRC sh
 python3 LikedSavedDownloaderServer.py
