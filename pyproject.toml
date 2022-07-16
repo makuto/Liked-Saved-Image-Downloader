@@ -6,7 +6,7 @@ authors = ["Macoy Madson <macoy@macoy.me>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.5.3"
+python = "^3.7.0"
 praw = "^6.1.1"
 pytumblr = "^0.1.0"
 py3-pinterest = "^1.1.0"
@@ -14,7 +14,7 @@ jsonpickle = "^1.4.1"
 tornado = "^6.0.4"
 youtube-dl = "^2020.7.28"
 gfycat = { git = "https://github.com/ankeshanand/py-gfycat", branch = "master" }
-pixivpy = { git = "https://github.com/upbit/pixivpy", branch = "master" }
+pixivpy3 = { git = "https://github.com/upbit/pixivpy", branch = "master" }
 passlib = {version = "^1.7.2", optional = true}
 bcrypt = {version = "^3.1.0", optional = true}
 argon2_cffi = {version = "^20.1.0", optional = true}
