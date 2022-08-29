@@ -44,10 +44,6 @@ def isRedditGallery(url):
 
     return False
 
-def redditGalleryName(url):
-    post = praw.models.reddit.submission.Submission(reddit=client(), url=url)
-    return post.title
-
 def downloadRedditGallery(url, outputDir, galleryName):
     """
     Download a reddit gallery to outputDir / subredditname / post.id - post.title /
