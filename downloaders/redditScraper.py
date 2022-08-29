@@ -10,7 +10,6 @@ import requests
 # local imports
 from utils import logger
 import settings
-import submission
 from submission import Submission
 import LikedSavedDatabase
 
