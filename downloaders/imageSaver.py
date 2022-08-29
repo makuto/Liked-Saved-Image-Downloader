@@ -27,7 +27,7 @@ import settings
 import LikedSavedDatabase
 import submission as Submissions
 from downloaders import imgurDownloader, videoDownloader
-from downloaders.redditScraper import isRedditGallery, downloadRedditGallery
+from downloaders.redditScraper import client, isRedditGallery, downloadRedditGallery
 from utils import logger, utilities
 from utils.crcUtils import signedCrc32
 
@@ -340,6 +340,9 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
 
     submissionsToSave = len(sortedSubmissions)
 
+    # lazy
+    reddit_client = client()
+
     for currentSubmissionIndex, submission in enumerate(sortedSubmissions):
         url = submission.bodyUrl
         subredditDir = submission.subreddit[3:-1] if submission.source == u'reddit' else safeFileName(submission.subredditTitle)
@@ -422,8 +425,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
 
         if isRedditGallery(submission):
             if not soft_retrieve_imgs:
-                galleryName = safeFileName(submission.title)
-                downloadedMedia = downloadRedditGallery(url, outputDir, galleryName)
+                downloadedMedia = downloadRedditGallery(client, submission, outputDir)
 
                 for saveFilePath in downloadedMedia:
                     LikedSavedDatabase.db.onSuccessfulSubmissionDownload(

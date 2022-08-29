@@ -12,6 +12,7 @@ from utils import logger
 import settings
 import submission
 from submission import Submission
+import LikedSavedDatabase
 
 user_agent = 'Python Script: v2.0: Reddit Liked Saved Image Downloader (by /u/makuto9)'
 
@@ -36,21 +37,21 @@ def isRedditGallery(submission: Submission) -> bool:
     """ Reddit Galleries are contentType 'html', but can be downloaded """
     return submission.bodyUrl.startswith("https://www.reddit.com/gallery/")
 
-def downloadRedditGallery(url, outputDir, galleryName):
+def downloadRedditGallery(client: praw.Reddit, submission: Submission, outputDir: str):
     """
     Download a reddit gallery to outputDir / subredditname / post.id - post.title /
     Images 0-indexed.
     """
-    post = praw.models.reddit.submission.Submission(reddit=client(), url=url)
-
-    subRedditDir = post.permalink.split("/")[2]
-    pth = pathlib.Path(outputDir, subRedditDir, f"{post.id} - {galleryName}")
+    subRedditDir = submission.subredditTitle
+    galleryName = submission.title
+    pth = pathlib.Path(outputDir, subRedditDir, galleryName)
     if not pth.exists():
         pth.mkdir(parents=True)
 
     # assert pth.is_dir()
 
     downloaded = []
+    post = client.submission(url=submission.bodyUrl)
     if post.media_metadata:
         for idx, item in enumerate(sorted(post.gallery_data['items'], key=lambda e: e["id"])):
             media_id = item["media_id"]
@@ -69,7 +70,8 @@ def downloadRedditGallery(url, outputDir, galleryName):
 
                 downloaded.append(str(saveFilePath))
     else:
-        logger.log(f"[ERROR] {url} has no media_metadata")
+        logger.log(f"[ERROR] {submission.bodyUrl} has no media_metadata")
+        LikedSavedDatabase.db.addUnsupportedSubmission(submission, "Failed to download reddit gallery (no metadata)")
 
     return downloaded
 
