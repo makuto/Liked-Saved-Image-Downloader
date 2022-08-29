@@ -32,11 +32,21 @@ def client():
     )
 
 
-def isRedditGallery(submission: Submission) -> bool:
+def isRedditGallery(reddit_client: praw.Reddit, submission: Submission, contentType: str) -> bool:
     """ Reddit Galleries are contentType 'html', but can be downloaded """
-    return submission.bodyUrl.startswith("https://www.reddit.com/gallery/")
+    if submission.bodyUrl.startswith("https://www.reddit.com/gallery/"):
+        return True
 
-def downloadRedditGallery(client: praw.Reddit, submission: Submission, outputDir: str):
+    # if given a regular-looking post URL with content-type HTML, we must use praw to determine
+    # whether it is a gallery
+    if contentType == "html":
+        post = reddit_client.submission(url=submission.bodyUrl)
+        if post.url.startswith("https://www.reddit.com/gallery/"):
+            return True
+
+    return False
+
+def downloadRedditGallery(reddit_client: praw.Reddit, submission: Submission, outputDir: str):
     """
     Download a reddit gallery to outputDir / subredditname / post.id - post.title /
     Images 0-indexed.
@@ -50,7 +60,7 @@ def downloadRedditGallery(client: praw.Reddit, submission: Submission, outputDir
     # assert pth.is_dir()
 
     downloaded = []
-    post = client.submission(url=submission.bodyUrl)
+    post = reddit_client.submission(url=submission.bodyUrl)
     if post.media_metadata:
         for idx, item in enumerate(sorted(post.gallery_data['items'], key=lambda e: e["id"])):
             media_id = item["media_id"]
