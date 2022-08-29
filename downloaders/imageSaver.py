@@ -420,6 +420,21 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
             logger.log("Skipped {} due to 'Only download videos' setting".format(url))
             continue
 
+        if isRedditGallery(url):
+            if not soft_retrieve_imgs:
+                galleryName = safeFileName(redditGalleryName(url))
+                downloadedMedia = downloadRedditGallery(url, outputDir, galleryName)
+
+                for saveFilePath in downloadedMedia:
+                    LikedSavedDatabase.db.onSuccessfulSubmissionDownload(
+                        submission, utilities.outputPathToDatabasePath(saveFilePath))
+
+                if downloadedMedia:
+                    # Output our progress
+                    logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
+                            + ' [save] ' + url + ' saved to "' + subredditDir + '"')
+                    numSavedAlbums += 1
+
         if not shouldTrustUrl:
             # Imgur Albums have special handling
             if imgurDownloader.isImgurAlbumUrl(url):
@@ -563,21 +578,6 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
             logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
                     + ' [save] ' + url + ' saved to "' + subredditDir + '"')
             numSavedImages += 1
-
-        elif isRedditGallery(url):
-            if not soft_retrieve_imgs:
-                galleryName = safeFileName(redditGalleryName(url))
-                downloadedMedia = downloadRedditGallery(url, outputDir, galleryName)
-
-                for saveFilePath in downloadedMedia:
-                    LikedSavedDatabase.db.onSuccessfulSubmissionDownload(
-                        submission, utilities.outputPathToDatabasePath(saveFilePath))
-
-                # Output our progress
-                logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
-                        + ' [save] ' + url + ' saved to "' + subredditDir + '"')
-                if downloadedMedia:
-                    numSavedAlbums += 1
 
         else:
             logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
