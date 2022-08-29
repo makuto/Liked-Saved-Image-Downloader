@@ -420,7 +420,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
             logger.log("Skipped {} due to 'Only download videos' setting".format(url))
             continue
 
-        if isRedditGallery(url):
+        if isRedditGallery(submission):
             if not soft_retrieve_imgs:
                 galleryName = safeFileName(submission.title)
                 downloadedMedia = downloadRedditGallery(url, outputDir, galleryName)

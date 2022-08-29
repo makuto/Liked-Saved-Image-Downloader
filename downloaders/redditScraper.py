@@ -31,18 +31,10 @@ def client():
         user_agent=user_agent,
     )
 
-def isRedditGallery(url):
+
+def isRedditGallery(submission: Submission) -> bool:
     """ Reddit Galleries are contentType 'html', but can be downloaded """
-    try:
-        post = praw.models.reddit.submission.Submission(reddit=client(), url=url)
-
-        if post.url.startswith("https://www.reddit.com/gallery/"):
-            return True
-
-    except:
-        pass
-
-    return False
+    return submission.bodyUrl.startswith("https://www.reddit.com/gallery/")
 
 def downloadRedditGallery(url, outputDir, galleryName):
     """
