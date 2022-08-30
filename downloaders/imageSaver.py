@@ -11,13 +11,10 @@ from builtins import str
 from operator import attrgetter
 
 import urllib
-if sys.version_info[0] >= 3:
-	from urllib.request import urlretrieve, urlopen
-        #from urllib.request import urlopen
-else:
-	from urllib import urlretrieve, urlopen
+from urllib.request import urlopen
 
 # third-party imports
+import requests
 # Must use API to access images
 from pixivpy3 import *
 from gfycat.client import GfycatClient
@@ -533,10 +530,17 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
 
                 # Retrieve the image and save it
                 try:
-                    urlretrieve(url, saveFilePath)
+                    # some hosts/CDNs block urllib's default headers in urlretrieve
+                    r = requests.get(url)
+                    r.raise_for_status()
+
+                    with open(saveFilePath, "wb") as f:
+                        f.write(r.content)
 
                     LikedSavedDatabase.db.onSuccessfulSubmissionDownload(
                         submission, utilities.outputPathToDatabasePath(saveFilePath))
+                except requests.exceptions.HTTPError as e:
+                    errorMessage = '[ERROR] retrieval: HTTPError: Url {0} raised exception:\n\t{1}'.format(url, e.response)
                 except IOError as e:
                     errorMessage = '[ERROR] retrieval: IOError: Url {0} raised exception:\n\t{1} {2}'.format(url, e.errno, e.strerror)
                     logger.log(errorMessage)
