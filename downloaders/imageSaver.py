@@ -27,7 +27,7 @@ import settings
 import LikedSavedDatabase
 import submission as Submissions
 from downloaders import imgurDownloader, videoDownloader
-from downloaders.redditScraper import client, isRedditGallery, downloadRedditGallery
+from downloaders.redditScraper import redditClient, isRedditGallery, downloadRedditGallery
 from utils import logger, utilities
 from utils.crcUtils import signedCrc32
 
@@ -341,7 +341,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
     submissionsToSave = len(sortedSubmissions)
 
     # lazy
-    reddit_client = client()
+    reddit_client = redditClient()
 
     for currentSubmissionIndex, submission in enumerate(sortedSubmissions):
         url = submission.bodyUrl

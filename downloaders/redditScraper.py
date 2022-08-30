@@ -22,7 +22,7 @@ def percentageComplete(currentItem, numItems):
 
     return 'Invalid'
 
-def client():
+def redditClient():
     return praw.Reddit(
         client_id=settings.settings['Client_id'],
         client_secret=settings.settings['Client_secret'],
