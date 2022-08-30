@@ -48,14 +48,15 @@ def isUrlSupportedType(url):
     urlFileType = getFileTypeFromUrl(url)
     return urlFileType in SupportedTypes
 
-def getUrlContentType(url):
+def getUrlContentType(session: requests.Session, url: str) -> str:
     if url:
-        openedUrl = None
         try:
-            openedUrl = urlopen(url)
-        except IOError as e:
-            logger.log('[Warning] getUrlContentType(): IOError: Url {0} raised exception:\n\t{1} {2}'
-                .format(url, e.errno, e.strerror))
+            # send HEAD req to URL, avoids grabbing page content early
+            resp = session.head(url)
+            resp.raise_for_status()
+        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
+            logger.log('[Warning] getUrlContentType(): HTTPError: Url {0} raised exception:\n\t{1}'
+                .format(url, e.response))
         except Exception as e:
             logger.log('[Warning] Exception: Url {0} raised exception:\n\t {1}'
                         .format(url, e))
@@ -64,10 +65,13 @@ def getUrlContentType(url):
                 '\n\thttps://github.com/makuto/redditLikedSavedImageDownloader/issues'
                 '\n and I will try to fix it')
         else:
-            if sys.version_info[0] >= 3:
-                return openedUrl.info().get_content_subtype()
-            else:
-                return openedUrl.info().subtype
+            # returns type like "text/html" or "image/jpeg" or "video/mp4"
+            # may include encoding like "text/html; charset=UTF-8"
+            contentType = resp.headers.get("content-type", "")
+            result = re.match(r"\w+/(\w+)", contentType)
+            if result:
+                return result.group(1)
+
     return ''
 
 def isContentTypeSupported(contentType):
@@ -317,6 +321,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
     # lazy
     reddit_client = redditClient()
 
+    reqSession = requests.Session()
+
     for currentSubmissionIndex, submission in enumerate(sortedSubmissions):
         url = submission.bodyUrl
         subredditDir = submission.subreddit[3:-1] if submission.source == u'reddit' else safeFileName(submission.subredditTitle)
@@ -368,7 +374,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 numUnsupportedImages += 1
             continue
 
-        urlContentType = getUrlContentType(url)
+        urlContentType = getUrlContentType(reqSession, url)
 
         if videoDownloader.shouldUseYoutubeDl(url):
             if "gfycat" in url:
