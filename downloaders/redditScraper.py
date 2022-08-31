@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 
+import pathlib
+import time
+
 # third-party imports
 import praw
+import requests
 
 # local imports
 from utils import logger
 import settings
-import submission
 from submission import Submission
+import LikedSavedDatabase
+from utils.utilities import safeFileName
 
 user_agent = 'Python Script: v2.0: Reddit Liked Saved Image Downloader (by /u/makuto9)'
 
@@ -17,6 +22,68 @@ def percentageComplete(currentItem, numItems):
         return str(int(((float(currentItem + 1) / float(numItems)) * 100))) + '%'
 
     return 'Invalid'
+
+def redditClient():
+    return praw.Reddit(
+        client_id=settings.settings['Client_id'],
+        client_secret=settings.settings['Client_secret'],
+        username=settings.settings['Username'],
+        password=settings.settings['Password'],
+        user_agent=user_agent,
+    )
+
+
+def isRedditGallery(reddit_client: praw.Reddit, submission: Submission, contentType: str) -> bool:
+    """ Reddit Galleries are contentType 'html', but can be downloaded """
+    if submission.bodyUrl.startswith("https://www.reddit.com/gallery/"):
+        return True
+
+    # if given a regular-looking post URL with content-type HTML, we must use praw to determine
+    # whether it is a gallery
+    if contentType == "html":
+        post = reddit_client.submission(url=submission.bodyUrl)
+        if post.url.startswith("https://www.reddit.com/gallery/"):
+            return True
+
+    return False
+
+def downloadRedditGallery(reddit_client: praw.Reddit, submission: Submission, outputDir: str):
+    """
+    Download a reddit gallery to outputDir / subredditname / post.id - post.title /
+    Images 0-indexed.
+    """
+    subRedditDir = submission.subreddit[3:-1]
+    galleryName = safeFileName(submission.title)
+    pth = pathlib.Path(outputDir, subRedditDir, galleryName)
+    if not pth.exists():
+        pth.mkdir(parents=True)
+
+    # assert pth.is_dir()
+
+    downloaded = []
+    post = reddit_client.submission(url=submission.bodyUrl)
+    if post.media_metadata:
+        for idx, item in enumerate(sorted(post.gallery_data['items'], key=lambda e: e["id"])):
+            media_id = item["media_id"]
+
+            media_url = post.media_metadata[media_id]["p"][0]["u"].split("?")[0].replace("preview", "i")
+
+            media_name = pathlib.Path(media_url.split("/")[-1])
+
+            saveFilePath = pth / pathlib.Path(f"{idx}{media_name.suffix}")
+
+            if not saveFilePath.exists():
+                req = requests.get(media_url, headers={"user-agent": user_agent})
+                with open(saveFilePath, "wb") as f:
+                    f.write(req.content)
+                    time.sleep(0.5)
+
+                downloaded.append(str(saveFilePath))
+    else:
+        logger.log(f"[ERROR] {submission.bodyUrl} has no media_metadata")
+        LikedSavedDatabase.db.addUnsupportedSubmission(submission, "Failed to download reddit gallery (no metadata)")
+
+    return downloaded
 
 def getSubmissionsFromRedditList(redditList, source,
                                  earlyOutPoint = None, unlikeUnsave = False, user_name = None):

@@ -1,5 +1,6 @@
 import re
 import os
+import random
 
 # local imports
 import settings
@@ -34,3 +35,27 @@ def outputPathToServerPath(path):
 def outputPathToDatabasePath(path):
     # This is a little weird
     return path.split(settings.settings['Output_dir'])[1]
+
+# Make sure the filename is alphanumeric or has supported symbols, and is shorter than 45 characters
+def safeFileName(filename, file_path = False):
+    acceptableChars = ['_', ' ']
+    safeName = ''
+
+    # If we are making a file path safe, allow / and \
+    if file_path:
+        acceptableChars += ['/', '\\']
+
+    for char in filename:
+        if char.isalnum() or char in acceptableChars:
+            safeName += char
+
+    # If there were no valid characters, give it a random number for a unique title
+    if not safeName:
+        safeName = 'badName_' + str(random.randint(1, 1000000))
+
+    if not file_path:
+        MAX_NAME_LENGTH = 250
+        if len(safeName) > MAX_NAME_LENGTH:
+            safeName = safeName[:MAX_NAME_LENGTH]
+
+    return safeName
