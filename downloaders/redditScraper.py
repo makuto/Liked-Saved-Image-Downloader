@@ -12,6 +12,7 @@ from utils import logger
 import settings
 from submission import Submission
 import LikedSavedDatabase
+from utils.utilities import safeFileName
 
 user_agent = 'Python Script: v2.0: Reddit Liked Saved Image Downloader (by /u/makuto9)'
 
@@ -51,8 +52,8 @@ def downloadRedditGallery(reddit_client: praw.Reddit, submission: Submission, ou
     Download a reddit gallery to outputDir / subredditname / post.id - post.title /
     Images 0-indexed.
     """
-    subRedditDir = submission.subredditTitle
-    galleryName = submission.title
+    subRedditDir = submission.subreddit[3:-1]
+    galleryName = safeFileName(submission.title)
     pth = pathlib.Path(outputDir, subRedditDir, galleryName)
     if not pth.exists():
         pth.mkdir(parents=True)

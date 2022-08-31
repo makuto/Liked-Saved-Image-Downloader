@@ -30,6 +30,7 @@ from downloaders import imgurDownloader, videoDownloader
 from downloaders.redditScraper import redditClient, isRedditGallery, downloadRedditGallery
 from utils import logger, utilities
 from utils.crcUtils import signedCrc32
+from utils.utilities import safeFileName
 
 SupportedTypes = ['jpg', 'jpeg', 'gif', 'png', 'webm', 'mp4']
 
@@ -275,30 +276,6 @@ def findSourceForRedGif(url):
 
 
     return None
-
-# Make sure the filename is alphanumeric or has supported symbols, and is shorter than 45 characters
-def safeFileName(filename, file_path = False):
-    acceptableChars = ['_', ' ']
-    safeName = ''
-
-    # If we are making a file path safe, allow / and \
-    if file_path:
-        acceptableChars += ['/', '\\']
-
-    for char in filename:
-        if char.isalnum() or char in acceptableChars:
-            safeName += char
-
-    # If there were no valid characters, give it a random number for a unique title
-    if not safeName:
-        safeName = 'badName_' + str(random.randint(1, 1000000))
-
-    if not file_path:
-        MAX_NAME_LENGTH = 250
-        if len(safeName) > MAX_NAME_LENGTH:
-            safeName = safeName[:MAX_NAME_LENGTH]
-
-    return safeName
 
 # Save the images in directories based on subreddits
 # Name the images based on their submission titles
