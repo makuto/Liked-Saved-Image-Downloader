@@ -57,12 +57,12 @@ def getUrlContentType(url):
         try:
             openedUrl = urlopen(url)
         except IOError as e:
-            logger.log('[ERROR] getUrlContentType(): IOError: Url {0} raised exception:\n\t{1} {2}'
+            logger.log('[Warning] getUrlContentType(): IOError: Url {0} raised exception:\n\t{1} {2}'
                 .format(url, e.errno, e.strerror))
         except Exception as e:
-            logger.log('[ERROR] Exception: Url {0} raised exception:\n\t {1}'
+            logger.log('[Warning] Exception: Url {0} raised exception:\n\t {1}'
                         .format(url, e))
-            logger.log('[ERROR] Url ' + url + 
+            logger.log('[Warning] Url ' + url + 
                 ' raised an exception I did not handle. Open an issue at '
                 '\n\thttps://github.com/makuto/redditLikedSavedImageDownloader/issues'
                 '\n and I will try to fix it')
