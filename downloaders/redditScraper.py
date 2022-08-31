@@ -41,9 +41,14 @@ def isRedditGallery(reddit_client: praw.Reddit, submission: Submission, contentT
     # if given a regular-looking post URL with content-type HTML, we must use praw to determine
     # whether it is a gallery
     if contentType == "html":
-        post = reddit_client.submission(url=submission.bodyUrl)
-        if post.url.startswith("https://www.reddit.com/gallery/"):
-            return True
+        try:
+            post = reddit_client.submission(url=submission.bodyUrl)
+            if post.url.startswith("https://www.reddit.com/gallery/"):
+                return True
+        except Exception as e:
+            logger.log('[ERROR] Exception: Url {0} raised exception:\n\t {1}'
+                        .format(submission.bodyUrl, e))
+            return False
 
     return False
 
@@ -61,27 +66,32 @@ def downloadRedditGallery(reddit_client: praw.Reddit, submission: Submission, ou
     # assert pth.is_dir()
 
     downloaded = []
-    post = reddit_client.submission(url=submission.bodyUrl)
-    if post.media_metadata:
-        for idx, item in enumerate(sorted(post.gallery_data['items'], key=lambda e: e["id"])):
-            media_id = item["media_id"]
+    try:
+        post = reddit_client.submission(url=submission.bodyUrl)
+        if post.media_metadata:
+            for idx, item in enumerate(sorted(post.gallery_data['items'], key=lambda e: e["id"])):
+                media_id = item["media_id"]
 
-            media_url = post.media_metadata[media_id]["p"][0]["u"].split("?")[0].replace("preview", "i")
+                media_url = post.media_metadata[media_id]["p"][0]["u"].split("?")[0].replace("preview", "i")
 
-            media_name = pathlib.Path(media_url.split("/")[-1])
+                media_name = pathlib.Path(media_url.split("/")[-1])
 
-            saveFilePath = pth / pathlib.Path(f"{idx}{media_name.suffix}")
+                saveFilePath = pth / pathlib.Path(f"{idx}{media_name.suffix}")
 
-            if not saveFilePath.exists():
-                req = requests.get(media_url, headers={"user-agent": user_agent})
-                with open(saveFilePath, "wb") as f:
-                    f.write(req.content)
-                    time.sleep(0.5)
+                if not saveFilePath.exists():
+                    req = requests.get(media_url, headers={"user-agent": user_agent})
+                    with open(saveFilePath, "wb") as f:
+                        f.write(req.content)
+                        time.sleep(0.5)
 
-                downloaded.append(str(saveFilePath))
-    else:
-        logger.log(f"[ERROR] {submission.bodyUrl} has no media_metadata")
-        LikedSavedDatabase.db.addUnsupportedSubmission(submission, "Failed to download reddit gallery (no metadata)")
+                    downloaded.append(str(saveFilePath))
+        else:
+            logger.log(f"[ERROR] {submission.bodyUrl} has no media_metadata")
+            LikedSavedDatabase.db.addUnsupportedSubmission(submission, "Failed to download reddit gallery (no metadata)")
+    except Exception as e:
+        logger.log('[ERROR] Exception: Url {0} raised exception:\n\t {1}'
+                   .format(submission.bodyUrl, e))
+        return downloaded
 
     return downloaded
 
