@@ -18,6 +18,22 @@ Use this awesome tool to download
 
 /Crossed out = These sites do not have official APIs, so breakage can happen much easier. As of 2021-07-04, they are both non-functioning./
 
+** Content Collector is moving!
+Content Collector will be moving off of GitHub in the near future.
+
+Please use ~https://macoy.me/code/macoy/Content-Collector.git~ instead.
+** Project status
+I use Content Collector nearly every day, so it is still a neat and useful project. You can expect very good (though not perfect) Reddit support, a good offline media browser, and a local media scanning setup.
+
+However, sites which lack suitable download APIs cause this type of project to be a constant battle or arms race against the site updating its security measures.
+
+As a software developer, this kind of battle isn't one I want to fight. As such, you shouldn't expect any more updates to this project in regards to new site support or major features.
+
+I think the ultimate solution to the media downloading problem is a web browser with strong automatic image/video downloading integrations.
+
+Content Collector may still be valuable in that world by offering a good way to browse the content you've downloaded, but its automatic downloading is likely to fall into disrepair.
+
+I'm still quite proud of this project, and hope that the other users have gotten good value out of it.
 ** Directions
 *** 0. Check Releases
 Check the [[https://github.com/makuto/Liked-Saved-Image-Downloader/releases][Releases]] page for a ready-to-use version of Content Collector. If you find a release for your system that works, you can skip straight to the *Usage* section.
