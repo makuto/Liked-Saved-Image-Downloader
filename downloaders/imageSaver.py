@@ -27,6 +27,7 @@ import settings
 import LikedSavedDatabase
 import submission as Submissions
 from downloaders import imgurDownloader, videoDownloader
+from downloaders.redditScraper import redditClient, isRedditGallery, downloadRedditGallery
 from utils import logger, utilities
 from utils.crcUtils import signedCrc32
 
@@ -307,6 +308,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                   soft_retrieve_imgs = False, only_important_messages = False):
     numSavedImages = 0
     numAlreadySavedImages = 0
+    numSavedAlbums = 0
     numAlreadySavedVideos = 0
     numSavedVideos = 0
     numUnsupportedImages = 0
@@ -337,6 +339,9 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
     pixivApi = None
 
     submissionsToSave = len(sortedSubmissions)
+
+    # lazy
+    reddit_client = redditClient()
 
     for currentSubmissionIndex, submission in enumerate(sortedSubmissions):
         url = submission.bodyUrl
@@ -389,7 +394,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 numUnsupportedImages += 1
             continue
 
-        urlContentType = ''
+        urlContentType = getUrlContentType(url)
 
         if videoDownloader.shouldUseYoutubeDl(url):
             if "gfycat" in url:
@@ -417,6 +422,22 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
         elif settings.settings['Only_download_videos'] and not 'gfycat' in url:
             logger.log("Skipped {} due to 'Only download videos' setting".format(url))
             continue
+
+        if isRedditGallery(reddit_client, submission, urlContentType):
+            if not soft_retrieve_imgs:
+                downloadedMedia = downloadRedditGallery(reddit_client, submission, outputDir)
+
+                for saveFilePath in downloadedMedia:
+                    LikedSavedDatabase.db.onSuccessfulSubmissionDownload(
+                        submission, utilities.outputPathToDatabasePath(saveFilePath))
+
+                if downloadedMedia:
+                    # Output our progress
+                    logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] ' 
+                            + ' [save] ' + url + ' saved to "' + subredditDir + '"')
+                    numSavedAlbums += 1
+
+                continue
 
         if not shouldTrustUrl:
             # Imgur Albums have special handling
@@ -471,7 +492,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                     urlContentType = getFileTypeFromUrl(url)
                     shouldTrustUrl = True
                 else:
-                    urlContentType = getUrlContentType(url)
+                    # keep urlContentType the same
+                    pass
             else:
                 logger.log('[' + percentageComplete(currentSubmissionIndex, submissionsToSave) + '] '
                         + ' [unsupported] ' + 'Failed to resolve trusted URL')
@@ -570,7 +592,6 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                                                            "URL or content type {} not supported".format(urlContentType))
             numUnsupportedImages += 1
 
-    numSavedAlbums = 0
     if imgur_auth and imgurAlbumsToSave:
         numSavedAlbums = imgurDownloader.saveAllImgurAlbums(outputDir, imgur_auth, imgurAlbumsToSave, 
                                                             soft_retrieve_imgs = soft_retrieve_imgs)
