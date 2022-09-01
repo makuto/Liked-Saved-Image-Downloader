@@ -16,6 +16,7 @@ from urllib.request import urlopen
 # third-party imports
 import requests
 # Must use API to access images
+from bs4 import BeautifulSoup as bs
 from pixivpy3 import *
 from gfycat.client import GfycatClient
 
@@ -164,9 +165,45 @@ def isGfycatUrl(url):
             and '.webm' not in url.lower()
             and '.gif' not in url.lower()[-4:])
 
+
+def findSourceFromGiphyHTML(gfyUrl: str):
+    """
+    Returns all tags with property="og:video" from a gfyUrl
+    """
+    resp = requests.get(gfyUrl)
+    try:
+        resp.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        logger.log("URL {} had HTTP error:\n{}".format(gfyUrl, str(e.response)))
+        return []
+
+    soup = bs(resp.content, parser="html.parser")
+    return soup.find_all(property="og:video")
+
+
 def gfycatToRedGifsWorkaround(gfyUrl):
     logger.log("Using Gfycat->RedGifs workaround")
-    return findSourceFromHTML(gfyUrl, '<source id="mp4source" src=')
+    legacy_src = findSourceFromHTML(gfyUrl, '<source id="mp4source" src=')
+    if legacy_src:
+        return legacy_src
+
+    # 2022: now, gfycats seem to be using something else ...
+    # resorting to BeautifulSoup parsing, as it's more robust than string search through HTML
+    full, mobile = None, None
+    for tag in findSourceFromGiphyHTML(gfyUrl):
+        content = tag.get("content", "")
+        if "mp4" in content:
+            if "mobile" in content:
+                mobile = content
+            else:
+                full = content
+
+    if full:
+        return full
+
+    # fallback to returning mobile link/None if full not found
+    return mobile
+
 
 # Lazy initialize in case it's not needed
 gfycatClient = None
