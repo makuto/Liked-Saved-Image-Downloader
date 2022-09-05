@@ -577,9 +577,6 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                     r = requests.get(url)
                     r.raise_for_status()
 
-                    _ext = saveFilePath.split(".")[-1]
-                    saveFilePath = safeFileName(saveFilePath) + "." + _ext
-
                     with open(saveFilePath, "wb") as f:
                         f.write(r.content)
 
