@@ -19,9 +19,11 @@ Use this awesome tool to download
 /Crossed out = These sites do not have official APIs, so breakage can happen much easier. As of 2021-07-04, they are both non-functioning./
 
 ** Content Collector is moving!
-Content Collector will be moving off of GitHub in the near future.
+*UPDATE:* For the near to mid-term, Content Collector will remain on GitHub.
 
-Please use ~https://macoy.me/code/macoy/Content-Collector.git~ instead.
+Content Collector will be moving off of GitHub in the future.
+
++Please use ~https://macoy.me/code/macoy/Content-Collector.git~ instead.+
 ** Project status
 I use Content Collector nearly every day, so it is still a neat and useful project. You can expect very good (though not perfect) Reddit support, a good offline media browser, and a local media scanning setup.
 
