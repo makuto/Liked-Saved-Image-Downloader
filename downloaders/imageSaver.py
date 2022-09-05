@@ -11,14 +11,12 @@ from builtins import str
 from operator import attrgetter
 
 import urllib
-if sys.version_info[0] >= 3:
-	from urllib.request import urlretrieve, urlopen
-        #from urllib.request import urlopen
-else:
-	from urllib import urlretrieve, urlopen
+from urllib.request import urlopen
 
 # third-party imports
+import requests
 # Must use API to access images
+from bs4 import BeautifulSoup as bs
 from pixivpy3 import *
 from gfycat.client import GfycatClient
 
@@ -51,14 +49,15 @@ def isUrlSupportedType(url):
     urlFileType = getFileTypeFromUrl(url)
     return urlFileType in SupportedTypes
 
-def getUrlContentType(url):
+def getUrlContentType(session: requests.Session, url: str) -> str:
     if url:
-        openedUrl = None
         try:
-            openedUrl = urlopen(url)
-        except IOError as e:
-            logger.log('[Warning] getUrlContentType(): IOError: Url {0} raised exception:\n\t{1} {2}'
-                .format(url, e.errno, e.strerror))
+            # send HEAD req to URL, avoids grabbing page content early
+            resp = session.head(url)
+            resp.raise_for_status()
+        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
+            logger.log('[Warning] getUrlContentType(): HTTPError: Url {0} raised exception:\n\t{1}'
+                .format(url, e.response))
         except Exception as e:
             logger.log('[Warning] Exception: Url {0} raised exception:\n\t {1}'
                         .format(url, e))
@@ -67,10 +66,13 @@ def getUrlContentType(url):
                 '\n\thttps://github.com/makuto/redditLikedSavedImageDownloader/issues'
                 '\n and I will try to fix it')
         else:
-            if sys.version_info[0] >= 3:
-                return openedUrl.info().get_content_subtype()
-            else:
-                return openedUrl.info().subtype
+            # returns type like "text/html" or "image/jpeg" or "video/mp4"
+            # may include encoding like "text/html; charset=UTF-8"
+            contentType = resp.headers.get("content-type", "")
+            result = re.match(r"\w+/(\w+)", contentType)
+            if result:
+                return result.group(1)
+
     return ''
 
 def isContentTypeSupported(contentType):
@@ -163,9 +165,45 @@ def isGfycatUrl(url):
             and '.webm' not in url.lower()
             and '.gif' not in url.lower()[-4:])
 
+
+def findSourceFromGiphyHTML(gfyUrl: str):
+    """
+    Returns all tags with property="og:video" from a gfyUrl
+    """
+    resp = requests.get(gfyUrl)
+    try:
+        resp.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        logger.log("URL {} had HTTP error:\n{}".format(gfyUrl, str(e.response)))
+        return []
+
+    soup = bs(resp.content, parser="html.parser")
+    return soup.find_all(property="og:video")
+
+
 def gfycatToRedGifsWorkaround(gfyUrl):
     logger.log("Using Gfycat->RedGifs workaround")
-    return findSourceFromHTML(gfyUrl, '<source id="mp4source" src=')
+    legacy_src = findSourceFromHTML(gfyUrl, '<source id="mp4source" src=')
+    if legacy_src:
+        return legacy_src
+
+    # 2022: now, gfycats seem to be using something else ...
+    # resorting to BeautifulSoup parsing, as it's more robust than string search through HTML
+    full, mobile = None, None
+    for tag in findSourceFromGiphyHTML(gfyUrl):
+        content = tag.get("content", "")
+        if "mp4" in content:
+            if "mobile" in content:
+                mobile = content
+            else:
+                full = content
+
+    if full:
+        return full
+
+    # fallback to returning mobile link/None if full not found
+    return mobile
+
 
 # Lazy initialize in case it's not needed
 gfycatClient = None
@@ -320,6 +358,8 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
     # lazy
     reddit_client = redditClient()
 
+    reqSession = requests.Session()
+
     for currentSubmissionIndex, submission in enumerate(sortedSubmissions):
         url = submission.bodyUrl
         subredditDir = submission.subreddit[3:-1] if submission.source == u'reddit' else safeFileName(submission.subredditTitle)
@@ -371,7 +411,7 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
                 numUnsupportedImages += 1
             continue
 
-        urlContentType = getUrlContentType(url)
+        urlContentType = getUrlContentType(reqSession, url)
 
         if videoDownloader.shouldUseYoutubeDl(url):
             if "gfycat" in url:
@@ -533,10 +573,20 @@ def saveAllImages(outputDir, submissions, imgur_auth = None, only_download_album
 
                 # Retrieve the image and save it
                 try:
-                    urlretrieve(url, saveFilePath)
+                    # some hosts/CDNs block urllib's default headers in urlretrieve
+                    r = requests.get(url)
+                    r.raise_for_status()
+
+                    _ext = saveFilePath.split(".")[-1]
+                    saveFilePath = safeFileName(saveFilePath) + "." + _ext
+
+                    with open(saveFilePath, "wb") as f:
+                        f.write(r.content)
 
                     LikedSavedDatabase.db.onSuccessfulSubmissionDownload(
                         submission, utilities.outputPathToDatabasePath(saveFilePath))
+                except requests.exceptions.HTTPError as e:
+                    errorMessage = '[ERROR] retrieval: HTTPError: Url {0} raised exception:\n\t{1}'.format(url, e.response)
                 except IOError as e:
                     errorMessage = '[ERROR] retrieval: IOError: Url {0} raised exception:\n\t{1} {2}'.format(url, e.errno, e.strerror)
                     logger.log(errorMessage)

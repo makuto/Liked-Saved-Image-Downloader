@@ -1,16 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
 import re
-import sys
-
-import urllib
-if sys.version_info[0] >= 3:
-	from urllib.request import urlretrieve, urlopen
-        #from urllib.request import urlopen
-else:
-	from urllib import urlretrieve, urlopen
 
 # third-party modules
+import requests
 import imgurpython as imgur
 
 # local imports
@@ -198,9 +191,20 @@ def saveAllImgurAlbums(outputDir, imgurAuth, subredditAlbums, soft_retrieve_imgs
 
                 if not soft_retrieve_imgs:
                     # Retrieve the image and save it
-                    urlretrieve(imageUrl, saveFilePath)
-                    LikedSavedDatabase.db.onSuccessfulSubmissionDownload(
-                        albumSubmission, utilities.outputPathToDatabasePath(saveFilePath))
+                    try:
+                        r = requests.get(imageUrl)
+                        r.raise_for_status()
+                    except requests.exceptions.HTTPError as e:
+                        logger.log(f"{imageUrl} had HTTP error: {e.response}")
+                        LikedSavedDatabase.db.addUnsupportedSubmission(
+                            imageUrl, "Imgur post hit exception"
+                        )
+                    else:
+                        with open(saveFilePath, "wb") as f:
+                            f.write(r.content)
+
+                        LikedSavedDatabase.db.onSuccessfulSubmissionDownload(
+                            albumSubmission, utilities.outputPathToDatabasePath(saveFilePath))
 
                 logger.log('\t\t[' + imageSaver.percentageComplete(imageIndex, numImages) + '] ' 
                     + ' [save] ' + imageUrl + ' saved to "' + saveAlbumPath + '"')
